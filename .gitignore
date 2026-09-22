@@ -1,0 +1,22 @@
+# Secrets (keep .env.example tracked)
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# Local vector store
+data/chroma/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
