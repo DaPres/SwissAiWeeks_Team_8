@@ -37,7 +37,7 @@ if prompt := st.chat_input("Describe your issue…"):
                 if r.status_code == 200:
                     data = r.json()
                     answer = data["answer"]
-                    sources = ", ".join(s["source"] for s in data["sources"]) or "none"
+                    sources = ", ".join(dict.fromkeys(s["source"] for s in data["sources"])) or "none"
                     meta = f"served by **{data['provider']}** ({data['model']}) · sources: {sources}"
                 else:
                     answer, meta = f"⚠️ API error {r.status_code}: {r.text}", ""

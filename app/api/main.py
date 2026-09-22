@@ -3,14 +3,25 @@
 Run:  uv run uvicorn app.api.main:app --reload --port 8000
 """
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from app.agent import AllProvidersFailed, LLMClient
 from app.rag.retrieve import format_context, retrieve
 
-app = FastAPI(title="Swiss Life Support Agent")
 llm = LLMClient()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Load the embedding model at boot so the first demo question isn't slow.
+    retrieve("warm up", k=1)
+    yield
+
+
+app = FastAPI(title="Swiss Life Support Agent", lifespan=lifespan)
 
 
 class ChatRequest(BaseModel):
