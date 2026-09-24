@@ -122,7 +122,9 @@ def test_pipeline_survives_every_provider_being_down(env, monkeypatch):
     "flags,conf,is_alert,cited,expected",
     [
         (Flags(injection=True), 0.9, False, True, Resolution.CANCELLED),
-        (Flags(related_open=["JIRA-1"]), 0.9, False, True, Resolution.CANCELLED),
+        # a duplicate needs near-identical text; related_open alone must NOT cancel (fix 4)
+        (Flags(duplicate=True, related_open=["JIRA-1"]), 0.9, False, True, Resolution.CANCELLED),
+        (Flags(related_open=["JIRA-1"]), 0.9, False, True, Resolution.DONE),
         (Flags(spam=True), 0.9, False, True, Resolution.CANCELLED),
         (Flags(unclear=True), 0.9, False, True, Resolution.CLARIFICATION),
         (Flags(), 0.9, True, False, Resolution.CANNOT_REPRODUCE),
