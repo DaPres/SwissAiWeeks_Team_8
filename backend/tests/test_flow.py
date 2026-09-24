@@ -123,3 +123,32 @@ def test_resolve_teaches_the_next_user():
         c.post(f"/api/assist/{nxt['assistId']}/feedback", json={"helpful": True})
         third = c.post("/api/assist", json={"text": "Bloomberg launcher BBG-7731 token expired"}).json()
         assert third["selfService"]["possible"]
+
+
+def test_eval_runs_from_the_api():
+    import time
+
+    with TestClient(app) as c:
+        opts = c.get("/api/eval/options").json()
+        assert opts["challenges"] and len(opts["records"]) == 20
+        started = c.post("/api/eval/runs", json={"limit": 3, "workers": 2, "configs": [
+            {"min_score": 0.0}, {"min_score": 0.9, "top_k": 2, "label": "strict"}]}).json()
+        assert [r["total"] for r in started] == [3, 3] and started[1]["label"] == "strict"
+
+        for _ in range(200):
+            runs = {r["id"]: r for r in c.get("/api/eval/runs").json()}
+            if all(runs[s["id"]]["status"] == "done" for s in started):
+                break
+            time.sleep(0.05)
+        run = c.get(f"/api/eval/runs/{started[0]['id']}").json()
+        assert run["status"] == "done" and run["completed"] == 3
+        t = run["tickets"][0]
+        assert t["record"]["Priority"] and t["record"]["Service Team(s)"] and t["trace"]["resolutionText"]
+        # a 0.9 similarity floor filters out every mock-embedding match
+        strict = c.get(f"/api/eval/runs/{started[1]['id']}").json()
+        assert all(not tk["trace"]["matches"] for tk in strict["tickets"])
+
+        results = c.get(f"/api/eval/runs/{run['id']}/results.json").json()
+        assert len(results["records"]) == 3 and results["triage"]["minScore"] == 0.0
+        assert c.delete(f"/api/eval/runs/{run['id']}").json()["ok"]
+        assert c.get(f"/api/eval/runs/{run['id']}").status_code == 404

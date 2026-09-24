@@ -11,6 +11,8 @@ dist/
 .env.*
 !.env.example
 *.local
+*.private.env.json
+http-client.private.env.json
 
 # Python
 .venv/

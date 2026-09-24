@@ -7,7 +7,10 @@ import hashlib
 import json
 import logging
 import math
+import random
 import re
+import threading
+import time
 from collections.abc import Callable
 from typing import Any, Protocol
 
@@ -66,6 +69,16 @@ class OpenAIEmbedder:
         return _normalise(np.array(out, dtype=np.float32))
 
 
+def _retry_after(e: Exception) -> float | None:
+    """Seconds from a 429's Retry-After header, if the server sent a usable one."""
+    headers = getattr(getattr(e, "response", None), "headers", None) or {}
+    try:
+        value = float(headers.get("retry-after", ""))
+    except ValueError:
+        return None
+    return value if 0 < value <= 120 else None
+
+
 def _parse_json(content: str) -> dict:
     """Models without structured output sometimes wrap the object in prose or a ```json fence."""
     try:
@@ -82,7 +95,7 @@ class ChatLLM:
     embedder so the knowledge base vectors stay comparable whichever chat provider is selected."""
 
     def __init__(self, mode: str, label: str, client: Any, chat_model: str, vision_model: str | None,
-                 embedder: Embedder, vision_fallback: "LLM | None" = None) -> None:
+                 embedder: Embedder, vision_fallback: "LLM | None" = None, max_concurrency: int = 0) -> None:
         self.mode = mode
         self.label = label
         self.client = client
@@ -90,6 +103,31 @@ class ChatLLM:
         self.vision_model = vision_model
         self.embedder = embedder
         self.vision_fallback = vision_fallback
+        # Caps in-flight calls across all threads (eval workers, parallel runs, users); 0 = unlimited.
+        self.slots = threading.BoundedSemaphore(max_concurrency) if max_concurrency > 0 else None
+
+    def _chat(self, **kwargs: Any) -> Any:
+        """chat.completions.create with rate-limit handling: the SDK's own two quick retries are not enough for
+        per-minute quotas (Apertus answers 429 "rate_limit_reached_error"), so back off honouring Retry-After."""
+        from openai import RateLimitError
+
+        for attempt in range(settings.rate_limit_retries + 1):
+            if self.slots:
+                self.slots.acquire()
+            try:
+                return self.client.chat.completions.create(**kwargs)
+            except RateLimitError as e:
+                if attempt == settings.rate_limit_retries:
+                    raise
+                delay = _retry_after(e) or min(60.0, 2.0 * 2 ** attempt) * random.uniform(0.8, 1.2)
+                log.warning("%s: rate limited (attempt %d/%d); retrying in %.1fs", self.mode, attempt + 1,
+                            settings.rate_limit_retries, delay)
+                # keep the slot while waiting so other threads queue up instead of hammering the endpoint
+                time.sleep(delay)
+            finally:
+                if self.slots:
+                    self.slots.release()
+        raise AssertionError("unreachable")
 
     @property
     def embedding_model(self) -> str:
@@ -104,7 +142,7 @@ class ChatLLM:
                 return self.vision_fallback.describe_image(data_url, context)
             return MockLLM().describe_image(data_url, context)
         prompt = IMAGE_PROMPT + (f"\n\nThe user wrote: {context[:1500]}" if context else "")
-        resp = self.client.chat.completions.create(
+        resp = self._chat(
             model=self.vision_model,
             messages=[{"role": "user", "content": [
                 {"type": "text", "text": prompt},
@@ -119,7 +157,7 @@ class ChatLLM:
 
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
         try:
-            resp = self.client.chat.completions.create(
+            resp = self._chat(
                 model=self.chat_model,
                 messages=messages,
                 response_format={"type": "json_schema", "json_schema": {"name": name, "schema": schema, "strict": True}},
@@ -129,16 +167,16 @@ class ChatLLM:
             log.warning("%s: json_schema not accepted (%s); retrying with json_object", self.mode, e)
         messages[0]["content"] += "\n\nReply with a single JSON object matching this schema:\n" + json.dumps(schema)
         try:
-            resp = self.client.chat.completions.create(
+            resp = self._chat(
                 model=self.chat_model, messages=messages, response_format={"type": "json_object"},
             )
         except (BadRequestError, UnprocessableEntityError) as e:
             log.warning("%s: json_object not accepted (%s); retrying without response_format", self.mode, e)
-            resp = self.client.chat.completions.create(model=self.chat_model, messages=messages)
+            resp = self._chat(model=self.chat_model, messages=messages)
         return _parse_json(resp.choices[0].message.content or "{}")
 
     def complete_text(self, system: str, user: str, fallback: Callable[[], str]) -> str:
-        resp = self.client.chat.completions.create(
+        resp = self._chat(
             model=self.chat_model,
             messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
         )
@@ -216,7 +254,8 @@ def _build_providers() -> dict[str, LLM]:
         vision = providers.get("foundry") or providers.get("openai")
         providers["apertus"] = ChatLLM("apertus", "Apertus (Swisscom)",
                                        OpenAI(base_url=settings.apertus_base_url, api_key=settings.apertus_api_key),
-                                       settings.apertus_model, None, embedder, vision_fallback=vision)
+                                       settings.apertus_model, None, embedder, vision_fallback=vision,
+                                       max_concurrency=settings.apertus_max_concurrency)
     return providers
 
 
