@@ -83,10 +83,12 @@ if [[ -z "$CLIENT_ID" ]]; then
 fi
 az ad sp show --id "$CLIENT_ID" -o none 2>/dev/null || az ad sp create --id "$CLIENT_ID" -o none
 SPN_OBJECT=$(az ad sp show --id "$CLIENT_ID" --query id -o tsv)
-SUBJECT="repo:$GH_REPO:environment:$GH_ENVIRONMENT"
+# GitHub's OIDC subject carries immutable owner/repo ids: repo:<owner>@<owner_id>/<repo>@<repo_id>:environment:<env>
+GH_IDS=$(gh api "repos/$GH_REPO" --jq '"\(.owner.login)@\(.owner.id)/\(.name)@\(.id)"')
+SUBJECT="repo:$GH_IDS:environment:$GH_ENVIRONMENT"
 if [[ -z $(az ad app federated-credential list --id "$CLIENT_ID" --query "[?subject=='$SUBJECT'].name" -o tsv) ]]; then
   az ad app federated-credential create --id "$CLIENT_ID" --parameters "{
-    \"name\": \"github-$GH_ENVIRONMENT\",
+    \"name\": \"github-${GH_IDS##*@}-$GH_ENVIRONMENT\",
     \"issuer\": \"https://token.actions.githubusercontent.com\",
     \"subject\": \"$SUBJECT\",
     \"audiences\": [\"api://AzureADTokenExchange\"]
