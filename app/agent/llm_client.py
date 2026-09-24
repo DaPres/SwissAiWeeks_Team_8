@@ -140,8 +140,13 @@ class LLMClient:
         return OpenAI(api_key=p.api_key(), base_url=p.base_url, timeout=self.timeout, max_retries=0)
 
     def _call(self, p: Provider, messages: list[dict], **kwargs) -> str:
+        msg = self._call_message(p, messages, **kwargs)
+        return msg.content or ""
+
+    def _call_message(self, p: Provider, messages: list[dict], **kwargs):
+        """The full assistant message, so callers that pass `tools=` can read tool_calls."""
         resp = self._make_client(p).chat.completions.create(model=p.model, messages=messages, **kwargs)
-        return resp.choices[0].message.content or ""
+        return resp.choices[0].message
 
     def _call_with_token_refresh(self, p: Provider, messages: list[dict], **kwargs) -> str:
         """Retry once on 401: the Apertus bearer token expires after ~60 min.
@@ -201,6 +206,27 @@ class LLMClient:
             except Exception as e:  # never let one provider's bug kill the fallback chain
                 errors[p.name] = f"{type(e).__name__}: {_short(e)}"
             log.warning("provider %s failed: %s", p.name, errors[p.name])
+        raise AllProvidersFailed(errors)
+
+    def chat_message(self, messages: list[dict], **kwargs):
+        """Like chat(), but returns (assistant_message, provider_name) for tool calling.
+
+        Same fallback chain; a provider that cannot do tools simply fails and the next one
+        is tried, so the loop degrades rather than dying.
+        """
+        errors: dict[str, str] = {}
+        for p in self.providers:
+            if p.offline_only and has_internet():
+                errors[p.name] = "skipped (internet is up; Ollama is offline-only)"
+                continue
+            try:
+                original_call = self._call_message
+                return original_call(p, messages, **kwargs), p.name
+            except ProviderUnavailable as e:
+                errors[p.name] = f"not configured: {e}"
+            except Exception as e:
+                errors[p.name] = f"{type(e).__name__}: {_short(e)}"
+            log.warning("provider %s failed (tools): %s", p.name, errors[p.name])
         raise AllProvidersFailed(errors)
 
     def ask(self, question: str, context: str = "", system_prompt: str = DEFAULT_SYSTEM_PROMPT) -> LLMResponse:
