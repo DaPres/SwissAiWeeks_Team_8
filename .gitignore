@@ -24,3 +24,4 @@ Thumbs.db
 # Challenge dataset (23.8 MB, re-downloadable; see README)
 data/jira.json
 data/challenge_20.json
+data/triagemate.db

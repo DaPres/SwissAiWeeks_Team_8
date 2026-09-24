@@ -85,6 +85,18 @@ in-progress tickets), breaking ties alphabetically so the result is reproducible
 **our operational heuristic, not a Swiss Life rule**, and the UI labels it as a suggestion.
 If Swiss Life route by skill or rota, this is a one-function change.
 
+## Storage and the related-ticket window
+
+`app/store.py` keeps tickets, triage results, analyst decisions and eval runs in SQLite
+(`data/triagemate.db`, git-ignored). Agent tools only ever read from it.
+
+`RELATED_WINDOW_HOURS` (default **4**) defines duplicate/alert correlation: same service,
+not done, created within ±4 h. **This is our parameter, not an organiser rule**, and the
+default is chosen from the data: the median gap between consecutive alerts on the same
+service is **10.20 h**, only **6.2%** land within 1 h, a 4 h window catches **24.1%**, and
+24 h would sweep in **79.9%** — genuine bursts without over-merging. To be swept on the
+stress set (1 h / 4 h / 24 h) once it exists.
+
 ## Dataset analysis
 
 ```bash
