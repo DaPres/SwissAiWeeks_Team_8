@@ -11,20 +11,20 @@ Content-Type: application/json
   "state": {
     //"title": "This is an incident",
     //"title": "This is a service request",
-    "title": "New license requested for Tax Reporting",
+    //"title": "New license requested for Tax Reporting",
     //"description": "This issue was raised against Client Reporting, but the title suggests a service request instead of a true incident. The underlying problem still needs triage and should be reviewed to ensure it is routed through the correct workflow.",
-    "description": "Regulatory Reporting generated an automated monitoring alert indicating an operational problem. The log shows repeated execution errors, service degradation, or a processing delay. Please review the event, confirm the impact, and decide whether immediate remediation is needed.",
+    "description": "Regulatory Reporting generated an automated monitoring alert indicating an operational problem. The log shows repeated execution errors, service degradation, or a processing delay. Please review the event, confirm the impact, and decide whether immediate remediation is needed."
     //"description": "A new user requires a license for Tax Reporting to support an operational activity. The request includes the relevant user details and justification and needs validation before the entitlement is assigned.",
     //"worktype": "service_request"
-    "worktype": "Incident",
-    "priority": "Lowest"
+    //"worktype": "Incident",
+    //"priority": "Lowest",
     //"priority": "Low"
     //"priority": "Medium"
     //"priority": "High"
     //"priority": "Low"
   },
   "questions": {
-    "category": {
+    "worktype": {
       "type": "choice",
       "instructions": "Classify this incident.",
       "criteria": {
@@ -32,26 +32,9 @@ Content-Type: application/json
         "incident": "Unplanned interruption or degradation of service"
       }
     },
-    "worktype": {
-      "type": "noul",
-      "instructions": "is the worktype correct?",
-      "criteria": {
-        "true": "yes",
-        "false": "no"
-      }
-    },
     "urgency": {
-        "type": "score",
-        "instructions": "How urgent is this incident?",
-        "criteria": [
-            "Can wait until next week",
-            "Should be fixed this week",
-            "Needs immediate attention"
-        ]
-        },
-    "priority": {
         "type": "choice",
-        "instructions": "determined by Urgency and Impact",
+      "instructions": "Assess the urgency of this incident using the following definitions:\nCritical: Immediate action required (prevent/fix regulatory breach, security compromise, or major outage). No workaround available.\nHigh: Rapid resolution needed within hours to avoid escalation. Workaround available but difficult/time-consuming.\nMedium: Important to fix soon; no immediate operational/regulatory threat. Easy workaround available.\nLow: Handled in normal workflow without urgent escalation.\nLowest: Routine/informational with no effect on operations or compliance.",
         "criteria": {
             "Lowest": "Lowest",
             "Low": "Low",
@@ -59,7 +42,46 @@ Content-Type: application/json
             "High": "High",
             "Highest": "Highest"
         }
+        },
+    "impact": {
+        "type": "choice",
+      "instructions": "Assess the impact of this incident using the following definitions:\nMajor / Widespread: Full unavailability to critical IT services supporting key operations (> 2 hrs downtime).\nSignificant / Large: Partial unavailability of critical IT services, 1+ business entities affected, or financial counterparts affected.\nModerate / Limited: Full unavailability of non-critical IT services, or up to 1 business entity affected.\nMinor / Localized: Partial unavailability of non-critical IT services, or individuals affected.\nNo direct impact / Information: No direct operational impact; informational/maintenance without service degradation.",
+        "criteria": {
+            "Major / Widespread": "Full unavailability to critical IT services supporting key operations (> 2 hrs downtime)",
+            "Significant / Large": "Partial unavailability of critical IT services, 1+ business entities affected, or financial counterparts affected",
+            "Moderate / Limited": "Full unavailability of non-critical IT services, or up to 1 business entity affected",
+            "Minor / Localized": "Partial unavailability of non-critical IT services, or individuals affected",
+            "No direct impact / Information": "No direct operational impact; informational/maintenance without service degradation"
         }
-        
+        },
+    "priority": {
+        "type": "choice",
+      "instructions": "Calculate priority from urgency and impact using this matrix. Impact columns: Major / Widespread, Significant / Large, Moderate / Limited, Minor / Localized, No direct impact / Information.\nCritical urgency: Highest, Highest, High, Medium, Medium.\nHigh urgency: Highest, High, High, Medium, Low.\nMedium urgency: High, High, Medium, Low, Low.\nLow urgency: Medium, Medium, Low, Low, Lowest.\nLowest urgency: Medium, Low, Low, Lowest, Lowest.",
+        "criteria": {
+        "Lowest": "Low urgency with No direct impact / Information, or Lowest urgency with Moderate / Limited or lower impact",
+        "Low": "High urgency with No direct impact / Information, Medium urgency with Minor / Localized or No direct impact / Information, Low urgency with Moderate / Limited or Minor / Localized, or Lowest urgency with Significant / Large or Moderate / Limited",
+        "Medium": "Critical urgency with Minor / Localized or No direct impact / Information, High urgency with Minor / Localized, Low urgency with Major / Widespread or Significant / Large, or Lowest urgency with Major / Widespread",
+        "High": "Critical urgency with Moderate / Limited, Medium urgency with Major / Widespread or Significant / Large, or High urgency with Significant / Large or Moderate / Limited",
+        "Highest": "Critical urgency with Major / Widespread or Significant / Large, or High urgency with Major / Widespread"
+        }
+        },
+        "service_teams": {
+            "type": "choice",
+            "instructions": "Select the responsible service team.",
+            "criteria": {
+                "Service Desk": "Service Desk",
+                "Enterprise Applications": "Enterprise Applications",
+                "Investment Operations": "Investment Operations",
+                "Securities Operations": "Securities Operations",
+                "Risk & Controls": "Risk & Controls",
+                "Valuation & Pricing": "Valuation & Pricing",
+                "Client Services": "Client Services",
+                "Market Data Services": "Market Data Services",
+                "Trading Support": "Trading Support",
+                "Tax & Reporting": "Tax & Reporting",
+                "Treasury & Cash": "Treasury & Cash",
+                "unclear": "Unclear"
+            }
+        }
     }
 }
