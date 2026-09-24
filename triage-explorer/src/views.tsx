@@ -29,7 +29,7 @@ export function Overview({ data }: { data: Insights }) {
       <div className="grid cols-2">
         <div className="card">
           <h3>Affected service</h3>
-          <p className="sub">Orange = generic intake bucket, not a real service. 20 services, one owning team each.</p>
+          <p className="sub">Coral = generic intake bucket, not a real service. 20 services, one owning team each.</p>
           <Bars data={dist['Affected Business or IT Services']} highlight={(s) => s === 'Emailed Support Tickets'} />
         </div>
         <div className="grid" style={{ alignContent: 'start' }}>

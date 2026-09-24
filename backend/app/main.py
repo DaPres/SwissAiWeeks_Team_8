@@ -1,5 +1,7 @@
 """FastAPI app: user assist (deflection), ticket creation, agent resolution with learning."""
 import base64
+import asyncio
+import json
 import logging
 import re
 import time
@@ -8,6 +10,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from . import catalog
@@ -40,6 +43,7 @@ class AssistIn(BaseModel):
     text: str = Field("", max_length=8000)
     images: list[str] = Field(default_factory=list, description="data:image/...;base64 URLs")
     reporter: str | None = None
+    debug: bool = False
 
 
 class FeedbackIn(BaseModel):
@@ -104,6 +108,46 @@ async def post_assist(body: AssistIn):
         raise HTTPException(400, "Describe the problem or paste a screenshot")
     _validate_images(body.images)
     return await run_in_threadpool(assist, store, body.text, body.images, body.reporter)
+
+
+@app.post("/api/assist/stream")
+async def post_assist_stream(body: AssistIn):
+    if not body.text.strip() and not body.images:
+        raise HTTPException(400, "Describe the problem or paste a screenshot")
+    _validate_images(body.images)
+
+    async def events():
+        loop = asyncio.get_running_loop()
+        output: asyncio.Queue[tuple[str, dict] | None] = asyncio.Queue()
+
+        def report(event: dict) -> None:
+            loop.call_soon_threadsafe(output.put_nowait, ("progress", event))
+
+        async def run_assist() -> None:
+            try:
+                result = await run_in_threadpool(assist, store, body.text, body.images,
+                                                 body.reporter, report, body.debug)
+                await output.put(("result", result))
+            except Exception:
+                logging.exception("streamed assist failed")
+                await output.put(("error", {"message": "Analysis failed. Please try again."}))
+            finally:
+                await output.put(None)
+
+        asyncio.create_task(run_assist())
+        while True:
+            try:
+                item = await asyncio.wait_for(output.get(), timeout=15)
+            except TimeoutError:
+                yield ": keep-alive\n\n"
+                continue
+            if item is None:
+                break
+            name, payload = item
+            yield f"event: {name}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(events(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 @app.post("/api/assist/{assist_id}/feedback")

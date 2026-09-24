@@ -1,64 +1,41 @@
 :root {
   color-scheme: light;
-  --surface-0: #f4f3f0;
-  --surface-1: #fcfcfb;
-  --surface-2: #efeee9;
-  --border: #dddcd6;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #7a7974;
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --grid: #e6e5df;
-  --seq-1: #cde2fb;
-  --seq-2: #9ec5f4;
-  --seq-3: #5598e7;
-  --seq-4: #256abf;
-  --seq-5: #0d366b;
-  --warn-bg: #fdf1d8;
-  --warn-ink: #7a4d00;
-  --good-bg: #dcf2e6;
-  --good-ink: #0d5c36;
-  --crit-bg: #fbe0df;
-  --crit-ink: #8a1f1e;
-  --accent: #2a78d6;
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --surface-0: #f8f4f8;
+  --surface-1: #ffffff;
+  --surface-2: #fbf0f7;
+  --border: #eadce8;
+  --text-primary: #2c1732;
+  --text-secondary: #685a6d;
+  --text-muted: #837389;
+  --series-1: #b52898;
+  --series-2: #ff6266;
+  --grid: #f0e7ef;
+  --seq-1: #fbe0ef;
+  --seq-2: #f3afd6;
+  --seq-3: #d963ad;
+  --seq-4: #a83096;
+  --seq-5: #642274;
+  --warn-bg: #fff0e6;
+  --warn-ink: #8a441c;
+  --good-bg: #e6f5ef;
+  --good-ink: #17614d;
+  --crit-bg: #ffe7eb;
+  --crit-ink: #a52f4b;
+  --accent: #9e258a;
+  --accent-hover: #821b76;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 15px;
   line-height: 1.5;
   color: var(--text-primary);
   background: var(--surface-0);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --surface-0: #121211;
-    --surface-1: #1a1a19;
-    --surface-2: #242422;
-    --border: #34332f;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #8f8e86;
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --grid: #2c2c29;
-    --seq-1: #184f95;
-    --seq-2: #1c5cab;
-    --seq-3: #2a78d6;
-    --seq-4: #6da7ec;
-    --seq-5: #cde2fb;
-    --warn-bg: #3a2c0c;
-    --warn-ink: #f5c865;
-    --good-bg: #0f3322;
-    --good-ink: #7ad7a5;
-    --crit-bg: #3f1616;
-    --crit-ink: #f29a99;
-    --accent: #3987e5;
-  }
+  font-synthesis: none;
 }
 
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--surface-0); min-width: 320px; }
+html { scroll-behavior: smooth; }
+body { margin: 0; min-width: 320px; background: var(--surface-0); }
 h1, h2, h3, h4 { margin: 0; line-height: 1.25; }
 code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.88em; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
 button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 3px solid #d96bb8; outline-offset: 2px; }
+::selection { background: #f4b2d6; color: #35143d; }

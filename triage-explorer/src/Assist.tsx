@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { api, type AssistResult, type Catalog, type Draft, type Ticket } from './api'
+import { api, type AssistProgress, type AssistResult, type Catalog, type Draft, type Ticket } from './api'
 import { PriorityPill, short } from './components'
+import { AnalysisProgress } from './AnalysisProgress'
 import type { Level } from './types'
 
 const MAX_IMAGES = 4
@@ -20,13 +21,20 @@ export function Assist({ catalog }: { catalog: Catalog | null }) {
   const [images, setImages] = useState<string[]>([])
   const [dragging, setDragging] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [analysing, setAnalysing] = useState(false)
+  const [debug, setDebug] = useState(() => localStorage.getItem('assist-debug') === 'true')
+  const [progress, setProgress] = useState<AssistProgress[]>([])
+  const [analysedImages, setAnalysedImages] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<AssistResult | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [outcome, setOutcome] = useState<{ kind: 'solved' } | { kind: 'ticket'; ticket: Ticket } | null>(null)
   const textRef = useRef<HTMLTextAreaElement>(null)
+  const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => { textRef.current?.focus() }, [])
+  useEffect(() => () => abortRef.current?.abort(), [])
+  useEffect(() => { localStorage.setItem('assist-debug', String(debug)) }, [debug])
 
   async function addFiles(files: File[]) {
     const imgs = files.filter((f) => f.type.startsWith('image/'))
@@ -47,20 +55,24 @@ export function Assist({ catalog }: { catalog: Catalog | null }) {
   }
 
   async function submit() {
-    setBusy(true); setError(null); setResult(null); setOutcome(null)
+    const controller = new AbortController()
+    abortRef.current = controller
+    setBusy(true); setAnalysing(true); setError(null); setResult(null); setDraft(null); setOutcome(null); setProgress([])
+    setAnalysedImages(images.length > 0)
     try {
-      const r = await api.assist(text, images)
+      const r = await api.assistStream(text, images, debug, (event) => setProgress((current) => [...current, event]), controller.signal)
       setResult(r)
       setDraft(r.draft)
     } catch (e) {
-      setError((e as Error).message)
+      if ((e as Error).name !== 'AbortError') setError((e as Error).message)
     } finally {
-      setBusy(false)
+      if (abortRef.current === controller) abortRef.current = null
+      setBusy(false); setAnalysing(false)
     }
   }
 
   function reset() {
-    setText(''); setImages([]); setResult(null); setDraft(null); setOutcome(null); setError(null)
+    setText(''); setImages([]); setResult(null); setDraft(null); setOutcome(null); setError(null); setProgress([])
     textRef.current?.focus()
   }
 
@@ -100,7 +112,14 @@ export function Assist({ catalog }: { catalog: Catalog | null }) {
   return (
     <div className="assist">
       <div className="card">
-        <h3>What’s going wrong?</h3>
+        <div className="assist-title-row">
+          <h3>What’s going wrong?</h3>
+          <label className="debug-switch" title="Show retrieval and tool activity while the agent works">
+            <input type="checkbox" checked={debug} onChange={(e) => setDebug(e.target.checked)} disabled={analysing} />
+            <span className="debug-switch-track" aria-hidden="true" />
+            <span>Debug</span>
+          </label>
+        </div>
         <p className="sub">Describe the problem in your own words. Paste (⌘V) or drop screenshots — they’re read by the assistant too.</p>
         <div
           className={`dropbox${dragging ? ' dragging' : ''}`}
@@ -144,6 +163,10 @@ export function Assist({ catalog }: { catalog: Catalog | null }) {
         </div>
         {error && <div className="pill crit" style={{ marginTop: 10 }}>⚠ {error}</div>}
       </div>
+
+      {(analysing || result || progress.length > 0) && <AnalysisProgress
+        events={progress} working={analysing} failed={Boolean(error) && !result} debug={debug} hasImages={analysedImages}
+      />}
 
       {result && draft && (
         <div className="grid" style={{ marginTop: 16 }}>
