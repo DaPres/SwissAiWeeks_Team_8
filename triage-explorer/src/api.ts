@@ -227,3 +227,104 @@ export const curationApi = {
   publish: (minLevel: Exclude<QualityLevel, 'reject'>) =>
     post<{ minLevel: string; published: number; tickets: number; knowledge: Stats['knowledge'] }>('/curation/publish', { min_level: minLevel }),
 }
+
+export interface EvalConfigIn { llm: string | null; top_k: number | null; min_score: number; label?: string }
+
+/** A challenge record with the 7 answer fields filled in (the submission format). */
+export interface EvalRecord {
+  Summary: string
+  'Work type': string
+  'Affected Business or IT Services': string[]
+  'Service Team(s)': string[]
+  Assignee: string | null
+  Urgency: string
+  Impact: string
+  Priority: string
+  Resolution: string
+}
+
+export interface EvalTicket {
+  record: EvalRecord
+  trace: {
+    summary: string
+    changed: Record<string, { input: unknown; output: unknown }>
+    understanding: string | null
+    rationale: string | null
+    assigneeReason: string
+    resolutionText: string
+    matches: { id: string; service: string; resolver: string | null; score: number; title: string }[]
+    precedents: { id: string; resolution: string; score: number }[]
+  }
+  problems: string[]
+  seconds: number
+}
+
+export type EvalStatus = 'queued' | 'running' | 'done' | 'failed' | 'cancelled' | 'interrupted'
+
+export interface EvalRunSummary {
+  id: string
+  batch: string | null
+  label: string
+  config: { llm: string; top_k: number | null; min_score: number; workers: number; limit: number | null }
+  model: string
+  source: string
+  challengeRunId: string | null
+  status: EvalStatus
+  total: number
+  completed: number
+  problems: number
+  createdAt: number
+  startedAt: number | null
+  finishedAt: number | null
+  error: string | null
+  meta: { topK: number; minScore: number; embeddingModel: string } | null
+}
+
+export interface EvalRun extends EvalRunSummary { tickets: (EvalTicket | null)[] }
+
+export interface EvalInputRecord {
+  Summary: string
+  Description: string
+  'Work type': string
+  'Request type': string
+  'Affected Business or IT Services': string[]
+  Urgency: string
+  Impact: string
+  Priority: string
+}
+
+export interface EvalOptions {
+  challenges: string[]
+  defaults: { topK: number; minScore: number; assistMinScore: number; workers: number }
+  records: EvalInputRecord[]
+}
+
+export type EvalEvent =
+  | { type: 'snapshot'; runs: EvalRunSummary[] }
+  | { type: 'run'; run: EvalRunSummary }
+  | { type: 'ticket'; runId: string; index: number; ticket: EvalTicket }
+  | { type: 'deleted'; id: string }
+
+/** Live eval progress over SSE; returns a function that closes the stream. EventSource reconnects on its own. */
+function evalStream(onEvent: (e: EvalEvent) => void, onConnection?: (open: boolean) => void): () => void {
+  const source = new EventSource('/api/eval/stream')
+  source.onopen = () => onConnection?.(true)
+  source.onerror = () => onConnection?.(false)
+  source.addEventListener('snapshot', (e) => onEvent({ type: 'snapshot', runs: JSON.parse(e.data) }))
+  source.addEventListener('run', (e) => onEvent({ type: 'run', run: JSON.parse(e.data) }))
+  source.addEventListener('ticket', (e) => onEvent({ type: 'ticket', ...JSON.parse(e.data) }))
+  source.addEventListener('deleted', (e) => onEvent({ type: 'deleted', id: JSON.parse(e.data).id }))
+  return () => source.close()
+}
+
+export const evalApi = {
+  options: () => call<EvalOptions>('/eval/options'),
+  runs: () => call<EvalRunSummary[]>('/eval/runs'),
+  run: (id: string) => call<EvalRun>(`/eval/runs/${id}`),
+  start: (body: { configs: EvalConfigIn[]; challenge?: string; limit?: number | null; workers: number }) =>
+    post<EvalRunSummary[]>('/eval/runs', body),
+  cancel: (id: string) => post<{ cancelling: boolean }>(`/eval/runs/${id}/cancel`, {}),
+  remove: (id: string) => call<{ ok: boolean }>(`/eval/runs/${id}`, { method: 'DELETE' }),
+  resultsUrl: (id: string) => `/api/eval/runs/${id}/results.json`,
+  stream: evalStream,
+}

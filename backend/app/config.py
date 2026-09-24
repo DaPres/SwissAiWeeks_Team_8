@@ -32,6 +32,10 @@ class Settings:
     apertus_base_url: str = os.getenv(
         "APERTUS_BASE_URL", "https://api.swisscom.com/products/swiss-ai-weeks/apertus-1.5-70b/v1")
     apertus_model: str = os.getenv("APERTUS_MODEL", "swiss-ai/Apertus-v1.5-70B")
+    # Apertus has a tight rate limit: at most this many calls in flight across the app (0 = unlimited)
+    apertus_max_concurrency: int = int(os.getenv("APERTUS_MAX_CONCURRENCY", "2"))
+    # retries with exponential backoff (2s .. 60s, or Retry-After) when a provider answers 429
+    rate_limit_retries: int = int(os.getenv("LLM_RATE_LIMIT_RETRIES", "6"))
 
     # Default chat provider: "foundry" (alias "azure"), "openai", "apertus" or "mock".
     # Empty = first configured of foundry, openai, apertus. "mock" disables every provider.
@@ -39,6 +43,8 @@ class Settings:
 
     db_path: Path = Path(os.getenv("DB_PATH", str(BACKEND_DIR / "data" / "knowledge.db")))
     training_file: Path = Path(os.getenv("TRAINING_FILE", str(REPO_DIR / "jira_first_20000_requested_fields_synthetic.json")))
+    # extra blind-eval challenge file; jira_hackathon_blind_eval_challenge_*.json in the repo root is always found
+    challenge_file: Path | None = Path(os.environ["CHALLENGE_FILE"]) if os.getenv("CHALLENGE_FILE") else None
 
     # built frontend (triage-explorer/dist) to serve from "/"; set in the container image
     static_dir: Path | None = Path(os.environ["STATIC_DIR"]) if os.getenv("STATIC_DIR") else None

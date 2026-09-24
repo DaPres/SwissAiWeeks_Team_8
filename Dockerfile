@@ -17,6 +17,8 @@ RUN uv sync --frozen --no-dev --no-install-project
 COPY backend/app ./app
 # training data: the knowledge base is built from it on first start (TRAINING_FILE defaults to the repo root)
 COPY jira_first_20000_requested_fields_synthetic.json /app/
+# blind-eval challenge for the Evaluation tab (found by its jira_hackathon_blind_eval_challenge_*.json name)
+COPY jira_hackathon_blind_eval_challenge_*.json /app/
 COPY --from=frontend /src/dist /app/static
 
 ARG VERSION=dev

@@ -5,18 +5,21 @@ import json
 import logging
 import re
 import time
+import uuid
 from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import catalog
 from .config import settings
 from .curation import publish, run_curation, training_tickets
+from .eval_runs import EvalRuns
+from .evaluate import EvalConfig, challenge_files
 from .knowledge import ensure_ready, learn_from_ticket, ticket_text
 from .llm import default_provider, get_llm, providers
 from .store import Store
@@ -24,13 +27,15 @@ from .triage import assist, draft_resolution
 
 logging.basicConfig(level=logging.INFO)
 store: Store
+evals: EvalRuns
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    global store
+    global store, evals
     store = Store(settings.db_path)
     await run_in_threadpool(ensure_ready, store)
+    evals = EvalRuns(store, settings.db_path.parent / "evals")
     yield
 
 
@@ -319,6 +324,118 @@ def stats():
             "resolved": sum(t["status"] == "resolved" for t in tickets),
         },
     }
+
+
+def _sse(name: str, payload: object) -> str:
+    return f"event: {name}\ndata: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
+def _challenge(name: str | None):
+    files = challenge_files()
+    if not files:
+        raise HTTPException(404, "No challenge file found (jira_hackathon_blind_eval_challenge_*.json)")
+    if not name:
+        return files[0]
+    match = next((f for f in files if f.name == name), None)
+    if not match:
+        raise HTTPException(400, f"Unknown challenge file {name!r}")
+    return match
+
+
+class EvalConfigIn(BaseModel):
+    llm: str | None = None
+    top_k: int | None = Field(None, ge=1, le=30)
+    min_score: float = Field(0.0, ge=0.0, le=0.95)
+    label: str | None = Field(None, max_length=80)
+
+
+class EvalStartIn(BaseModel):
+    configs: list[EvalConfigIn] = Field(min_length=1, max_length=8)
+    challenge: str | None = None
+    limit: int | None = Field(None, ge=1)
+    workers: int = Field(4, ge=1, le=16)
+
+
+@app.get("/api/eval/options")
+def eval_options():
+    """What the Evaluation tab can configure, plus the challenge tickets as submitted (the input column)."""
+    files = challenge_files()
+    challenge = json.loads(files[0].read_text()) if files else {"records": []}
+    return {
+        "challenges": [f.name for f in files],
+        "defaults": {"topK": settings.top_k, "minScore": 0.0, "assistMinScore": settings.min_knowledge_score, "workers": 4},
+        "records": [{k: r.get(k) for k in ("Summary", "Description", "Work type", "Request type",
+                                             "Affected Business or IT Services", "Urgency", "Impact", "Priority")}
+                    for r in challenge["records"]],
+    }
+
+
+@app.get("/api/eval/runs")
+def eval_runs():
+    return evals.summaries()
+
+
+@app.post("/api/eval/runs")
+def start_eval_runs(body: EvalStartIn):
+    path = _challenge(body.challenge)
+    batch = uuid.uuid4().hex[:8]
+    return [evals.start(EvalConfig(llm=_provider(c.llm), top_k=c.top_k, min_score=c.min_score,
+                                   workers=body.workers, limit=body.limit), path, c.label, batch)
+            for c in body.configs]
+
+
+@app.get("/api/eval/runs/{run_id}")
+def get_eval_run(run_id: str):
+    run = evals.get(run_id)
+    if not run:
+        raise HTTPException(404)
+    return run
+
+
+@app.post("/api/eval/runs/{run_id}/cancel")
+def cancel_eval_run(run_id: str):
+    return {"cancelling": evals.cancel(run_id)}
+
+
+@app.delete("/api/eval/runs/{run_id}")
+def delete_eval_run(run_id: str):
+    if not evals.delete(run_id):
+        raise HTTPException(404)
+    return {"ok": True}
+
+
+@app.get("/api/eval/runs/{run_id}/results.json")
+def eval_results_file(run_id: str):
+    run = evals.get(run_id)
+    if not run:
+        raise HTTPException(404)
+    results = evals.results_file(run_id, _challenge(run["source"]))
+    name = f"{run['challengeRunId'] or 'eval'}.{run_id}.results.json"
+    return Response(json.dumps(results, indent=2, ensure_ascii=False), media_type="application/json",
+                    headers={"Content-Disposition": f'attachment; filename="{name}"'})
+
+
+@app.get("/api/eval/stream")
+async def eval_stream():
+    """Server-sent events for every eval run: `snapshot` (all run summaries) on connect, then `run` (status /
+    progress), `ticket` (one finished ticket: {runId, index, ticket}) and `deleted` as they happen."""
+    queue = evals.subscribe()
+
+    async def events():
+        try:
+            yield _sse("snapshot", evals.summaries())
+            while True:
+                try:
+                    name, payload = await asyncio.wait_for(queue.get(), timeout=15)
+                except TimeoutError:
+                    yield ": keep-alive\n\n"
+                    continue
+                yield _sse(name, payload)
+        finally:
+            evals.unsubscribe(queue)
+
+    return StreamingResponse(events(), media_type="text/event-stream",
+                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 # Container image: the built frontend is served from the same origin (SPA fallback to index.html).
