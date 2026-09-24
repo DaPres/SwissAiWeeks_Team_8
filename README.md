@@ -18,6 +18,21 @@ aspire run
 (`triage-explorer/`, via Vite) and opens the Aspire dashboard with logs, traces and health. See
 [backend/README.md](backend/README.md) for the triage/learning pipeline.
 
+### Deploy (Azure Container Apps)
+
+One image (`Dockerfile`) builds the frontend and serves it from the FastAPI backend. Releases are tag-driven:
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+`.github/workflows/release.yml` pushes `aiweeksteam8.azurecr.io/triage:1.0.0` (+ `:latest`), rolls the `triage`
+Container App in RG `ai-weeks` to it, health-checks `/api/health` and creates the GitHub release.
+Azure resources, the app's Foundry access (managed identity) and the deploy SPN (GitHub OIDC, repo secrets
+`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`) come from `infra/setup-azure.sh`.
+The knowledge base is SQLite inside the container: it is rebuilt from the training data on each new revision,
+so tickets created in the app do not survive a redeploy.
+
 ---
 
 Welcome! This challenge asks you to build an AI system that can triage Jira

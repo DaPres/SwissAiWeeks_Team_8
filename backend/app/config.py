@@ -40,6 +40,9 @@ class Settings:
     db_path: Path = Path(os.getenv("DB_PATH", str(BACKEND_DIR / "data" / "knowledge.db")))
     training_file: Path = Path(os.getenv("TRAINING_FILE", str(REPO_DIR / "jira_first_20000_requested_fields_synthetic.json")))
 
+    # built frontend (triage-explorer/dist) to serve from "/"; set in the container image
+    static_dir: Path | None = Path(os.environ["STATIC_DIR"]) if os.getenv("STATIC_DIR") else None
+
     top_k: int = int(os.getenv("TOP_K", "6"))
     # cosine similarity a knowledge match must exceed to reach the assistant
     min_knowledge_score: float = float(os.getenv("MIN_KNOWLEDGE_SCORE", "0.4"))
