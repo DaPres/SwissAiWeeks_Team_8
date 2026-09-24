@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import contextvars
 import functools
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -35,6 +36,14 @@ from .safety import TicketSafety, analyse_ticket, names_from_emails
 
 PB_MIN = 0.28          # min fused score for a same-service playbook note to be used as the resolution basis
 KB_GOOD = 0.5          # fused score treated as a "good" retrieval for confidence normalisation
+
+
+_PERSONAL_TOKEN = re.compile(r"\[(PERSON|EMAIL_[A-Z]+|PHONE|IBAN|POLICY|ID)_\d+\]")
+
+
+def _scrub_note(note: str) -> str:
+    """A resolution note becomes a Jira comment: personal-data tokens are never restored into it (unlike the analyst-facing draft)."""
+    return _PERSONAL_TOKEN.sub(lambda m: "the requester" if m.group(1).startswith(("PERSON", "EMAIL")) else "the reported account", note)
 
 
 def _submit(ex: ThreadPoolExecutor, fn: Callable, *a, **kw):
@@ -237,7 +246,7 @@ class Triage:
         return TriageResult(
             ticket_id=t.id, work_type=cls.work_type, service=cls.service, team=cls.team, assignee=assignee, assignee_reason=why,
             urgency=pr.urgency, impact=pr.impact, priority=pr.priority, resolution=status,
-            resolution_note=safe.restore(note), resolution_source=note_src, confidence=conf, flags=flags,
+            resolution_note=_scrub_note(note), resolution_source=note_src, confidence=conf, flags=flags,
             classification=cls, priority_detail=pr, draft=draft, duplicates=[r["id"] for r in st.related],
             similar=st.similar, trace=st.trace, redaction_count=safe.redaction_count,
             mode=("hybrid" if self.llm_on and cls.source != "rules" else "llm" if self.llm_on else "offline"),

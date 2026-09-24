@@ -212,7 +212,26 @@ def ticket_detail(ticket_id: str):
     t, r = store().get_ticket(ticket_id), store().get_result(ticket_id)
     if not t or not r:
         raise HTTPException(404, "unknown ticket")
-    return {"ticket": t.model_dump(exclude={"raw"}), "result": r.model_dump()}
+    return {"ticket": t.model_dump(exclude={"raw"}), "result": r.model_dump(), "redacted_text": store().get_redacted(ticket_id)}
+
+
+@app.post("/api/challenge/run-bundled")
+def challenge_run_bundled():
+    """Run the challenge file shipped in data/ and return the submission-format records plus a compact review table."""
+    f = find_challenge_file()
+    if not f:
+        raise HTTPException(404, "no jira_hackathon*challenge*.json in data/")
+    recs, meta = read_records(f)
+    tickets = [ticket_from_record(r, i, "CH", "jira") for i, r in enumerate(recs)]
+    with _lock:
+        results = tri().run_batch(tickets)
+    table = [{"id": t.id, "summary": t.summary, "given_service": t.service, "given_work_type": t.work_type, "given_priority": t.priority,
+              "work_type": r.work_type, "service": r.service, "team": r.team, "assignee": r.assignee, "urgency": r.urgency, "impact": r.impact,
+              "priority": r.priority, "resolution": r.resolution, "comment": f"{r.assignee}: {r.resolution_note}", "confidence": r.confidence,
+              "flags": [k for k, v in r.flags.model_dump().items() if v], "source": r.resolution_source}
+             for t, r in zip(tickets, results)]
+    preds = [apply_result(r, res) for r, res in zip(recs, results)]
+    return {"file": f.name, "mode": results[0].mode if results else "offline", "table": table, "records": preds, "meta": meta}
 
 
 class Decision(BaseModel):
@@ -261,8 +280,8 @@ def playbook():
 
 @app.get("/api/eval")
 def eval_results():
-    p = ROOT / "eval" / "results.json"
-    if not p.exists():
+    p = next((q for q in (ROOT / "eval" / "results_hybrid.json", ROOT / "eval" / "results_offline.json", ROOT / "eval" / "results.json") if q.exists()), None)
+    if p is None:
         raise HTTPException(404, "run `python -m triagemate.cli eval` first")
     return JSONResponse(json.loads(p.read_text(encoding="utf-8")))
 

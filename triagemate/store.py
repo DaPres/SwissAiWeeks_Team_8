@@ -86,6 +86,11 @@ class Store:
             row = self._db.execute("SELECT result_json FROM results WHERE ticket_id=?", (ticket_id,)).fetchone()
         return TriageResult.model_validate_json(row["result_json"]) if row else None
 
+    def get_redacted(self, ticket_id: str) -> str:
+        with self._lock:
+            row = self._db.execute("SELECT redacted_text FROM tickets WHERE id=?", (ticket_id,)).fetchone()
+        return (row["redacted_text"] if row else "") or ""
+
     def get_ticket(self, ticket_id: str) -> Ticket | None:
         with self._lock:
             row = self._db.execute("SELECT ticket_json FROM tickets WHERE id=?", (ticket_id,)).fetchone()
