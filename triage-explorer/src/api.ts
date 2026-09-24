@@ -27,7 +27,9 @@ export interface Match {
 
 export interface AssistResult {
   assistId: string
-  mode: 'azure' | 'mock'
+  /** provider id that answered: 'foundry' | 'openai' | 'apertus' | 'mock' */
+  mode: string
+  model: string
   imageDescriptions: string[]
   understanding: string
   selfService: { possible: boolean; answer: string }
@@ -72,6 +74,9 @@ export interface Ticket {
   resolved_at: number | null
 }
 
+export interface LlmProvider { id: string; label: string; model: string; vision: boolean }
+export interface Llms { default: string; providers: LlmProvider[]; embeddingModel: string }
+
 export interface CatalogService { name: string; team: string; critical: boolean }
 export interface Catalog { services: CatalogService[]; levels: Level[]; matrix: Record<Level, Record<Level, Level>> }
 
@@ -96,12 +101,12 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 
 const post = <T,>(path: string, body: unknown) => call<T>(path, { method: 'POST', body: JSON.stringify(body) })
 
-async function assistStream(text: string, images: string[], debug: boolean,
+async function assistStream(text: string, images: string[], debug: boolean, llm: string | null,
                             onProgress: (event: AssistProgress) => void, signal?: AbortSignal): Promise<AssistResult> {
   const res = await fetch('/api/assist/stream', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-    body: JSON.stringify({ text, images, debug }),
+    body: JSON.stringify({ text, images, debug, llm }),
     signal,
   })
   if (!res.ok) {
@@ -145,6 +150,7 @@ async function assistStream(text: string, images: string[], debug: boolean,
 
 export const api = {
   catalog: () => call<Catalog>('/catalog'),
+  llms: () => call<Llms>('/llms'),
   stats: () => call<Stats>('/stats'),
   assist: (text: string, images: string[]) => post<AssistResult>('/assist', { text, images }),
   assistStream,

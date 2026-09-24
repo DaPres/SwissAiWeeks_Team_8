@@ -19,8 +19,23 @@ class Settings:
     chat_deployment: str = os.getenv("CHAT_DEPLOYMENT", "gpt-4.1")
     vision_deployment: str = os.getenv("VISION_DEPLOYMENT", "") or os.getenv("CHAT_DEPLOYMENT", "gpt-4.1")
     embedding_deployment: str = os.getenv("EMBEDDING_DEPLOYMENT", "text-embedding-3-large")
-    # "azure" or "mock"; defaults to mock when no endpoint is configured
-    llm_mode: str = os.getenv("LLM_MODE", "azure" if os.getenv("AZURE_FOUNDRY_ENDPOINT") else "mock")
+
+    # OpenAI API (platform.openai.com); enabled when OPENAI_API_KEY is set
+    openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
+    openai_base_url: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    openai_chat_model: str = os.getenv("OPENAI_CHAT_MODEL", "gpt-6-luna")
+    openai_vision_model: str = os.getenv("OPENAI_VISION_MODEL", "") or os.getenv("OPENAI_CHAT_MODEL", "gpt-6-luna")
+    openai_embedding_model: str = os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
+
+    # Swisscom Apertus (OpenAI-compatible, text only, no embeddings); enabled when APERTUS_API_KEY is set
+    apertus_api_key: str = os.getenv("APERTUS_API_KEY", "")
+    apertus_base_url: str = os.getenv(
+        "APERTUS_BASE_URL", "https://api.swisscom.com/products/swiss-ai-weeks/apertus-1.5-70b/v1")
+    apertus_model: str = os.getenv("APERTUS_MODEL", "swiss-ai/Apertus-v1.5-70B")
+
+    # Default chat provider: "foundry" (alias "azure"), "openai", "apertus" or "mock".
+    # Empty = first configured of foundry, openai, apertus. "mock" disables every provider.
+    llm_mode: str = os.getenv("LLM_MODE", "")
 
     db_path: Path = Path(os.getenv("DB_PATH", str(BACKEND_DIR / "data" / "knowledge.db")))
     training_file: Path = Path(os.getenv("TRAINING_FILE", str(REPO_DIR / "jira_first_20000_requested_fields_synthetic.json")))

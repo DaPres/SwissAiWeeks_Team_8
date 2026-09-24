@@ -133,7 +133,7 @@ def _cluster(vectors: np.ndarray, weights: list[int], threshold: float) -> list[
 
 def run_curation(store: Store, threshold: float | None = None) -> dict:
     llm = get_llm()
-    threshold = threshold if threshold is not None else (0.86 if llm.mode == "azure" else 0.6)
+    threshold = threshold if threshold is not None else (0.6 if llm.embedding_model.startswith("mock:") else 0.86)
     t0 = time.time()
     tickets = training_tickets()
     scored = [score_ticket(t) for t in tickets]

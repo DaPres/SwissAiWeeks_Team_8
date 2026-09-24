@@ -17,7 +17,7 @@ from . import catalog
 from .config import settings
 from .curation import publish, run_curation, training_tickets
 from .knowledge import ensure_ready, learn_from_ticket, ticket_text
-from .llm import get_llm
+from .llm import default_provider, get_llm, providers
 from .store import Store
 from .triage import assist, draft_resolution
 
@@ -44,6 +44,7 @@ class AssistIn(BaseModel):
     images: list[str] = Field(default_factory=list, description="data:image/...;base64 URLs")
     reporter: str | None = None
     debug: bool = False
+    llm: str | None = Field(None, description="provider id from /api/llms; default when omitted")
 
 
 class FeedbackIn(BaseModel):
@@ -82,6 +83,12 @@ def _validate_images(images: list[str]) -> None:
             raise HTTPException(413, f"Image larger than {settings.max_image_bytes // 1024 // 1024} MB")
 
 
+def _provider(name: str | None) -> str | None:
+    if name and name not in providers():
+        raise HTTPException(400, f"LLM {name!r} is not enabled")
+    return name
+
+
 def _service(name: str) -> str:
     if name not in catalog.SERVICES:
         raise HTTPException(400, f"Unknown service {name!r}")
@@ -91,6 +98,19 @@ def _service(name: str) -> str:
 @app.get("/api/health")
 def health():
     return {"mode": get_llm().mode, "embeddingModel": get_llm().embedding_model, "knowledge": store.knowledge_stats()}
+
+
+@app.get("/api/llms")
+def llms():
+    """Enabled chat providers, for the model picker."""
+    return {
+        "default": default_provider(),
+        "providers": [
+            {"id": p.mode, "label": p.label, "model": p.chat_model, "vision": bool(getattr(p, "vision_model", None))}
+            for p in providers().values()
+        ],
+        "embeddingModel": get_llm().embedding_model,
+    }
 
 
 @app.get("/api/catalog")
@@ -107,7 +127,8 @@ async def post_assist(body: AssistIn):
     if not body.text.strip() and not body.images:
         raise HTTPException(400, "Describe the problem or paste a screenshot")
     _validate_images(body.images)
-    return await run_in_threadpool(assist, store, body.text, body.images, body.reporter)
+    return await run_in_threadpool(assist, store, body.text, body.images, body.reporter,
+                                   None, False, _provider(body.llm))
 
 
 @app.post("/api/assist/stream")
@@ -115,6 +136,7 @@ async def post_assist_stream(body: AssistIn):
     if not body.text.strip() and not body.images:
         raise HTTPException(400, "Describe the problem or paste a screenshot")
     _validate_images(body.images)
+    provider = _provider(body.llm)
 
     async def events():
         loop = asyncio.get_running_loop()
@@ -126,7 +148,7 @@ async def post_assist_stream(body: AssistIn):
         async def run_assist() -> None:
             try:
                 result = await run_in_threadpool(assist, store, body.text, body.images,
-                                                 body.reporter, report, body.debug)
+                                                 body.reporter, report, body.debug, provider)
                 await output.put(("result", result))
             except Exception:
                 logging.exception("streamed assist failed")

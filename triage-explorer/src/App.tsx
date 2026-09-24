@@ -31,6 +31,9 @@ const PAGE_COPY: Record<Tab, { title: string; description: string }> = {
 export default function App() {
   const [tab, setTab] = useState<Tab>('Get help')
   const [catalog, setCatalog] = useState<Catalog | null>(null)
+  // Get help folds the hero away once a question is submitted, so the answer gets the full screen.
+  const [heroFolded, setHeroFolded] = useState(false)
+  const folded = tab === 'Get help' && heroFolded
 
   useEffect(() => { api.catalog().then(setCatalog).catch(() => setCatalog(null)) }, [])
 
@@ -46,6 +49,7 @@ export default function App() {
         </div>
         <span className="event-badge">SwissLife · 2026</span>
       </div>
+      <div className={`hero-fold${folded ? ' folded' : ''}`} aria-hidden={folded}>
       <header className={`header hero${tab === 'Get help' ? '' : ' hero-compact'}`}>
         <div className="hero-copy">
           <div className="hero-eyebrow"><span className="hero-spark" /> Intelligent support, beautifully simple</div>
@@ -58,6 +62,7 @@ export default function App() {
           </div>}
         </div>
       </header>
+      </div>
       <nav className="tabs" role="tablist">
         {TABS.map((t, i) => (
           <button key={t} role="tab" aria-selected={tab === t} className={`tab${tab === t ? ' active' : ''}${i === 3 ? ' tab-divider' : ''}`} onClick={() => setTab(t)}>
@@ -65,7 +70,7 @@ export default function App() {
           </button>
         ))}
       </nav>
-      {tab === 'Get help' && <Assist catalog={catalog} />}
+      {tab === 'Get help' && <Assist catalog={catalog} onFoldChange={setHeroFolded} />}
       {tab === 'Agent queue' && <Queue catalog={catalog} />}
       {tab === 'Data curation' && <Curation />}
       {tab === 'Overview' && <Overview data={data} />}
