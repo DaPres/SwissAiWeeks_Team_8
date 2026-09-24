@@ -3,7 +3,7 @@
 #
 #   ACR (aiweeksteam8)  <- GitHub Actions pushes images on version tags (v*)
 #   Container Apps env + app "triage" pulls from ACR with its managed identity
-#   App identity gets "Azure AI User" on the Foundry account -> no Foundry key needed
+#   App identity gets "Foundry User" on the Foundry account -> no Foundry key needed
 #   SPN "gh-swissaiweeks-team8-deploy" with a GitHub OIDC federated credential
 #   (environment "production") -> AcrPush on ACR + Contributor on the resource group
 #
@@ -68,7 +68,7 @@ echo "==> Foundry access for the app identity"
 APP_PRINCIPAL=$(az containerapp show -n "$APP" -g "$RG" --query identity.principalId -o tsv)
 FOUNDRY_ID=$(az cognitiveservices account show -n "$FOUNDRY" -g "$RG" --query id -o tsv)
 az role assignment create --assignee-object-id "$APP_PRINCIPAL" --assignee-principal-type ServicePrincipal \
-  --role "Azure AI User" --scope "$FOUNDRY_ID" -o none
+  --role "Foundry User" --scope "$FOUNDRY_ID" -o none
 
 echo "==> Deploy SPN $SPN_NAME (GitHub OIDC)"
 CLIENT_ID=$(az ad app list --display-name "$SPN_NAME" --query "[0].appId" -o tsv)
