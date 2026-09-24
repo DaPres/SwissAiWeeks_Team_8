@@ -85,6 +85,50 @@ in-progress tickets), breaking ties alphabetically so the result is reproducible
 **our operational heuristic, not a Swiss Life rule**, and the UI labels it as a suggestion.
 If Swiss Life route by skill or rota, this is a one-function change.
 
+## The deterministic spine
+
+The stages that must never be wrong are code, not model output.
+
+**Safety gate (`app/safety.py`).** Redacts emails, IBANs, phone numbers, card numbers and
+person names (derived from the ticket's own reporter/assignee) before any text reaches a
+provider — the model layer only ever sees redacted text. Injection is detected on the
+*original* text, so redaction cannot mask an attack, and each of the 8 rules reports *why*
+it fired. Measured on all 20,000 real tickets: **0 false-positive injection flags**.
+
+**Priority (`app/priority.py`).** The LLM extracts urgency and impact with a quoted sentence
+each; the 5×5 matrix in code turns them into a priority. Two vocabularies meet here — the
+organisers' matrix labels (`Critical…Lowest` × `Major…None`) and the dataset's lowercase
+`lowest…highest` — and `URGENCY_LABEL`/`IMPACT_LABEL` are the single place they are mapped.
+`tests/test_priority.py` re-transcribes the organisers' grid independently and walks **all
+25 cells**, so a typo in either table fails the build.
+
+*Overrides are ours, not Swiss Life's.* One rule only, grounded in the organisers'
+critical-service list: **a Critical service in full outage cannot be below `Significant`
+impact.** It lives in a single labelled table (`OUR_OVERRIDES`), never lowers an impact,
+and every applied override is marked `ours=True` so the UI can show it as our heuristic.
+(The market-hours and regulatory-deadline rules were considered and **dropped** — they were
+not in any organiser document.)
+
+**Quality gate and classifier (`app/quality.py`, `app/classify.py`).** Deterministic cues
+catch the dataset's trap templates; the description always outranks the summary; the model's
+service answer is snapped back to the catalogue, and with every provider down the fallback
+still finds the service in the text.
+
+Measured over all 20,000 tickets (`uv run python scripts/eval_spine.py`):
+
+| Class | N | unclear | mismatch | injection FP |
+|---|---:|---:|---:|---:|
+| automated alert | 7,385 | 0.0% | 0.0% | 0 |
+| external email | 5,423 | 0.0% | 0.0% | 0 |
+| **trap** | 3,718 | **51.0%** | **49.0%** | 0 |
+| normal | 3,474 | 0.0% | 0.0% | 0 |
+
+The gates flag **3,718 tickets = 18.6%**, which is exactly the trap population, with **zero
+false positives** on the other 16,282. Every trap is caught by one gate or the other.
+(The fallback classifier's 100% service accuracy in that script is *not* a skill claim — the
+training text names its own service. The honest test is the challenge set, where it is wrong
+on purpose.)
+
 ## Storage and the related-ticket window
 
 `app/store.py` keeps tickets, triage results, analyst decisions and eval runs in SQLite
