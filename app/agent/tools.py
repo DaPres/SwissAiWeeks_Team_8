@@ -15,11 +15,14 @@ import sqlite3
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.rag.hybrid import HybridIndex, retrieval_confidence
-from app.rag.tickets import find_open_related, find_similar_tickets
+from app.rag.hybrid import SCORE_FLOOR, HybridIndex, retrieval_confidence
+from app.rag.tickets import find_duplicates, find_open_related, find_similar_tickets
 from app.schemas import Citation
 
 MAX_K = 5
+# A resolution comment at or below this quality is filler ("Problem fixed."), not a precedent.
+FILLER_QUALITY = 0.2
+GENERIC_ASKS = ("more detail", "more information", "further information", "additional detail", "clarify the issue")
 
 TOOL_SPECS = [
     {
@@ -57,7 +60,7 @@ TOOL_SPECS = [
         "type": "function",
         "function": {
             "name": "find_open_related",
-            "description": "Find OPEN tickets on the same service within the correlation window - use to detect duplicates and alert storms.",
+            "description": "Find OPEN tickets on the same service within the correlation window. Returns 'related_open' (same service+window only) and 'duplicates' (also near-identical text).",
             "parameters": {
                 "type": "object",
                 "properties": {"service": {"type": "string"}},
@@ -69,7 +72,9 @@ TOOL_SPECS = [
         "type": "function",
         "function": {
             "name": "request_clarification",
-            "description": "The ticket cannot be actioned as written. State exactly what is missing and why it blocks resolution.",
+            "description": ("LAST RESORT, only after retrieval found no usable precedent. Name the SPECIFIC "
+                            "missing fields (e.g. 'error code', 'affected user count'). Never call this first, "
+                            "and never for a generic lack of detail."),
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -110,6 +115,13 @@ class ToolContext:
     clarification: dict | None = None
     escalation: str | None = None
     related_open: list[str] = field(default_factory=list)
+    duplicates: list[tuple[str, float]] = field(default_factory=list)
+    ticket_text: str = ""
+    retrieval_attempted: bool = False
+    # Set when retrieval returns a precedent that is both relevant and substantively
+    # documented - the organisers tell us to follow such a pattern rather than ask.
+    usable_precedent: str | None = None
+    precedent_quality: float = 0.0
 
 
 def _s(args: dict, key: str, default: str | None = None) -> str | None:
@@ -123,7 +135,11 @@ def run_tool(name: str, args: dict[str, Any], ctx: ToolContext) -> dict:
         query = _s(args, "query") or ""
         service = _s(args, "service", ctx.default_service)
         hits = ctx.index.search(query, service=service, k=MAX_K)
+        ctx.retrieval_attempted = True
         ctx.retrieval_confidence = max(ctx.retrieval_confidence, retrieval_confidence(hits))
+        for h in hits:
+            if h.score >= SCORE_FLOOR and h.pattern.best_quality > FILLER_QUALITY and h.pattern.best_quality > ctx.precedent_quality:
+                ctx.usable_precedent, ctx.precedent_quality = h.citation_id, h.pattern.best_quality
         for h in hits:
             ctx.citations.append(Citation(id=h.citation_id, snippet=h.snippet[:200], score=round(h.score, 3)))
         return {
@@ -142,8 +158,11 @@ def run_tool(name: str, args: dict[str, Any], ctx: ToolContext) -> dict:
             ctx.con, ctx.index, query, service=_s(args, "service", ctx.default_service),
             work_type=_s(args, "work_type"), k=MAX_K,
         )
+        ctx.retrieval_attempted = True
         for s in sims:
             ctx.citations.append(Citation(id=s.id, snippet=s.comment[:200], score=s.similarity))
+            if s.similarity >= SCORE_FLOOR and s.quality > FILLER_QUALITY and s.quality > ctx.precedent_quality:
+                ctx.usable_precedent, ctx.precedent_quality = s.id, s.quality
         return {
             "results": [
                 {"id": s.id, "similarity": s.similarity, "resolution": s.resolution,
@@ -156,14 +175,36 @@ def run_tool(name: str, args: dict[str, Any], ctx: ToolContext) -> dict:
     if name == "find_open_related":
         service = _s(args, "service", ctx.default_service)
         rel = find_open_related(ctx.con, service, ctx.created, exclude_id=ctx.ticket_id)
+        dupes = find_duplicates(ctx.con, ctx.ticket_text or "", service, ctx.created, exclude_id=ctx.ticket_id)
         ctx.related_open = [t.id for t in rel]
+        ctx.duplicates = [(t.id, score) for t, score in dupes]
         return {
-            "results": [{"id": t.id, "summary": t.summary[:120], "created": t.created, "status": t.status} for t in rel],
-            "note": "If this duplicates an open ticket, say so - the resolution becomes 'cancelled'.",
+            "related_open": [{"id": t.id, "summary": t.summary[:120], "created": t.created, "status": t.status} for t in rel],
+            "duplicates": [{"id": t.id, "similarity": score} for t, score in dupes],
+            "note": ("Only entries under 'duplicates' are near-identical. 'related_open' merely shares a "
+                     "service and time window - mention it as context, do not treat it as a duplicate."),
         }
 
     if name == "request_clarification":
-        ctx.clarification = {"missing": _s(args, "missing") or "unspecified", "why": _s(args, "why") or ""}
+        # Deterministic gate: the organisers' brief says missing information means RETRIEVE a
+        # pattern, not ask a question. Prompt wording is not enough - enforce the order here.
+        if not ctx.retrieval_attempted:
+            return {"rejected": True,
+                    "reason": "Retrieval has not been attempted yet. Call search_kb or "
+                              "find_similar_tickets first; a thin ticket is the normal case.",
+                    "next": "search_kb"}
+        if ctx.usable_precedent:
+            return {"rejected": True,
+                    "reason": f"A usable precedent exists ({ctx.usable_precedent}, documentation quality "
+                              f"{ctx.precedent_quality}). Follow that resolution pattern and cite it.",
+                    "next": "stop and let the draft stage follow the precedent"}
+        missing = _s(args, "missing") or ""
+        if len(missing) < 12 or any(g in missing.lower() for g in GENERIC_ASKS):
+            return {"rejected": True,
+                    "reason": "Name the SPECIFIC missing fields (e.g. 'error code', 'affected user "
+                              "count', 'time the batch failed'). Generic requests are not accepted.",
+                    "next": "request_clarification with named fields"}
+        ctx.clarification = {"missing": missing, "why": _s(args, "why") or ""}
         return {"accepted": True, "effect": "resolution will be 'clarification'"}
 
     if name == "escalate_to_human":

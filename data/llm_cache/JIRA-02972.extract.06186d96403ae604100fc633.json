@@ -1,0 +1,1 @@
+{"value": {"urgency": {"value": "low", "quote": "This request is for standard role-based access and is aligned to the employee's business duties."}, "impact": {"value": "medium", "quote": "A user needs access to Outlook & Email to complete their daily tasks."}}, "source": "ok", "provider": "swisscom-apertus", "error": null, "cached_at": 1790250994.8794}

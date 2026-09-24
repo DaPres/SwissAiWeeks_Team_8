@@ -20,7 +20,7 @@ from dataclasses import dataclass
 
 from app import store
 from app.rag.hybrid import Hit, HybridIndex
-from app.rag.patterns import resolution_quality, strip_author
+from app.rag.patterns import resolution_quality, signature, strip_author
 from app.schemas import Ticket
 
 
@@ -82,11 +82,46 @@ def find_similar_tickets(
     return out[:k]
 
 
+def duplicate_threshold() -> float:
+    return float(os.getenv("DUPLICATE_SIMILARITY", "0.75"))
+
+
 def find_open_related(con: sqlite3.Connection, service: str | None, created: str | None, exclude_id: str | None = None) -> list[Ticket]:
-    """Same service, not done, within +/- RELATED_WINDOW_HOURS (ours, default 4)."""
+    """Same service, not done, within +/- RELATED_WINDOW_HOURS (ours, default 4).
+
+    These are *related*, not duplicates — being on the same service in the same window is
+    common. Use is_duplicate() before acting on one.
+    """
     if not service:
         return []
     return store.find_open_related(con, service, created, related_window_hours(), exclude_id)
+
+
+def text_similarity(a: str, b: str) -> float:
+    """Token Jaccard on the template signature: cheap, deterministic, no embedding call."""
+    ta, tb = set(signature(a).split()), set(signature(b).split())
+    if not ta or not tb:
+        return 0.0
+    return len(ta & tb) / len(ta | tb)
+
+
+def find_duplicates(
+    con: sqlite3.Connection, ticket_text: str, service: str | None, created: str | None,
+    exclude_id: str | None = None,
+) -> list[tuple[Ticket, float]]:
+    """A duplicate needs ALL THREE: same service, inside the window, AND high text similarity.
+
+    Same service + window alone flagged 25% of a dry run as duplicates, which would cancel a
+    quarter of a real queue. The similarity gate (DUPLICATE_SIMILARITY, default 0.75) is what
+    makes the claim defensible.
+    """
+    threshold = duplicate_threshold()
+    out = []
+    for t in find_open_related(con, service, created, exclude_id):
+        score = text_similarity(ticket_text, t.text())
+        if score >= threshold:
+            out.append((t, round(score, 3)))
+    return sorted(out, key=lambda pair: -pair[1])
 
 
 def suggest_assignee_from_patterns(

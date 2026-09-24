@@ -1,0 +1,1 @@
+{"value": {"reply": "Missing user details: employee name, employee ID, and job role/business unit are required to validate the access request against policy. No action taken due to insufficient information. [JIRA-03603], [JIRA-00008]", "next_steps": [], "self_confidence": 0.8}, "source": "ok", "provider": "swisscom-apertus", "error": null, "cached_at": 1790251009.280854}

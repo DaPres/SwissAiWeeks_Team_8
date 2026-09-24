@@ -7,12 +7,15 @@ Results are cached by ticket id + task, so a re-run costs nothing and is reprodu
 Run: uv run python scripts/dry_run.py [n]
 """
 
+import argparse
 import json
 import random
 import statistics
 import sys
+import threading
 import time
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -22,34 +25,82 @@ from app.pipeline import triage
 from app.rag.hybrid import HybridIndex
 from app.rag.patterns import strip_author
 
-N = int(sys.argv[1]) if len(sys.argv) > 1 else 20
 OUT = Path(__file__).resolve().parent.parent / "docs" / "dry_run.json"
+WRITE_LOCK = threading.Lock()
+
+
+def parse_args():
+    ap = argparse.ArgumentParser(description="Run the full pipeline over N random training tickets.")
+    ap.add_argument("n", nargs="?", type=int, default=20)
+    ap.add_argument("--workers", type=int, default=1,
+                    help="parallel tickets; keep low - Apertus 429s under load (measured)")
+    ap.add_argument("--fresh", action="store_true", help="ignore stored results and re-triage everything")
+    ap.add_argument("--seed", type=int, default=11)
+    return ap.parse_args()
 
 
 def main() -> None:
+    args = parse_args()
+    N = args.n
     con = store.connect()
     if store.ticket_count(con) == 0:
         store.load_corpus(con)
     index = HybridIndex.from_store(con)
 
     rows = con.execute("SELECT id FROM tickets").fetchall()
-    random.seed(11)
+    random.seed(args.seed)
     ids = [r["id"] for r in random.sample(rows, N)]
 
+    # RESUME: a partial run continues where it stopped instead of restarting from zero.
     results, timings = [], []
-    for i, tid in enumerate(ids, 1):
+    todo = []
+    for tid in ids:
+        stored = None if args.fresh else store.get_result(con, tid)
+        if stored is not None:
+            results.append(stored)
+        else:
+            todo.append(tid)
+    if results:
+        print(f"resuming: {len(results)} already done, {len(todo)} to go "
+              f"(use --fresh to re-triage everything)")
+
+    def work(tid: str):
         ticket = store.get_ticket(con, tid)
         t0 = time.perf_counter()
-        try:
-            r = triage(ticket, con, index)
-        except Exception as e:  # a dry run must report, not crash
-            print(f"[{i}/{N}] {tid} FAILED: {type(e).__name__}: {e}")
-            continue
-        timings.append(time.perf_counter() - t0)
-        results.append(r)
-        store.save_result(con, r)
-        print(f"[{i}/{N}] {tid} -> {r.graded.priority.value:<7} {r.graded.resolution.value:<16} "
-              f"conf={r.confidence:<5} {timings[-1]:.1f}s")
+        r = triage(ticket, con, index)
+        return r, time.perf_counter() - t0
+
+    done = len(results)
+    if args.workers > 1:
+        with ThreadPoolExecutor(max_workers=args.workers) as pool:
+            futures = {pool.submit(work, tid): tid for tid in todo}
+            for fut in as_completed(futures):
+                tid = futures[fut]
+                done += 1
+                try:
+                    r, secs = fut.result()
+                except Exception as e:
+                    print(f"[{done}/{N}] {tid} FAILED: {type(e).__name__}: {e}")
+                    continue
+                timings.append(secs)
+                results.append(r)
+                with WRITE_LOCK:
+                    store.save_result(con, r)
+                print(f"[{done}/{N}] {tid} -> {r.graded.priority.value:<7} {r.graded.resolution.value:<16} "
+                      f"conf={r.confidence:<5} {secs:.1f}s")
+    else:
+        for tid in todo:
+            done += 1
+            try:
+                r, secs = work(tid)
+            except Exception as e:  # a dry run must report, not crash
+                print(f"[{done}/{N}] {tid} FAILED: {type(e).__name__}: {e}")
+                continue
+            timings.append(secs)
+            results.append(r)
+            store.save_result(con, r)
+            print(f"[{done}/{N}] {tid} -> {r.graded.priority.value:<7} {r.graded.resolution.value:<16} "
+                  f"conf={r.confidence:<5} {secs:.1f}s")
 
     if not results:
         print("no results")
@@ -102,7 +153,9 @@ def main() -> None:
 
     providers = Counter(s.detail.split("source=")[-1].rstrip(")") for r in results for s in r.trace if s.step == "classify")
     print(f"\n  classify sources: {dict(providers)}")
-    print(f"  wall time: mean {statistics.mean(timings):.1f}s per ticket, {sum(timings):.0f}s total")
+    if timings:
+        print(f"  wall time: mean {statistics.mean(timings):.1f}s per ticket, {sum(timings):.0f}s total "
+              f"({args.workers} worker(s))")
 
     OUT.write_text(json.dumps([r.model_dump(mode="json") for r in results], indent=1, ensure_ascii=False), encoding="utf-8")
     print(f"\nwrote {OUT}")

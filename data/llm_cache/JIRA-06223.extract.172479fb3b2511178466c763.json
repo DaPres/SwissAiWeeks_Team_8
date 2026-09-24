@@ -1,0 +1,1 @@
+{"value": {"urgency": {"value": "high", "quote": "SimCorp Dimension generated an automated monitoring alert indicating an operational problem."}, "impact": {"value": "highest", "quote": "Service: SimCorp Dimension (CRITICAL per the organisers' list)"}}, "source": "ok", "provider": "swisscom-apertus", "error": null, "cached_at": 1790248813.6984982}
