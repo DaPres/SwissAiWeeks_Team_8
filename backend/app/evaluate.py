@@ -61,6 +61,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--db", type=Path, help="SQLite knowledge base (default: DB_PATH / backend/data/knowledge.db)")
     p.add_argument("--limit", type=int, help="only the first N tickets")
     p.add_argument("--workers", type=int, default=4, help="parallel LLM calls (default 4)")
+    p.add_argument("--llm", help="chat provider: foundry, openai or apertus (default: LLM_MODE / first configured)")
     return p.parse_args()
 
 
@@ -117,7 +118,7 @@ def main() -> None:
     records = challenge["records"][: args.limit] if args.limit else challenge["records"]
     run_id = challenge.get("runId") or args.input.stem
 
-    llm = get_llm()
+    llm = get_llm(args.llm)
     store = Store(settings.db_path)
     ensure_ready(store)
     experts = service_resolvers()
@@ -133,7 +134,7 @@ def main() -> None:
 
     def run(i: int) -> dict:
         r, text, hits = records[i], texts[i], all_hits[i]
-        decision, routing = triage(text, [], hits[: settings.top_k])
+        decision, routing = triage(text, [], hits[: settings.top_k], provider=llm.mode)
         if not routing["assignee"]:  # same voting over the wider net, then the service's main resolver
             routing["assignee"], routing["assigneeReason"] = pick_assignee(routing["service"], hits)
             if not routing["assignee"] and experts.get(routing["service"]):
@@ -207,7 +208,7 @@ def main() -> None:
 
     args.out.mkdir(parents=True, exist_ok=True)
     meta = {"evaluatedAtUtc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "llmMode": llm.mode,
-            "chatDeployment": settings.chat_deployment if llm.mode == "azure" else None,
+            "chatDeployment": llm.chat_model if llm.mode != "mock" else None,
             "embeddingModel": llm.embedding_model, "knowledge": store.knowledge_stats(), "source": args.input.name}
     results_path = args.out / f"{run_id}.results.json"
     trace_path = args.out / f"{run_id}.trace.json"

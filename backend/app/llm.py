@@ -1,4 +1,4 @@
-"""LLM access through Azure AI Foundry (OpenAI v1-compatible endpoint).
+"""LLM access through OpenAI-compatible endpoints: Azure AI Foundry, OpenAI and Swisscom Apertus.
 
 `MockLLM` keeps the whole system runnable offline (dev, tests, demos without keys):
 hashed bag-of-words embeddings and caller-supplied heuristic fallbacks instead of chat calls.
@@ -26,7 +26,9 @@ IMAGE_PROMPT = (
 
 
 class LLM(Protocol):
-    mode: str
+    mode: str  # provider id: "foundry", "openai", "apertus" or "mock"
+    label: str
+    chat_model: str
     embedding_model: str
 
     def embed(self, texts: list[str]) -> np.ndarray: ...
@@ -42,32 +44,68 @@ def _normalise(m: np.ndarray) -> np.ndarray:
     return (m / norms).astype(np.float32)
 
 
-class FoundryLLM:
-    mode = "azure"
+class Embedder(Protocol):
+    embedding_model: str
 
-    def __init__(self) -> None:
-        from openai import OpenAI
+    def embed(self, texts: list[str]) -> np.ndarray: ...
 
-        if settings.foundry_api_key:
-            api_key: Any = settings.foundry_api_key
-        else:
-            from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 
-            api_key = get_bearer_token_provider(DefaultAzureCredential(), "https://ai.azure.com/.default")
-        self.client = OpenAI(base_url=settings.foundry_endpoint, api_key=api_key)
-        self.embedding_model = f"azure:{settings.embedding_deployment}"
+class OpenAIEmbedder:
+    """Embeddings through an OpenAI-compatible endpoint (Foundry or OpenAI)."""
+
+    def __init__(self, client: Any, model: str, prefix: str) -> None:
+        self.client = client
+        self.model = model
+        self.embedding_model = f"{prefix}:{model}"
 
     def embed(self, texts: list[str]) -> np.ndarray:
         out: list[list[float]] = []
         for i in range(0, len(texts), 64):
-            resp = self.client.embeddings.create(model=settings.embedding_deployment, input=texts[i:i + 64])
+            resp = self.client.embeddings.create(model=self.model, input=texts[i:i + 64])
             out.extend(d.embedding for d in resp.data)
         return _normalise(np.array(out, dtype=np.float32))
 
+
+def _parse_json(content: str) -> dict:
+    """Models without structured output sometimes wrap the object in prose or a ```json fence."""
+    try:
+        return json.loads(content)
+    except json.JSONDecodeError:
+        start, end = content.find("{"), content.rfind("}")
+        if start == -1 or end <= start:
+            raise
+        return json.loads(content[start:end + 1])
+
+
+class ChatLLM:
+    """Chat/vision through an OpenAI-compatible endpoint. Embeddings are delegated to the shared
+    embedder so the knowledge base vectors stay comparable whichever chat provider is selected."""
+
+    def __init__(self, mode: str, label: str, client: Any, chat_model: str, vision_model: str | None,
+                 embedder: Embedder, vision_fallback: "LLM | None" = None) -> None:
+        self.mode = mode
+        self.label = label
+        self.client = client
+        self.chat_model = chat_model
+        self.vision_model = vision_model
+        self.embedder = embedder
+        self.vision_fallback = vision_fallback
+
+    @property
+    def embedding_model(self) -> str:
+        return self.embedder.embedding_model
+
+    def embed(self, texts: list[str]) -> np.ndarray:
+        return self.embedder.embed(texts)
+
     def describe_image(self, data_url: str, context: str = "") -> str:
+        if not self.vision_model:  # text-only model: borrow another provider's vision
+            if self.vision_fallback:
+                return self.vision_fallback.describe_image(data_url, context)
+            return MockLLM().describe_image(data_url, context)
         prompt = IMAGE_PROMPT + (f"\n\nThe user wrote: {context[:1500]}" if context else "")
         resp = self.client.chat.completions.create(
-            model=settings.vision_deployment,
+            model=self.vision_model,
             messages=[{"role": "user", "content": [
                 {"type": "text", "text": prompt},
                 {"type": "image_url", "image_url": {"url": data_url}},
@@ -77,24 +115,31 @@ class FoundryLLM:
 
     def complete_json(self, system: str, user: str, schema: dict, name: str,
                       fallback: Callable[[], dict]) -> dict:
+        from openai import BadRequestError, UnprocessableEntityError
+
         messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
         try:
             resp = self.client.chat.completions.create(
-                model=settings.chat_deployment,
+                model=self.chat_model,
                 messages=messages,
                 response_format={"type": "json_schema", "json_schema": {"name": name, "schema": schema, "strict": True}},
             )
-        except Exception as e:  # some Foundry models only support json_object
-            log.warning("json_schema not accepted (%s); retrying with json_object", e)
-            messages[0]["content"] += "\n\nReply with a single JSON object matching this schema:\n" + json.dumps(schema)
+            return _parse_json(resp.choices[0].message.content or "{}")
+        except (BadRequestError, UnprocessableEntityError) as e:  # some models only support json_object, or no response_format at all
+            log.warning("%s: json_schema not accepted (%s); retrying with json_object", self.mode, e)
+        messages[0]["content"] += "\n\nReply with a single JSON object matching this schema:\n" + json.dumps(schema)
+        try:
             resp = self.client.chat.completions.create(
-                model=settings.chat_deployment, messages=messages, response_format={"type": "json_object"},
+                model=self.chat_model, messages=messages, response_format={"type": "json_object"},
             )
-        return json.loads(resp.choices[0].message.content or "{}")
+        except (BadRequestError, UnprocessableEntityError) as e:
+            log.warning("%s: json_object not accepted (%s); retrying without response_format", self.mode, e)
+            resp = self.client.chat.completions.create(model=self.chat_model, messages=messages)
+        return _parse_json(resp.choices[0].message.content or "{}")
 
     def complete_text(self, system: str, user: str, fallback: Callable[[], str]) -> str:
         resp = self.client.chat.completions.create(
-            model=settings.chat_deployment,
+            model=self.chat_model,
             messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
         )
         return (resp.choices[0].message.content or "").strip()
@@ -104,6 +149,8 @@ class MockLLM:
     """Deterministic offline stand-in. Retrieval quality ~ keyword search."""
 
     mode = "mock"
+    label = "Offline (mock)"
+    chat_model = "heuristic fallback"
     embedding_model = "mock:hash-1024"
     DIM = 1024
     _token = re.compile(r"[a-z0-9_]+")
@@ -121,7 +168,7 @@ class MockLLM:
 
     def describe_image(self, data_url: str, context: str = "") -> str:
         size_kb = math.ceil(len(data_url) * 3 / 4 / 1024)
-        return f"[mock mode] Attached image (~{size_kb} KB) not analysed; configure AZURE_FOUNDRY_ENDPOINT for vision."
+        return f"[mock mode] Attached image (~{size_kb} KB) not analysed; configure a vision-capable provider (Foundry or OpenAI)."
 
     def complete_json(self, system: str, user: str, schema: dict, name: str,
                       fallback: Callable[[], dict]) -> dict:
@@ -131,12 +178,66 @@ class MockLLM:
         return fallback()
 
 
-_llm: LLM | None = None
+_providers: dict[str, LLM] | None = None
+_default: str = "mock"
 
 
-def get_llm() -> LLM:
-    global _llm
-    if _llm is None:
-        _llm = FoundryLLM() if settings.llm_mode == "azure" else MockLLM()
-        log.info("LLM mode: %s (%s)", _llm.mode, _llm.embedding_model)
-    return _llm
+def _build_providers() -> dict[str, LLM]:
+    """All configured chat providers, in preference order. Empty when nothing is configured or LLM_MODE=mock."""
+    from openai import OpenAI
+
+    if settings.llm_mode == "mock":
+        return {}
+    foundry = openai = None
+    if settings.foundry_endpoint:
+        if settings.foundry_api_key:
+            api_key: Any = settings.foundry_api_key
+        else:
+            from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+
+            api_key = get_bearer_token_provider(DefaultAzureCredential(), "https://ai.azure.com/.default")
+        foundry = OpenAI(base_url=settings.foundry_endpoint, api_key=api_key)
+    if settings.openai_api_key:
+        openai = OpenAI(base_url=settings.openai_base_url, api_key=settings.openai_api_key)
+
+    # One embedder for everything: knowledge vectors must come from a single model.
+    embedder: Embedder = (OpenAIEmbedder(foundry, settings.embedding_deployment, "azure") if foundry
+                          else OpenAIEmbedder(openai, settings.openai_embedding_model, "openai") if openai
+                          else MockLLM())
+
+    providers: dict[str, LLM] = {}
+    if foundry:
+        providers["foundry"] = ChatLLM("foundry", "Azure AI Foundry", foundry, settings.chat_deployment,
+                                       settings.vision_deployment, embedder)
+    if openai:
+        providers["openai"] = ChatLLM("openai", "OpenAI", openai, settings.openai_chat_model,
+                                      settings.openai_vision_model, embedder)
+    if settings.apertus_api_key:
+        vision = providers.get("foundry") or providers.get("openai")
+        providers["apertus"] = ChatLLM("apertus", "Apertus (Swisscom)",
+                                       OpenAI(base_url=settings.apertus_base_url, api_key=settings.apertus_api_key),
+                                       settings.apertus_model, None, embedder, vision_fallback=vision)
+    return providers
+
+
+def providers() -> dict[str, LLM]:
+    global _providers, _default
+    if _providers is None:
+        _providers = _build_providers()
+        wanted = {"azure": "foundry"}.get(settings.llm_mode, settings.llm_mode)
+        _default = wanted if wanted in _providers else next(iter(_providers), "mock")
+        if settings.llm_mode and settings.llm_mode != "mock" and wanted not in _providers:
+            log.warning("LLM_MODE=%s is not configured; using %s", settings.llm_mode, _default)
+        log.info("LLM providers: %s (default %s)", ", ".join(_providers) or "none", _default)
+    return _providers
+
+
+def default_provider() -> str:
+    providers()
+    return _default
+
+
+def get_llm(provider: str | None = None) -> LLM:
+    """The chat provider by id (see `providers()`), or the default one. Falls back to the offline mock."""
+    available = providers()
+    return available.get(provider or _default) or MockLLM()

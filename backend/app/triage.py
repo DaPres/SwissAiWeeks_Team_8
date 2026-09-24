@@ -1,5 +1,6 @@
 """User-facing assist pipeline: describe images -> retrieve knowledge -> LLM decides -> deterministic routing."""
 import collections
+import logging
 import re
 import time
 import uuid
@@ -11,6 +12,7 @@ from .knowledge import ticket_text
 from .llm import get_llm
 from .store import Hit, Store
 
+log = logging.getLogger(__name__)
 SERVICE_NAMES = list(catalog.SERVICES)
 ProgressCallback = Callable[[dict], None]
 
@@ -47,9 +49,17 @@ DECISION_SCHEMA = {
         "ticket_summary": {"type": "string"},
         "ticket_description": {"type": "string"},
         "used_knowledge_ids": {"type": "array", "items": {"type": "string"}},
-        "rationale": {"type": "string", "description": "Why this service, work type, urgency and impact."},
+        "rationale": {"type": "string", "description": "Why this service and work type, and which urgency and impact definitions apply."},
     },
 }
+
+def _definitions(defs: dict[str, str]) -> str:
+    return "\n".join(f"    {level}: {text}" for level, text in defs.items())
+
+
+def _indent(text: str, n: int) -> str:
+    return "\n".join(" " * n + line for line in text.splitlines())
+
 
 SYSTEM_PROMPT = f"""You are the L2 triage assistant of a pan-European asset manager's IT service desk.
 A user describes a problem (text, plus descriptions of any screenshots). Decide what it really is and where it goes.
@@ -64,11 +74,26 @@ Rules:
   service (e.g. Portfolio Accounting access -> Portfolio Accounting), not Identity & Access Management. Use Identity
   & Access Management only for identity-level work: joiner/mover/leaver accounts, deactivated-user clean-ups,
   role provisioning not tied to one application.
-- Urgency definitions: {catalog.URGENCY_DEFINITIONS}
-- Impact definitions: {catalog.IMPACT_DEFINITIONS}
-- Critical services: {[s for s in SERVICE_NAMES if catalog.is_critical(s)]}. Failures there justify higher
-  urgency/impact than the same failure on a non-critical service. Don't over-escalate shouty wording; single-user
-  service requests are usually low/low.
+- Urgency and impact follow the Incident Priority Calculation Matrix (below). Assess each one on its own from the
+  problem content against these definitions. The historic tickets' urgency/impact are random: never copy them.
+  Impact = how much of the business is affected:
+{_definitions(catalog.IMPACT_DEFINITIONS)}
+  Urgency = how fast it must be fixed:
+{_definitions(catalog.URGENCY_DEFINITIONS)}
+- How to assess:
+  * Impact: which service (critical or not), full vs partial unavailability, and the scope — one person (low),
+    one team or business entity (medium), several entities, funds, clients or financial counterparts (high),
+    key operations fully down or all funds/clients affected (highest).
+  * Urgency: deadlines (cut-offs, NAV/publication times, regulatory filings), whether a workaround exists and how
+    painful it is, and any regulatory breach or security compromise (a suspected compromise is highest urgency and
+    at least high impact on a critical service).
+  * Critical services: {[s for s in SERVICE_NAMES if catalog.is_critical(s)]}. The same failure on a critical
+    service justifies higher urgency/impact than on a non-critical one.
+  * Service requests with no service degradation (access, licences, new lists) are usually low or lowest impact;
+    raise urgency only for a real deadline (e.g. a joiner starting tomorrow who cannot work).
+  * Judge the facts, not the tone: don't escalate shouty wording, don't downplay calm reports of big outages.
+- Priority is computed for you from urgency x impact with this matrix; pick the pair that reflects the facts:
+{_indent(catalog.matrix_table(), 4)}
 - Self-service: only offer it when the user can realistically fix or bypass the problem themselves, or when the
   knowledge base shows it is a known issue with a documented user-side answer. Never promise actions only support
   staff can perform. Access, licence and provisioning requests always need a ticket.
@@ -145,11 +170,20 @@ def build_prompt(text: str, image_descriptions: list[str], hits: list[Hit], dupl
     )
 
 
+def _level(value: object, field: str) -> str:
+    """Models without strict schemas answer "Medium" or " high"; only fall back to low for real garbage."""
+    level = str(value or "").strip().lower()
+    if level in catalog.LEVELS:
+        return level
+    log.warning("model returned invalid %s %r; using 'low'", field, value)
+    return "low"
+
+
 def route(decision: dict, hits: list[Hit]) -> dict:
     """Deterministic post-processing: never trust the model with lookups or arithmetic."""
     service = decision["service"] if decision.get("service") in catalog.SERVICES else (hits[0].row["service"] if hits else SERVICE_NAMES[0])
-    urgency = decision.get("urgency") if decision.get("urgency") in catalog.LEVELS else "low"
-    impact = decision.get("impact") if decision.get("impact") in catalog.LEVELS else "low"
+    urgency = _level(decision.get("urgency"), "urgency")
+    impact = _level(decision.get("impact"), "impact")
     assignee, assignee_reason = pick_assignee(service, hits)
     return {
         "workType": decision.get("work_type") if decision.get("work_type") in ("Incident", "Service Request") else "Incident",
@@ -165,12 +199,13 @@ def route(decision: dict, hits: list[Hit]) -> dict:
 
 
 def triage(text: str, image_descriptions: list[str], hits: list[Hit], duplicates: list[Hit] = (),
-           progress: ProgressCallback | None = None, debug: bool = False) -> tuple[dict, dict]:
+           progress: ProgressCallback | None = None, debug: bool = False,
+           provider: str | None = None) -> tuple[dict, dict]:
     """LLM decision over the retrieved knowledge, then deterministic routing. Returns (decision, routing)."""
     query = "\n".join([text, *(f"Screenshot: {d}" for d in image_descriptions)])
-    llm = get_llm()
+    llm = get_llm(provider)
     started = time.perf_counter()
-    tool = "llm.complete_json" if llm.mode == "azure" else "heuristic_decision"
+    tool = "llm.complete_json" if llm.mode != "mock" else "heuristic_decision"
     _progress(progress, debug, "decision", "started", "Analysing the issue", tool,
               detail="Comparing your description with the retrieved precedents")
     decision = llm.complete_json(SYSTEM_PROMPT, build_prompt(text, image_descriptions, hits, duplicates),
@@ -178,7 +213,7 @@ def triage(text: str, image_descriptions: list[str], hits: list[Hit], duplicates
                                  fallback=lambda: _heuristic_decision(query, hits))
     _progress(progress, debug, "decision", "completed", "Issue analysed", tool, started,
               detail="Generated a support recommendation from the retrieved evidence",
-              data={"mode": llm.mode, "model": settings.chat_deployment if llm.mode == "azure" else "heuristic fallback",
+              data={"mode": llm.mode, "model": llm.chat_model,
                     "service": decision.get("service"), "workType": decision.get("work_type"),
                     "usedKnowledgeIds": decision.get("used_knowledge_ids", [])})
 
@@ -194,9 +229,9 @@ def triage(text: str, image_descriptions: list[str], hits: list[Hit], duplicates
 
 
 def assist(store: Store, text: str, images: list[str], reporter: str | None = None,
-           progress: ProgressCallback | None = None, debug: bool = False) -> dict:
+           progress: ProgressCallback | None = None, debug: bool = False, provider: str | None = None) -> dict:
     total_started = time.perf_counter()
-    llm = get_llm()
+    llm = get_llm(provider)
     image_descriptions = []
     if images:
         started = time.perf_counter()
@@ -233,12 +268,13 @@ def assist(store: Store, text: str, images: list[str], reporter: str | None = No
               "store.search_open_tickets", started,
               data={"threshold": settings.duplicate_threshold, "matches": [
                   {"id": h.row["id"], "summary": h.row["summary"], "score": round(h.score, 3)} for h in duplicates]})
-    decision, routing = triage(text, image_descriptions, hits, duplicates, progress, debug)
+    decision, routing = triage(text, image_descriptions, hits, duplicates, progress, debug, llm.mode)
 
     assist_id = uuid.uuid4().hex[:12]
     result = {
         "assistId": assist_id,
         "mode": llm.mode,
+        "model": llm.chat_model,
         "imageDescriptions": image_descriptions,
         "understanding": decision.get("understanding", ""),
         "selfService": {

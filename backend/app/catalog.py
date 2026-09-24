@@ -32,6 +32,12 @@ def priority(urgency: str, impact: str) -> str:
     return MATRIX[urgency][impact]
 
 
+def matrix_table() -> str:
+    """The README's Incident Priority Calculation Matrix as a plain-text table for prompts."""
+    head = "urgency \\ impact | " + " | ".join(f"{i:<7}" for i in LEVELS)
+    return "\n".join([head, *(f"{u:>16} | " + " | ".join(f"{MATRIX[u][i]:<7}" for i in LEVELS) for u in LEVELS)])
+
+
 # name -> (owning team, critical?, short description used as a catalog knowledge card)
 SERVICES: dict[str, tuple[str, bool, str]] = {
     "Trading Platform": ("Investment Operations", True, "Front-office trading platform used by traders to execute orders; execution screens, trader workstations."),

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { api, type AssistProgress, type AssistResult, type Catalog, type Draft, type Ticket } from './api'
+import { api, type AssistProgress, type AssistResult, type Catalog, type Draft, type Llms, type Ticket } from './api'
 import { PriorityPill, short } from './components'
 import { AnalysisProgress } from './AnalysisProgress'
+import { ModelMark, ModelPicker } from './ModelPicker'
 import type { Level } from './types'
 
 const MAX_IMAGES = 4
@@ -16,25 +17,46 @@ function readAsDataUrl(file: File): Promise<string> {
   })
 }
 
-export function Assist({ catalog }: { catalog: Catalog | null }) {
+export function Assist({ catalog, onFoldChange }: { catalog: Catalog | null; onFoldChange?: (folded: boolean) => void }) {
   const [text, setText] = useState('')
   const [images, setImages] = useState<string[]>([])
   const [dragging, setDragging] = useState(false)
   const [busy, setBusy] = useState(false)
   const [analysing, setAnalysing] = useState(false)
   const [debug, setDebug] = useState(() => localStorage.getItem('assist-debug') === 'true')
+  const [llms, setLlms] = useState<Llms | null>(null)
+  const [llm, setLlm] = useState<string | null>(() => localStorage.getItem('assist-llm'))
   const [progress, setProgress] = useState<AssistProgress[]>([])
   const [analysedImages, setAnalysedImages] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<AssistResult | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
+  // After submit the composer folds into a compact question bar (and the page hero folds away).
+  const [folded, setFolded] = useState(false)
+  const [asked, setAsked] = useState<{ text: string; images: string[]; llm: string | null } | null>(null)
   const [outcome, setOutcome] = useState<{ kind: 'solved' } | { kind: 'ticket'; ticket: Ticket } | null>(null)
   const textRef = useRef<HTMLTextAreaElement>(null)
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => { textRef.current?.focus() }, [])
+  const askedProvider = llms?.providers.find((p) => p.id === (asked?.llm ?? llms.default))
   useEffect(() => () => abortRef.current?.abort(), [])
   useEffect(() => { localStorage.setItem('assist-debug', String(debug)) }, [debug])
+  useEffect(() => {
+    api.llms().then((l) => {
+      setLlms(l)
+      setLlm((current) => (l.providers.some((p) => p.id === current) ? current : l.providers.length ? l.default : null))
+    }).catch(() => setLlms(null))
+  }, [])
+  useEffect(() => { if (llm) localStorage.setItem('assist-llm', llm) }, [llm])
+  // hero stays folded while editing; only a new question brings it back
+  // Fold as soon as the user starts describing the problem; stays folded (no bounce while typing/editing)
+  // until "New question" / "Clear".
+  const engaged = asked !== null || text.length > 0 || images.length > 0
+  const [started, setStarted] = useState(false)
+  if (engaged && !started) setStarted(true)
+  useEffect(() => { onFoldChange?.(started) }, [started, onFoldChange])
+  useEffect(() => () => onFoldChange?.(false), [onFoldChange])
 
   async function addFiles(files: File[]) {
     const imgs = files.filter((f) => f.type.startsWith('image/'))
@@ -59,8 +81,11 @@ export function Assist({ catalog }: { catalog: Catalog | null }) {
     abortRef.current = controller
     setBusy(true); setAnalysing(true); setError(null); setResult(null); setDraft(null); setOutcome(null); setProgress([])
     setAnalysedImages(images.length > 0)
+    setAsked({ text, images, llm })
+    setFolded(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
     try {
-      const r = await api.assistStream(text, images, debug, (event) => setProgress((current) => [...current, event]), controller.signal)
+      const r = await api.assistStream(text, images, debug, llm, (event) => setProgress((current) => [...current, event]), controller.signal)
       setResult(r)
       setDraft(r.draft)
     } catch (e) {
@@ -72,8 +97,15 @@ export function Assist({ catalog }: { catalog: Catalog | null }) {
   }
 
   function reset() {
+    abortRef.current?.abort()
     setText(''); setImages([]); setResult(null); setDraft(null); setOutcome(null); setError(null); setProgress([])
-    textRef.current?.focus()
+    setAsked(null); setFolded(false); setStarted(false)
+    requestAnimationFrame(() => textRef.current?.focus())
+  }
+
+  function editQuestion() {
+    setFolded(false)
+    requestAnimationFrame(() => textRef.current?.focus())
   }
 
   async function markSolved() {
@@ -111,7 +143,27 @@ export function Assist({ catalog }: { catalog: Catalog | null }) {
 
   return (
     <div className="assist">
-      <div className="card">
+      {folded && asked ? (
+        <div className="card question-bar">
+          <div className="question-bar-body">
+            <div className="eyebrow">Your question</div>
+            <p className="question-bar-text">{asked.text.trim() || <span className="muted">Screenshot only</span>}</p>
+            <div className="question-bar-meta">
+              {asked.images.length > 0 && (
+                <span className="question-bar-thumbs">
+                  {asked.images.map((src, i) => <img key={i} src={src} alt={`Screenshot ${i + 1}`} />)}
+                </span>
+              )}
+              {askedProvider && <span className="question-bar-model"><ModelMark id={askedProvider.id} /> {askedProvider.label}</span>}
+            </div>
+          </div>
+          <div className="question-bar-actions">
+            <button className="btn ghost" onClick={editQuestion} disabled={busy}>Edit</button>
+            <button className="btn" onClick={reset}>New question</button>
+          </div>
+        </div>
+      ) : (
+      <div className="card composer">
         <div className="assist-title-row">
           <h3>What’s going wrong?</h3>
           <label className="debug-switch" title="Show retrieval and tool activity while the agent works">
@@ -149,10 +201,15 @@ export function Assist({ catalog }: { catalog: Catalog | null }) {
             </div>
           )}
           <div className="dropbox-bar">
-            <label className="attach">
-              <input type="file" accept="image/*" multiple hidden onChange={(e) => { void addFiles(Array.from(e.target.files ?? [])); e.target.value = '' }} />
-              📎 Add screenshot <span className="muted">({images.length}/{MAX_IMAGES})</span>
-            </label>
+            <div className="dropbox-tools">
+              <label className="attach">
+                <input type="file" accept="image/*" multiple hidden onChange={(e) => { void addFiles(Array.from(e.target.files ?? [])); e.target.value = '' }} />
+                📎 Add screenshot <span className="muted">({images.length}/{MAX_IMAGES})</span>
+              </label>
+              {llms && llms.providers.length > 0 && (
+                <ModelPicker providers={llms.providers} value={llm} onChange={setLlm} disabled={busy} embeddingModel={llms.embeddingModel} />
+              )}
+            </div>
             <div style={{ display: 'flex', gap: 8 }}>
               {(result || text || images.length > 0) && <button className="btn ghost" onClick={reset} disabled={busy}>Clear</button>}
               <button className="btn primary" onClick={submit} disabled={!canSubmit}>
@@ -161,8 +218,10 @@ export function Assist({ catalog }: { catalog: Catalog | null }) {
             </div>
           </div>
         </div>
-        {error && <div className="pill crit" style={{ marginTop: 10 }}>⚠ {error}</div>}
+        {error && !folded && <div className="note crit" style={{ marginTop: 10 }}><span className="note-icon" aria-hidden="true">⚠</span><span>{error}</span></div>}
       </div>
+      )}
+      {error && folded && <div className="note crit" style={{ marginTop: 12 }}><span className="note-icon" aria-hidden="true">⚠</span><span>{error}</span></div>}
 
       {(analysing || result || progress.length > 0) && <AnalysisProgress
         events={progress} working={analysing} failed={Boolean(error) && !result} debug={debug} hasImages={analysedImages}
@@ -171,7 +230,7 @@ export function Assist({ catalog }: { catalog: Catalog | null }) {
       {result && draft && (
         <div className="grid" style={{ marginTop: 16 }}>
           {result.mode === 'mock' && (
-            <div className="callout">Running in <strong>mock mode</strong> (no Azure Foundry endpoint configured): keyword retrieval and heuristic triage only.</div>
+            <div className="callout">Running in <strong>mock mode</strong> (no LLM provider configured): keyword retrieval and heuristic triage only.</div>
           )}
 
           {result.duplicates.length > 0 && (
@@ -187,9 +246,14 @@ export function Assist({ catalog }: { catalog: Catalog | null }) {
           )}
 
           <div className="card">
-            <div className="eyebrow">What we understood</div>
+            <div className="eyebrow">What we understood{result.mode !== 'mock' && <span className="muted" style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}> · answered by {llms?.providers.find((p) => p.id === result.mode)?.label ?? result.mode} ({result.model})</span>}</div>
             <p style={{ margin: '4px 0 0', fontSize: '1.02rem' }}>{result.understanding}</p>
-            {result.clarifyingQuestion && <p className="pill warn" style={{ marginTop: 10 }}>? {result.clarifyingQuestion}</p>}
+            {result.clarifyingQuestion && (
+              <div className="note warn" style={{ marginTop: 12 }}>
+                <span className="note-icon" aria-hidden="true">?</span>
+                <span><strong>One question for you</strong>{result.clarifyingQuestion}</span>
+              </div>
+            )}
             {result.imageDescriptions.length > 0 && (
               <details style={{ marginTop: 10 }}>
                 <summary className="muted" style={{ cursor: 'pointer', fontSize: '0.88rem' }}>What the assistant saw in your {result.imageDescriptions.length} screenshot(s)</summary>

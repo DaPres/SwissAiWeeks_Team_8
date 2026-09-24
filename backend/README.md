@@ -51,7 +51,19 @@ uv run python -m app.curate --threshold 0.9 --db /tmp/x.db
 Or browse it in the **Data curation** tab, pick the lowest level to learn, and publish (one knowledge item per cluster).
 Changing the embedding deployment triggers an automatic re-embed on next start.
 
-Without an endpoint (or with `LLM_MODE=mock`) everything runs offline with keyword embeddings and heuristic triage.
+### LLM providers
+
+Every provider whose credentials are in `.env` is enabled and offered in the **Get help** model picker (`GET /api/llms`):
+
+| Provider | Enabled by | Chat | Vision | Embeddings |
+| --- | --- | --- | --- | --- |
+| `foundry` | `AZURE_FOUNDRY_ENDPOINT` (+ key or Entra ID) | `CHAT_DEPLOYMENT` | `VISION_DEPLOYMENT` | `EMBEDDING_DEPLOYMENT` |
+| `openai` | `OPENAI_API_KEY` | `OPENAI_CHAT_MODEL` | `OPENAI_VISION_MODEL` | `OPENAI_EMBEDDING_MODEL` (if no Foundry) |
+| `apertus` | `APERTUS_API_KEY` | `APERTUS_MODEL` | via Foundry/OpenAI | — |
+
+Embeddings come from one model for all providers (Foundry, else OpenAI, else offline), so switching the chat model
+never invalidates the knowledge base. `LLM_MODE` picks the default provider; `--llm` does the same for `app.evaluate`.
+With nothing configured (or `LLM_MODE=mock`) everything runs offline with keyword embeddings and heuristic triage.
 
 ```bash
 uv run pytest                         # end-to-end learning loop, mock mode
@@ -68,6 +80,7 @@ values in the challenge are treated as unverified hints.
 ```bash
 uv run python -m app.evaluate                          # picks up jira_hackathon_blind_eval_challenge_*.json from the repo root
 uv run python -m app.evaluate --input ../x.json --limit 3 --workers 1
+uv run python -m app.evaluate --llm apertus            # compare chat providers
 LLM_MODE=mock uv run python -m app.evaluate --db /tmp/eval.db   # offline smoke run
 ```
 
