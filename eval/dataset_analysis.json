@@ -1,0 +1,391 @@
+{
+  "tickets": 20000,
+  "work_type": {
+    "Service Request": 4000,
+    "Incident": 16000
+  },
+  "status": {
+    "done": 16969,
+    "in progress": 2064,
+    "open": 967
+  },
+  "resolution": {
+    "done": 4236,
+    "cannot reproduce": 4322,
+    "clarification": 4243,
+    "cancelled": 4168,
+    "null": 3031
+  },
+  "unique_summaries": 173,
+  "unique_descriptions": 173,
+  "comments_total": 52845,
+  "unique_comment_bodies": 79,
+  "assignees": 30,
+  "reporters": 92,
+  "services": 20,
+  "teams": 11,
+  "service_team_mapping": {
+    "services_in_data": 20,
+    "problems": [],
+    "ok": true
+  },
+  "patterns": [
+    {
+      "work_type": "Incident",
+      "template": "Automated alert triggered for <SVC>",
+      "count": 7385,
+      "share": 0.3693
+    },
+    {
+      "work_type": "Incident",
+      "template": "External email warning received for <SVC>",
+      "count": 4212,
+      "share": 0.2106
+    },
+    {
+      "work_type": "Incident",
+      "template": "Operational issue reported for <SVC>",
+      "count": 1490,
+      "share": 0.0745
+    },
+    {
+      "work_type": "Incident",
+      "template": "Unclear incident input for <SVC>",
+      "count": 1485,
+      "share": 0.0742
+    },
+    {
+      "work_type": "Incident",
+      "template": "Incident mislabelled as service request in <SVC>",
+      "count": 1428,
+      "share": 0.0714
+    },
+    {
+      "work_type": "Service Request",
+      "template": "Email notification received for <SVC>",
+      "count": 1211,
+      "share": 0.0605
+    },
+    {
+      "work_type": "Service Request",
+      "template": "New license requested for <SVC>",
+      "count": 814,
+      "share": 0.0407
+    },
+    {
+      "work_type": "Service Request",
+      "template": "Access requested for <SVC>",
+      "count": 757,
+      "share": 0.0379
+    },
+    {
+      "work_type": "Service Request",
+      "template": "Access removal requested for <SVC>",
+      "count": 413,
+      "share": 0.0207
+    },
+    {
+      "work_type": "Service Request",
+      "template": "General request for <SVC> with unclear details",
+      "count": 412,
+      "share": 0.0206
+    },
+    {
+      "work_type": "Service Request",
+      "template": "Incorrect incident title for service request in <SVC>",
+      "count": 393,
+      "share": 0.0197
+    }
+  ],
+  "priority_equals_urgency": 0.3591,
+  "priority_equals_impact": 0.3568,
+  "priority_consistent_with_matrix": 0.3902,
+  "descriptions_carrying_all_5_priorities": 104,
+  "resolution_share_by_pattern": {
+    "New license requested for <SVC>": {
+      "done": 0.223,
+      "cannot reproduce": 0.264,
+      "cancelled": 0.284,
+      "clarification": 0.229
+    },
+    "Incorrect incident title for service request in <SVC>": {
+      "clarification": 0.281,
+      "cancelled": 0.243,
+      "cannot reproduce": 0.249,
+      "done": 0.227
+    },
+    "Access requested for <SVC>": {
+      "clarification": 0.266,
+      "cancelled": 0.235,
+      "done": 0.249,
+      "cannot reproduce": 0.25
+    },
+    "Access removal requested for <SVC>": {
+      "cannot reproduce": 0.279,
+      "clarification": 0.253,
+      "cancelled": 0.192,
+      "done": 0.276
+    },
+    "General request for <SVC> with unclear details": {
+      "cancelled": 0.274,
+      "done": 0.237,
+      "cannot reproduce": 0.231,
+      "clarification": 0.257
+    },
+    "Email notification received for <SVC>": {
+      "done": 0.253,
+      "cancelled": 0.234,
+      "clarification": 0.241,
+      "cannot reproduce": 0.272
+    },
+    "Operational issue reported for <SVC>": {
+      "cancelled": 0.225,
+      "cannot reproduce": 0.239,
+      "clarification": 0.282,
+      "done": 0.254
+    },
+    "Automated alert triggered for <SVC>": {
+      "clarification": 0.248,
+      "done": 0.253,
+      "cancelled": 0.246,
+      "cannot reproduce": 0.253
+    },
+    "External email warning received for <SVC>": {
+      "done": 0.243,
+      "clarification": 0.251,
+      "cancelled": 0.245,
+      "cannot reproduce": 0.26
+    },
+    "Unclear incident input for <SVC>": {
+      "cancelled": 0.253,
+      "clarification": 0.233,
+      "done": 0.252,
+      "cannot reproduce": 0.263
+    },
+    "Incident mislabelled as service request in <SVC>": {
+      "cancelled": 0.26,
+      "cannot reproduce": 0.235,
+      "done": 0.262,
+      "clarification": 0.243
+    }
+  },
+  "assignee_independence": {
+    "service": {
+      "cramers_v": 0.0396,
+      "chi2": 596.2,
+      "df": 551,
+      "independent": true
+    },
+    "team": {
+      "cramers_v": 0.0385,
+      "chi2": 296.3,
+      "df": 290,
+      "independent": true
+    },
+    "entity": {
+      "cramers_v": 0.0444,
+      "chi2": 158.0,
+      "df": 116,
+      "independent": true
+    },
+    "work_type": {
+      "cramers_v": 0.0404,
+      "chi2": 32.6,
+      "df": 29,
+      "independent": true
+    },
+    "resolution": {
+      "cramers_v": 0.0363,
+      "chi2": 105.2,
+      "df": 116,
+      "independent": true
+    },
+    "priority": {
+      "cramers_v": 0.038,
+      "chi2": 115.4,
+      "df": 116,
+      "independent": true
+    }
+  },
+  "created_22_to_06_share": 0.3301,
+  "playbook": {
+    "entries": 21,
+    "services": [
+      "Cash Management",
+      "Client Reporting",
+      "Corporate Actions",
+      "Order Management",
+      "Outlook & Email",
+      "Regulatory Reporting",
+      "Securities Settlement",
+      "SimCorp Dimension",
+      "Tax Reporting",
+      "Trade Matching"
+    ],
+    "items": [
+      {
+        "id": "HIST-01",
+        "service": "Cash Management",
+        "count": 274,
+        "top_share": 1.0,
+        "text": "Resolution: Reconciled the cash ledger against the bank statement and found the sweep missed the prior day's cutoff; booked a value-dated adjustment and confirmed the balance with the desk."
+      },
+      {
+        "id": "HIST-02",
+        "service": "Cash Management",
+        "count": 272,
+        "top_share": 1.0,
+        "text": "Resolution: Traced the shortfall to a missed banking cutoff on the margin sweep; corrected with an intraday adjustment and confirmed with Treasury."
+      },
+      {
+        "id": "HIST-03",
+        "service": "Client Reporting",
+        "count": 288,
+        "top_share": 1.0,
+        "text": "Resolution: Traced the defect to a template rendering condition that evaluated incorrectly in production. Corrected the template logic, reran the affected batch, and spot-checked output PDFs before release."
+      },
+      {
+        "id": "HIST-04",
+        "service": "Client Reporting",
+        "count": 281,
+        "top_share": 1.0,
+        "text": "Resolution: The fee section was suppressed by a broken conditional in the report template; fixed the condition, regenerated the client batch, and confirmed the fee table now renders correctly."
+      },
+      {
+        "id": "HIST-05",
+        "service": "Corporate Actions",
+        "count": 303,
+        "top_share": 1.0,
+        "text": "Resolution: Several events were missing option code mappings after ingestion. Updated the mapping table, reprocessed the feed, and confirmed elections displayed correctly."
+      },
+      {
+        "id": "HIST-06",
+        "service": "Corporate Actions",
+        "count": 291,
+        "top_share": 1.0,
+        "text": "Resolution: Root cause was an incomplete option-code mapping for a batch of events; corrected the mapping and reprocessed, verifying elections appeared on the dashboard."
+      },
+      {
+        "id": "HIST-07",
+        "service": "Order Management",
+        "count": 289,
+        "top_share": 1.0,
+        "text": "Resolution: Diagnosed a broken broker routing link after the account switch; updated the routing table and confirmed subsequent orders flowed through without manual intervention."
+      },
+      {
+        "id": "HIST-08",
+        "service": "Order Management",
+        "count": 270,
+        "top_share": 1.0,
+        "text": "Resolution: A stale clearing account mapping from a recent broker change was blocking order routing. Corrected the mapping, tested with one order, then released the remaining held orders."
+      },
+      {
+        "id": "HIST-09",
+        "service": "Outlook & Email",
+        "count": 313,
+        "top_share": 1.0,
+        "text": "Resolution: Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions."
+      },
+      {
+        "id": "HIST-10",
+        "service": "Outlook & Email",
+        "count": 301,
+        "top_share": 1.0,
+        "text": "Resolution: Set up the shared mailbox and DL as requested, granted the team the necessary send/access rights, and confirmed visibility in Outlook."
+      },
+      {
+        "id": "HIST-11",
+        "service": "Regulatory Reporting",
+        "count": 295,
+        "top_share": 1.0,
+        "text": "Resolution: Submission was rejected due to missing classification data on new entity records. Updated the master data, regenerated the file, and resubmitted successfully."
+      },
+      {
+        "id": "HIST-12",
+        "service": "Regulatory Reporting",
+        "count": 284,
+        "top_share": 1.0,
+        "text": "Resolution: Traced the gateway rejection to incomplete counterparty classification; corrected the records, regenerated the submission, and confirmed acceptance."
+      },
+      {
+        "id": "HIST-13",
+        "service": "Securities Settlement",
+        "count": 210,
+        "top_share": 1.0,
+        "text": "Resolution: Reviewed the settlement message queue, cleared several stuck acknowledgements, and replayed the pending confirmations so custody statuses synced back to the dashboard."
+      },
+      {
+        "id": "HIST-14",
+        "service": "Securities Settlement",
+        "count": 194,
+        "top_share": 1.0,
+        "text": "Resolution: Root cause was a stalled consumer on the settlement queue. Restarted the listener, replayed the backlog, and confirmed downstream custody records caught up."
+      },
+      {
+        "id": "HIST-15",
+        "service": "Securities Settlement",
+        "count": 193,
+        "top_share": 1.0,
+        "text": "Resolution: Custodian was late sending status updates; paused automated fail-chasing while we waited, then matched statements and reconciled the backlog once messages came through."
+      },
+      {
+        "id": "HIST-16",
+        "service": "SimCorp Dimension",
+        "count": 315,
+        "top_share": 1.0,
+        "text": "Resolution: Diagnosed a timeout on the position sync job caused by a locked staging table; cleared the session and reran the sync, confirming holdings matched afterward."
+      },
+      {
+        "id": "HIST-17",
+        "service": "SimCorp Dimension",
+        "count": 281,
+        "top_share": 1.0,
+        "text": "Resolution: Replication job had stalled due to a temporary database lock. Cleared the lock, restarted the job from its last checkpoint, and reconciled positions against downstream reporting."
+      },
+      {
+        "id": "HIST-18",
+        "service": "Tax Reporting",
+        "count": 287,
+        "top_share": 1.0,
+        "text": "Resolution: Reviewed the request with the tax team lead, granted the standard processing entitlement, and verified access to the output workspace."
+      },
+      {
+        "id": "HIST-19",
+        "service": "Tax Reporting",
+        "count": 270,
+        "top_share": 1.0,
+        "text": "Resolution: Confirmed the withholding tax workflow license was provisioned and validated the user could access the quarterly extract tool."
+      },
+      {
+        "id": "HIST-20",
+        "service": "Trade Matching",
+        "count": 323,
+        "top_share": 1.0,
+        "text": "Resolution: Adapter was rejecting allocations due to an incomplete broker account setup. Corrected the setup, reprocessed the batch, and validated matching status for all affected trades."
+      },
+      {
+        "id": "HIST-21",
+        "service": "Trade Matching",
+        "count": 280,
+        "top_share": 1.0,
+        "text": "Resolution: Found a missing broker SSI mapping causing allocation rejections. Added the mapping, replayed the rejected messages, and confirmed the trades matched successfully."
+      }
+    ]
+  },
+  "baselines": {
+    "test_texts_seen_in_training_share": 1.0,
+    "service": {
+      "tfidf_logreg_accuracy": 1.0,
+      "majority_baseline": 0.2775
+    },
+    "work_type": {
+      "tfidf_logreg_accuracy": 1.0,
+      "majority_baseline": 0.8033
+    },
+    "priority": {
+      "tfidf_logreg_accuracy": 0.4935,
+      "majority_baseline": 0.497
+    },
+    "work_type_from_title_keywords": 0.9597
+  }
+}

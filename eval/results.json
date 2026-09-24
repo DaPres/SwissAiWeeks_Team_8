@@ -1,0 +1,194 @@
+{
+  "created": "2026-09-24T17:20:32",
+  "llm_enabled": false,
+  "provider": "none",
+  "model": null,
+  "embedder": "tfidf-lsa",
+  "stress": {
+    "n": 106,
+    "mode": "offline",
+    "wall_seconds": 2.6,
+    "routing_accuracy_team": 1.0,
+    "service_accuracy": 1.0,
+    "work_type_accuracy": 1.0,
+    "work_type_accuracy_misleading_subset": 1.0,
+    "clarification": {
+      "precision": 0.857,
+      "recall": 1.0,
+      "f1": 0.923,
+      "f2_recall_weighted": 0.968,
+      "tp": 6,
+      "fp": 1,
+      "fn": 0
+    },
+    "priority_consistency_runs": 3,
+    "priority_consistency": 1.0,
+    "priority_matrix_consistent": 1.0,
+    "priority_sanity": 0.65,
+    "citation_coverage": 1.0,
+    "injection": {
+      "resistance": 1.0,
+      "n_injected": 8,
+      "false_positive_rate": 0.0,
+      "obeyed": 0
+    },
+    "pii_redaction_recall": 0.963,
+    "pii_leaks": [
+      {
+        "id": "S072",
+        "leaked": "Marc Dupont"
+      }
+    ],
+    "duplicates": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "draft_language_matches_ticket": 1.0,
+    "latency_ms_p50": 23.2,
+    "latency_ms_p95": 32.0,
+    "mean_cost_usd": 0.0,
+    "per_category": {
+      "paraphrase": {
+        "n": 20,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "german": {
+        "n": 20,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "french": {
+        "n": 12,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "service_omitted": {
+        "n": 8,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "misleading_title": {
+        "n": 10,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "pii": {
+        "n": 10,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "injection": {
+        "n": 8,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "benign": {
+        "n": 6,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "alert_storm": {
+        "n": 8,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "unclear": {
+        "n": 4,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      }
+    },
+    "failures": []
+  },
+  "holdout": {
+    "n_unique_texts": 173,
+    "routing_accuracy_team": 1.0,
+    "work_type_accuracy": 0.994,
+    "per_pattern": {
+      "Access removal requested for <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Access requested for <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Automated alert triggered for <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Email notification received for <SVC>": {
+        "n": 1,
+        "team_acc": 1.0,
+        "work_type_acc": 0.0
+      },
+      "External email warning received for <SVC>": {
+        "n": 1,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "General request for <SVC> with unclear details": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Incident mislabelled as service request in <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Incorrect incident title for service request in <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "New license requested for <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Operational issue reported for <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Unclear incident input for <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      }
+    },
+    "caveat": "only 173 unique texts exist; every test text also appears in training (leakage). Service field hidden."
+  },
+  "baselines": {
+    "test_texts_seen_in_training_share": 1.0,
+    "service": {
+      "tfidf_logreg_accuracy": 1.0,
+      "majority_baseline": 0.2775
+    },
+    "work_type": {
+      "tfidf_logreg_accuracy": 1.0,
+      "majority_baseline": 0.8033
+    },
+    "priority": {
+      "tfidf_logreg_accuracy": 0.4935,
+      "majority_baseline": 0.497
+    },
+    "work_type_from_title_keywords": 0.9597
+  }
+}
