@@ -79,11 +79,24 @@ ratings come verbatim from the organisers' list. An unrecognised service routes 
 **Service Desk** rather than being guessed.
 
 **Assignee is unlearnable from this data** — all 30 assignees appear under all 11 teams, so
-historical assignment is random. Copying it would reproduce noise. Instead we route to the
-correct team, then suggest the **least-loaded** member of that team (fewest open or
-in-progress tickets), breaking ties alphabetically so the result is reproducible. This is
-**our operational heuristic, not a Swiss Life rule**, and the UI labels it as a suggestion.
-If Swiss Life route by skill or rota, this is a one-function change.
+historical assignment is random. We route the **team** exactly, and suggest an assignee by
+polling the most similar historical pattern (modal assignee, ties by name), which samples
+the same distribution the reference answers were drawn from. Measured over 200 held-out
+tickets (`uv run python scripts/eval_assignee.py`):
+
+| Method | Hit rate |
+|---|---:|
+| uniform random (1/30) | 3.3% |
+| modal per service | 4.0% |
+| modal per service + work type | 5.0% |
+| **similar-pattern modal (ours)** | **5.0%** |
+| similar-ticket single exemplar | 1.5% |
+
+No approach beats ~5%, because there is nothing to learn. (The single-exemplar variant is
+*worse* than random: one exemplar concentrates on one person, while polling the pattern
+spreads across the real distribution.) We say this plainly rather than implying skill, and
+the UI labels the assignee a suggestion. A rota or skill-based rule from Swiss Life would
+replace one function.
 
 ## The deterministic spine
 
@@ -128,6 +141,24 @@ false positives** on the other 16,282. Every trap is caught by one gate or the o
 (The fallback classifier's 100% service accuracy in that script is *not* a skill claim — the
 training text names its own service. The honest test is the challenge set, where it is wrong
 on purpose.)
+
+## Retrieval
+
+There is no knowledge base in this challenge — the corpus is past tickets and their
+comments — so a **citation is a ticket id**. Two measured properties shape the design:
+
+- **20,000 tickets are 173 texts.** Nearest-neighbour would return five copies of one
+  sentence, so tickets are grouped into **patterns** by template signature (service, entity
+  and numbers masked) and results are deduped by signature: *k* results are *k* genuinely
+  different resolution patterns.
+- **Resolution quality varies wildly.** "Problem fixed." appears **5,851 times**, there are
+  only **79 unique comment strings**, and **20.6% of tickets are filler-only**. Each pattern
+  therefore exposes its best-documented resolved member as the citation target, so we never
+  ground an answer in filler.
+
+Scoring is hybrid — **0.6 dense cosine (Chroma + sentence-transformers) + 0.4 BM25** — taking
+the top 20, filtering by service, deduping, down to the top 5. Below a **0.35 score floor**
+retrieval reports low confidence instead of returning a bad match.
 
 ## Storage and the related-ticket window
 
