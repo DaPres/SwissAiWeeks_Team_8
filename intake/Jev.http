@@ -1,5 +1,5 @@
 @baseUrl = https://api.typesafe.ai
-@apiKey = xxx
+@apiKey = apikey_22472d92f92b0c1b4fabb915006310fae021_089823cf614011908029b8c7fc6528dd73c948712b7fa0dbcc672cb4014a5872
 
 ### Jev
 POST {{baseUrl}}/v1/systemone
@@ -29,7 +29,8 @@ Content-Type: application/json
       "instructions": "Classify this incident.",
       "criteria": {
         "service_request": "Request for a new service or change in existing service",
-        "incident": "Unplanned interruption or degradation of service"
+        "incident": "Unplanned interruption or degradation of service",
+        "unclear": "Unclear classification"
       }
     },
     "urgency": {
@@ -40,7 +41,8 @@ Content-Type: application/json
             "Low": "Low",
             "Medium": "Medium",
             "High": "High",
-            "Highest": "Highest"
+            "Highest": "Highest",
+            "unclear": "Unclear"
         }
         },
     "impact": {
@@ -51,7 +53,8 @@ Content-Type: application/json
             "Significant / Large": "Partial unavailability of critical IT services, 1+ business entities affected, or financial counterparts affected",
             "Moderate / Limited": "Full unavailability of non-critical IT services, or up to 1 business entity affected",
             "Minor / Localized": "Partial unavailability of non-critical IT services, or individuals affected",
-            "No direct impact / Information": "No direct operational impact; informational/maintenance without service degradation"
+            "No direct impact / Information": "No direct operational impact; informational/maintenance without service degradation",
+            "Unclear": "Impact is unclear"
         }
         },
     "priority": {
@@ -62,7 +65,8 @@ Content-Type: application/json
         "Low": "High urgency with No direct impact / Information, Medium urgency with Minor / Localized or No direct impact / Information, Low urgency with Moderate / Limited or Minor / Localized, or Lowest urgency with Significant / Large or Moderate / Limited",
         "Medium": "Critical urgency with Minor / Localized or No direct impact / Information, High urgency with Minor / Localized, Low urgency with Major / Widespread or Significant / Large, or Lowest urgency with Major / Widespread",
         "High": "Critical urgency with Moderate / Limited, Medium urgency with Major / Widespread or Significant / Large, or High urgency with Significant / Large or Moderate / Limited",
-        "Highest": "Critical urgency with Major / Widespread or Significant / Large, or High urgency with Major / Widespread"
+        "Highest": "Critical urgency with Major / Widespread or Significant / Large, or High urgency with Major / Widespread",
+        "Unclear": "Priority is unclear"
         }
         },
         "service_teams": {
