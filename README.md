@@ -19,7 +19,7 @@ Every component reaches a provider through `app/agent/llm_client.py` and nothing
 1. **Swisscom Apertus** (`swiss-ai/Apertus-v1.5-70B`): primary. If the ~60-min bearer token expires, the client re-reads `.env` and retries once on HTTP 401.
 2. **OpenAI** (`gpt-4o-mini`)
 3. **Public AI via the Hugging Face router** (`:publicai` model suffix)
-4. **Local Ollama** (`llama3.2:3b`): only used when there's no internet (set `OLLAMA_FALLBACK_MODE=always` to change this)
+4. **Local Ollama** (`llama3.2:3b`): catches any cloud failure by default, so a stage demo degrades to a slow local answer instead of an error (`OLLAMA_FALLBACK_MODE=offline_only` restricts it to offline runs)
 
 ## The result contract
 

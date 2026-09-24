@@ -92,7 +92,9 @@ def default_providers() -> list[Provider]:
             base_url=f"{ollama_base}/v1",
             model=os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
             key_env=None,
-            offline_only=os.getenv("OLLAMA_FALLBACK_MODE", "offline_only") != "always",
+            # Default "always": on stage, a slow local answer beats a 503. Set
+            # OLLAMA_FALLBACK_MODE=offline_only to restrict it to genuinely offline runs.
+            offline_only=os.getenv("OLLAMA_FALLBACK_MODE", "always") == "offline_only",
         ),
     ]
 
