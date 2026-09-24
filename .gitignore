@@ -29,3 +29,6 @@ __pycache__/
 
 # Logs
 *.log
+
+# Generated eval output
+backend/out/
