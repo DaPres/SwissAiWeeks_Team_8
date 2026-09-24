@@ -9,19 +9,19 @@ Content-Type: application/json
 {
   "model": "jev-latest",
   "state": {
-    //"title": "This is an incident",
-    //"title": "This is a service request",
-    //"title": "New license requested for Tax Reporting",
-    //"description": "This issue was raised against Client Reporting, but the title suggests a service request instead of a true incident. The underlying problem still needs triage and should be reviewed to ensure it is routed through the correct workflow.",
-    "description": "Regulatory Reporting generated an automated monitoring alert indicating an operational problem. The log shows repeated execution errors, service degradation, or a processing delay. Please review the event, confirm the impact, and decide whether immediate remediation is needed."
-    //"description": "A new user requires a license for Tax Reporting to support an operational activity. The request includes the relevant user details and justification and needs validation before the entitlement is assigned.",
-    //"worktype": "service_request"
-    //"worktype": "Incident",
-    //"priority": "Lowest",
-    //"priority": "Low"
-    //"priority": "Medium"
-    //"priority": "High"
-    //"priority": "Low"
+    //Usage: uncomment the case to test
+
+    //service request description
+    "description": "A user needs access to NAV Calculation to complete their daily tasks. This request is for standard role-based access and is aligned to the employee's business duties. Please validate the access profile and ensure the user receives the correct permissions in line with policy."
+    
+    //incident description
+    //"description": "Regulatory Reporting generated an automated monitoring alert indicating an operational problem. The log shows repeated execution errors, service degradation, or a processing delay. Please review the event, confirm the impact, and decide whether immediate remediation is needed."
+    
+    //unclear classification
+    //"description": "This issue was raised against Client Reporting, but the title suggests a service request instead of a true incident. The underlying problem still needs triage and should be reviewed to ensure it is routed through the correct workflow."
+    
+    //trash description for testing
+    //"description": "lkndf"
   },
   "questions": {
     "worktype": {
