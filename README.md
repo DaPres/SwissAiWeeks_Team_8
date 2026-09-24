@@ -69,6 +69,22 @@ The response includes `answer`, `provider` (which LLM served it), `sources`, and
 uv run pytest
 ```
 
+## Routing and assignee
+
+`data/catalogue.yaml` is **generated** from the training data by
+`uv run python scripts/build_catalogue.py`, which refuses to write a lookup table if
+service→team is not 1:1. Service→team and criticality are therefore never model decisions:
+the mapping is verified (20 services, 11 teams, 0 exceptions) and the Critical/Non-Critical
+ratings come verbatim from the organisers' list. An unrecognised service routes to
+**Service Desk** rather than being guessed.
+
+**Assignee is unlearnable from this data** — all 30 assignees appear under all 11 teams, so
+historical assignment is random. Copying it would reproduce noise. Instead we route to the
+correct team, then suggest the **least-loaded** member of that team (fewest open or
+in-progress tickets), breaking ties alphabetically so the result is reproducible. This is
+**our operational heuristic, not a Swiss Life rule**, and the UI labels it as a suggestion.
+If Swiss Life route by skill or rota, this is a one-function change.
+
 ## Dataset analysis
 
 ```bash
