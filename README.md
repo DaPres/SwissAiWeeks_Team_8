@@ -1,8 +1,20 @@
-# Swiss Life Support Agent
+# TriageMate
 
-An AI support agent for operational service desks, built for the **Swiss {ai} Weeks Zurich Hackathon** (24–25 Sep 2026), Swiss Life challenge.
+A **triage co-pilot** for Swiss Life's operational service desks, built for the **Swiss {ai} Weeks Zurich Hackathon** (24–25 Sep 2026).
 
-It uses RAG over knowledge-base docs and a multi-provider LLM client with automatic fallback:
+Not a chatbot. Measured on the challenge dataset, only **17%** of the ticket queue is a normal
+ticket wanting a written answer: **37%** is automated alerts, **27%** external emails and
+**19%** deliberate traps. The value is in filtering, routing and prioritising — not in prose.
+See [docs/dataset_findings.md](docs/dataset_findings.md) for the evidence and
+[CLAUDE.md](CLAUDE.md) for the architecture and working rules.
+
+> **Provenance:** commit `1c0140a` is the last pre-event scaffold (generic boilerplate —
+> model layer, RAG skeleton, FastAPI, Streamlit, tests). Everything after it was built during
+> the hackathon. The organisers confirmed disclosed pre-built boilerplate is fine.
+
+## Model layer
+
+Every component reaches a provider through `app/agent/llm_client.py` and nothing else, with automatic fallback:
 
 1. **Swisscom Apertus** (`swiss-ai/Apertus-v1.5-70B`): primary. If the ~60-min bearer token expires, the client re-reads `.env` and retries once on HTTP 401.
 2. **OpenAI** (`gpt-4o-mini`)
@@ -48,6 +60,21 @@ The response includes `answer`, `provider` (which LLM served it), `sources`, and
 
 ```bash
 uv run pytest
+```
+
+## Dataset analysis
+
+```bash
+uv run python analyze_data.py
+```
+
+Verifies the claims TriageMate is built on: template counts, service→team cardinality,
+whether priority is learnable, and a leakage check. Findings in
+[docs/dataset_findings.md](docs/dataset_findings.md); the challenge brief is mirrored at
+[docs/challenge.md](docs/challenge.md). `data/jira.json` (23.8 MB) is git-ignored — download it with:
+
+```bash
+curl -sL -o data/jira.json https://raw.githubusercontent.com/Swiss-ai-Weeks/SwissLife-2026/main/jira_first_20000_requested_fields_synthetic.json
 ```
 
 ## License
