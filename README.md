@@ -21,6 +21,13 @@ Every component reaches a provider through `app/agent/llm_client.py` and nothing
 3. **Public AI via the Hugging Face router** (`:publicai` model suffix)
 4. **Local Ollama** (`llama3.2:3b`): only used when there's no internet (set `OLLAMA_FALLBACK_MODE=always` to change this)
 
+## The result contract
+
+Every stage codes against `app/schemas.py`. `TriageResult` carries the **7 graded fields**
+(`GradedFields`: work type, service, team, assignee, priority, resolution, resolution comment)
+kept deliberately separate from our internals (flags, citations, confidence, trace), so
+`result.submission()` emits exactly the challenge's required output and nothing else.
+
 ```
 app/agent   LLM client + fallback logic
 app/rag     Chroma + sentence-transformers ingest/retrieve
