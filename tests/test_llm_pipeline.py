@@ -113,11 +113,50 @@ def test_azure_and_anthropic_wiring():
                             triage_offline=False), transport=httpx.MockTransport(h))
     az.chat([{"role": "user", "content": "x"}])
     assert "/openai/deployments/dep/chat/completions" in seen["url"] and seen["headers"]["api-key"] == "k" and "model" not in seen["body"]
-    an = LLMClient(Settings(llm_provider="anthropic", llm_api_key="k2", llm_base_url="https://api.anthropic.com/v1", llm_model="claude-x",
-                            triage_offline=False), transport=httpx.MockTransport(h))
+
+
+def _anthropic_msg(**over):
+    body = {"id": "msg_1", "type": "message", "role": "assistant", "model": "claude-opus-5", "content": [{"type": "text", "text": "hi"}],
+            "stop_reason": "end_turn", "stop_sequence": None, "usage": {"input_tokens": 7, "output_tokens": 3}}
+    body.update(over)
+    return body
+
+
+def test_anthropic_backend_uses_official_sdk_and_current_api_rules():
+    pytest.importorskip("anthropic")
+    seen = {}
+
+    def h(req):
+        seen["url"], seen["headers"], seen["body"] = str(req.url), dict(req.headers), json.loads(req.content)
+        return httpx.Response(200, json=_anthropic_msg())
+    an = LLMClient(Settings(llm_provider="anthropic", llm_api_key="k2", llm_model="claude-opus-5", triage_offline=False), transport=httpx.MockTransport(h))
     r = an.chat([{"role": "system", "content": "sys"}, {"role": "user", "content": "x"}], max_tokens=50)
-    assert seen["url"].endswith("/messages") and seen["headers"]["x-api-key"] == "k2" and seen["body"]["system"] == "sys"
+    b = seen["body"]
+    assert seen["url"].endswith("/messages") and seen["headers"]["x-api-key"] == "k2"
+    assert b["system"] == "sys" and "temperature" not in b                       # sampling params are removed on Opus 5
+    assert b["output_config"] == {"effort": "low"} and b["max_tokens"] >= 2048     # thinking headroom, cheap effort for classification
+    assert b["fallbacks"] == "default" and seen["headers"]["anthropic-beta"] == "server-side-fallback-2026-07-01"
     assert r["content"] == "hi" and r["usage"] == (7, 3)
+
+
+def test_anthropic_refusal_becomes_a_fallback_signal():
+    pytest.importorskip("anthropic")
+
+    def h(req):
+        return httpx.Response(200, json=_anthropic_msg(stop_reason="refusal", content=[]))
+    an = LLMClient(Settings(llm_provider="anthropic", llm_api_key="k2", llm_model="claude-opus-5", triage_offline=False), transport=httpx.MockTransport(h))
+    with pytest.raises(LLMError, match="refused"):
+        an.chat([{"role": "user", "content": "x"}])
+
+
+def test_role_providers_can_differ_and_apertus_is_throttled():
+    s = Settings(llm_provider="openai", classify_provider="", draft_provider="apertus", openai_api_key="sk-a", apertus_api_key="sw-b", triage_offline=False)
+    assert s.role_provider("classify") == "openai" and s.role_provider("draft") == "apertus"
+    ap = s.profile("apertus")
+    assert ap.enabled and ap.model == "swiss-ai/Apertus-v1.5-70B" and ap.base_url.endswith("/apertus-1.5-70b/v1") and 0 < ap.rps <= 5
+    assert s.model_for("draft") == "swiss-ai/Apertus-v1.5-70B" and s.model_for("classify") == "gpt-4.1-mini"
+    assert s.embed_profile().provider == "openai"                      # Apertus has no embeddings; OpenAI key is reused
+    assert not Settings(llm_provider="apertus", apertus_api_key="PASTE_KEY_HERE", triage_offline=False).profile("apertus").enabled   # placeholder = offline
 
 
 def test_service_enum_normalisation():
@@ -191,6 +230,7 @@ def test_hybrid_mode_uses_llm_and_stays_consistent(retriever, mk, mock_llm):
     assert r.resolution_source == "llm" and r.resolution_note.startswith("Resolution:")
     assert is_consistent(r.priority, r.urgency, r.impact) and r.urgency == "high" and r.impact == "high"
     assert r.cost_usd > 0 and r.tokens_in > 0 and r.prompt_versions.get("classify", "").startswith("1.0")
+    assert r.draft.text.startswith("Hello") and r.draft.next_steps[0].startswith("Confirm") and r.prompt_versions["draft"].startswith("1.1")   # typed LLM draft used
     assert {s.mode for s in r.trace} <= {"llm", "policy", "policy (fill-in)"} and len(r.trace) <= 5
 
 

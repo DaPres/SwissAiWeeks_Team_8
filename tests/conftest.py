@@ -103,7 +103,8 @@ class MockLLM:
         if "resolution comment" in system:
             return reply("Resolution: Mock resolution generated from the playbook and confirmed with the requester.")
         if "Draft a reply" in system:
-            return reply("Hello,\nThe team is checking the service. [KB-01]\nWe will update you as soon as we have confirmed the details.")
+            return reply(json.dumps({"reply": "Hello,\nThe team is checking the service. [KB-01]\nWe will update you as soon as we have confirmed the details.",
+                                     "next_steps": ["Confirm business impact with the desk head. [KB-01]", "Correlate with open incidents. [KB-01]"]}))
         if "cannot be actioned as written" in system:
             return reply("Hello,\n1. Which system?\n2. When?\nPlease reply with these details.")
         return reply("ok")
@@ -116,7 +117,7 @@ def mock_llm():
     settings = Settings(llm_provider="openai", llm_api_key="sk-test", llm_base_url="https://mock.local/v1", llm_model="mock-model",
                         triage_offline=False, llm_max_retries=1)
     client = llm_mod.LLMClient(settings, transport=httpx.MockTransport(m.handler))
-    prev = llm_mod._CLIENT
+    prev = llm_mod._OVERRIDE
     llm_mod.set_client(client)
     yield m
     llm_mod.set_client(prev)

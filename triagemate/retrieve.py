@@ -149,6 +149,7 @@ class ApiEmbedder(Embedder):
         self.client = get_client()
         self.fallback = fallback
         self.ok = True
+        self._mem: dict[str, np.ndarray] = {}
         self.name = f"api:{get_settings().embed_model}"
 
     def fit(self, texts: list[str]) -> "ApiEmbedder":
@@ -159,10 +160,12 @@ class ApiEmbedder(Embedder):
         if not self.ok:
             return self.fallback.embed(texts)
         try:
-            vecs = self.client.embed(texts)
-            M = np.array(vecs, dtype=float)
-            n = np.linalg.norm(M, axis=1, keepdims=True)
-            return M / np.where(n == 0, 1, n)
+            need = [t for t in dict.fromkeys(texts) if t not in self._mem]
+            if need:
+                for t, v in zip(need, self.client.embed(need)):
+                    a = np.asarray(v, dtype=float)
+                    self._mem[t] = a / (np.linalg.norm(a) or 1.0)
+            return np.vstack([self._mem[t] for t in texts])
         except Exception:
             self.ok = False
             self.name = "tfidf-lsa (api embeddings unavailable)"
@@ -172,7 +175,7 @@ class ApiEmbedder(Embedder):
 def make_embedder() -> Embedder:
     s = get_settings()
     base = LsaEmbedder()
-    if s.llm_enabled and (s.embed_base_url or s.llm_provider.lower() in ("openai", "azure", "local")) and s.embed_model:
+    if s.embed_profile() is not None:
         return ApiEmbedder(base)
     return base
 
@@ -208,7 +211,7 @@ class HybridIndex:
         self.docs = docs
         self.alpha = alpha
         self.embedder = embedder
-        texts = [d.title + "\n" + d.text for d in docs]
+        texts = self._texts = [d.title + "\n" + d.text for d in docs]
         if fit:
             embedder.fit(texts)
         self.bm25 = BM25([tokens(t) for t in texts])
@@ -221,6 +224,8 @@ class HybridIndex:
         q_tok = tokens(query)
         bm = self.bm25.scores(q_tok) / self.bm25.upper_bound(q_tok)
         qv = self.embedder.embed([query])[0]
+        if self.vecs.shape[1] != qv.shape[0]:            # embedder degraded mid-run (API -> local): re-embed the index consistently
+            self.vecs = self.embedder.embed(self._texts)
         cos = np.clip(self.vecs @ qv, 0, 1)
         fused = self.alpha * cos + (1 - self.alpha) * bm
         order = np.argsort(-fused)[:prefilter]

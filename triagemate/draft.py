@@ -74,15 +74,38 @@ def _bullets(kb_hits: list[Hit], section: str, article: str | None) -> list[tupl
     return out
 
 
+_NONFACTUAL_START = re.compile(
+    r"^(?:hello|hi\b|dear|thanks?|thank\s+you|guten\s+(?:tag|morgen)|sehr\s+geehrte|liebe|vielen\s+dank|danke|bonjour|madame|monsieur|cher|ch[eè]re|merci|"
+    r"ciao|we\s+will\s+(?:update|keep|get\s+back)|wir\s+melden|wir\s+werden\s+uns|nous\s+reviendrons|please\s+reply|bitte\s+antworten|"
+    r"best\s+regards|kind\s+regards|regards|mit\s+freundlichen|freundliche|cordialement|bien\s+cordialement)", re.I)
+_REQUEST = re.compile(
+    r"\b(?:please|could\s+you|can\s+you|kindly|we\s+(?:need|would\s+need|ask)|bitte|bitten\s+wir|ben\u00f6tigen\s+wir|k\u00f6nnten\s+sie|"
+    r"veuillez|merci\s+de|nous\s+vous\s+(?:prions|demandons)|pourriez-vous)\b", re.I)
+_CITE = re.compile(r"\[(?:KB|HIST)-\d+\]")
+
+
+def _sentences(text: str) -> list[str]:
+    return [s.strip() for s in re.split(r"(?<=[.!?])\s+(?!\[)|(?<=\])\s+|\n+", text) if s.strip()]
+
+
+def _is_factual(s: str) -> bool:
+    core = _CITE.sub("", s).strip(" -*\u2022\t")
+    if not core or core.endswith("?") or core.endswith(":") or len(core.split()) <= 4:
+        return False
+    return not (_NONFACTUAL_START.match(core) or _REQUEST.search(core))
+
+
+def uncited_sentences(text: str) -> list[str]:
+    return [s for s in _sentences(text) if _is_factual(s) and not _CITE.search(s)]
+
+
 def citation_coverage(text: str) -> float:
-    """Share of factual sentences that end with a [KB-xx]/[HIST-xx] citation. Frame sentences (greeting, thanks,
-    closing, questions) are non-factual and excluded."""
-    sents = [s.strip() for s in re.split(r"(?<=[.!?])\s+(?!\[)|(?<=\])\s+|\n+", text) if s.strip()]
-    factual = [s for s in sents if not s.endswith("?") and not re.match(r"^(?:Hello|Hi|Guten Tag|Bonjour|Thank|Vielen|Merci|We will update|We will keep|Wir melden|Nous reviendrons|Please reply|Bitte antworten|Merci de)", s)]
+    """Share of factual sentences that end with a [KB-xx]/[HIST-xx] citation. Greetings, thanks, closings, questions and pure
+    requests for information are not factual claims and are excluded."""
+    factual = [s for s in _sentences(text) if _is_factual(s)]
     if not factual:
         return 1.0
-    cited = [s for s in factual if re.search(r"\[(?:KB|HIST)-\d+\]", s)]
-    return round(len(cited) / len(factual), 3)
+    return round(sum(1 for s in factual if _CITE.search(s)) / len(factual), 3)
 
 
 def build_reply(service: str, team: str, language: str, kb_hits: list[Hit], floor: float) -> Draft:

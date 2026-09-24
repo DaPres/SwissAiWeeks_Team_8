@@ -4,12 +4,21 @@ Ticket in -> safety gate -> quality gate + classifier -> router -> priority -> r
           -> assignee -> analyst review (human) -> feedback.
 
 Every model-dependent component has a deterministic fallback: the system degrades, it does not fail.
+
+Latency design (hybrid mode): independent model calls run concurrently -
+   stage 1  LLM classification  ||  LLM urgency/impact (speculatively on the rules' service; recomputed only if it changes)
+   stage 2  priority finalisation ||  agent loop (retrieval tools)
+   stage 3  resolution note      ||  reply draft
+and a batch processes several tickets at once (assignment stays sequential so results are deterministic).
 """
 from __future__ import annotations
 
+import contextvars
+import functools
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import datetime
+from typing import Callable
 
 from . import classify as C
 from . import draft as D
@@ -19,13 +28,18 @@ from .agent import AgentState, run_agent
 from .assign import Assigner
 from .catalogue import CHANNEL_SERVICE, UNKNOWN, team_for
 from .config import get_settings
-from .llm import LLMError, LLMUnavailable, get_client, track
+from .llm import LLMError, LLMUnavailable, any_llm_enabled, track
 from .models import Classification, Draft, Flags, PriorityResult, Ticket, TriageResult
 from .retrieve import Retriever, _parse_dt, get_retriever
 from .safety import TicketSafety, analyse_ticket, names_from_emails
 
 PB_MIN = 0.28          # min fused score for a same-service playbook note to be used as the resolution basis
 KB_GOOD = 0.5          # fused score treated as a "good" retrieval for confidence normalisation
+
+
+def _submit(ex: ThreadPoolExecutor, fn: Callable, *a, **kw):
+    """Run in a worker thread while keeping the caller's contextvars (per-ticket usage / cost tracking)."""
+    return ex.submit(contextvars.copy_context().run, functools.partial(fn, *a, **kw))
 
 
 @dataclass
@@ -39,6 +53,7 @@ class Ctx:
     prompt_versions: dict = field(default_factory=dict)
     notes: list = field(default_factory=list)
     agreement: float = 0.6
+    spec_priority: tuple | None = None       # ((PriorityResult, version), service, work_type) computed speculatively
 
 
 class Triage:
@@ -53,11 +68,15 @@ class Triage:
     @property
     def llm_on(self) -> bool:
         if self._use_llm is not None:
-            return bool(self._use_llm) and get_client().enabled
-        return get_client().enabled
+            return bool(self._use_llm) and any_llm_enabled()
+        return any_llm_enabled()
 
     def _known_names(self, t: Ticket) -> set[str]:
         return names_from_emails(t.reporter, t.assignee, *[a for a, _ in t.comment_bodies()])
+
+    @staticmethod
+    def _text_all(safe: TicketSafety) -> str:
+        return " ".join([safe.summary, safe.description, *[b for _, b in safe.comments]])
 
     # ------------------------------------------------------------ stage 1: safety + classification
     def prepare(self, t: Ticket) -> Ctx:
@@ -71,22 +90,30 @@ class Triage:
         rules = C.classify_rules(t, safe.summary, safe.description, safe.comments, votes)
         stage["classify_rules"] = (time.perf_counter() - t0) * 1000
 
-        cls, agreement, versions, notes = rules, 0.6, {}, []
+        cls, agreement, versions, notes, spec = rules, 0.6, {}, [], None
         if self.llm_on and not safe.injection:
             t0 = time.perf_counter()
-            try:
-                from .llm_tasks import llm_classify
-                llm_cls, ver = llm_classify(
-                    safe.summary, safe.description, " ".join(b for _, b in safe.comments), selected_service=t.service,
-                    request_type=t.request_type, entity=t.entity or rules.entity, given_work_type=t.work_type, advisory=rules.candidates)
-                versions["classify"] = ver
-                cls, agreement, arb_notes = self._arbitrate(rules, llm_cls)
-                notes += arb_notes
-            except (LLMError, LLMUnavailable) as e:
-                notes.append(f"LLM classification unavailable ({str(e)[:90]}): using deterministic rules")
+            from .llm_tasks import llm_classify, llm_urgency_impact
+            text_all = self._text_all(safe)
+            with ThreadPoolExecutor(max_workers=2) as ex:
+                f_cls = _submit(ex, llm_classify, safe.summary, safe.description, " ".join(b for _, b in safe.comments),
+                                selected_service=t.service, request_type=t.request_type, entity=t.entity or rules.entity,
+                                given_work_type=t.work_type, advisory=rules.candidates)
+                f_pri = _submit(ex, llm_urgency_impact, text_all, rules.service, rules.work_type)
+                try:
+                    llm_cls, ver = f_cls.result()
+                    versions["classify"] = ver
+                    cls, agreement, arb_notes = self._arbitrate(rules, llm_cls)
+                    notes += arb_notes
+                except (LLMError, LLMUnavailable) as e:
+                    notes.append(f"LLM classification unavailable ({str(e)[:90]}): using deterministic rules")
+                try:
+                    spec = (f_pri.result(), rules.service, rules.work_type)
+                except (LLMError, LLMUnavailable):
+                    spec = None
             stage["classify_llm"] = (time.perf_counter() - t0) * 1000
         return Ctx(ticket=t, safety=safe, rules=rules, cls=cls, votes=votes, stage_ms=stage, prompt_versions=versions,
-                   notes=notes, agreement=agreement)
+                   notes=notes, agreement=agreement, spec_priority=spec)
 
     def _arbitrate(self, rules: Classification, llm: Classification) -> tuple[Classification, float, list[str]]:
         notes: list[str] = []
@@ -117,43 +144,59 @@ class Triage:
         return merged, agreement, notes
 
     # ------------------------------------------------------------ stage 2: everything else
-    def finish(self, ctx: Ctx, batch_pool: dict | None = None, commit_assign: bool = True) -> TriageResult:
+    def finish(self, ctx: Ctx, batch_pool: dict | None = None, commit_assign: bool = True, assign: bool = True) -> TriageResult:
         t = ctx.ticket
         safe, cls = ctx.safety, ctx.cls
         stage = ctx.stage_ms
         notes = list(ctx.notes)
         versions = dict(ctx.prompt_versions)
-        text_all = " ".join([safe.summary, safe.description, *[b for _, b in safe.comments]])
+        text_all = self._text_all(safe)
+        llm_ok = self.llm_on and not safe.injection
+        par = self.llm_on
 
         # ---- priority (evidence -> policy) --------------------------------------------------
-        t0 = time.perf_counter()
-        entities = t.entities or ([cls.entity] if cls.entity else [])
-        pr_rules = P.rule_assess(P.AssessInput(text=text_all, service=cls.service, work_type=cls.work_type, request_type=t.request_type,
-                                               entities=entities, unclear=cls.unclear), overrides_enabled=self.s.enable_business_overrides)
-        pr = pr_rules
-        if self.llm_on and not safe.injection:
-            try:
-                from .llm_tasks import llm_urgency_impact
-                pr_llm, ver = llm_urgency_impact(text_all, cls.service, cls.work_type)
-                versions["urgency_impact"] = ver
-                pr = P.sanity_clamp(pr_llm, cls.service, cls.work_type)
-                if (pr.urgency, pr.impact) != (pr_rules.urgency, pr_rules.impact):
-                    notes.append(f"urgency/impact: LLM {pr.urgency}/{pr.impact} vs rules {pr_rules.urgency}/{pr_rules.impact}")
-            except (LLMError, LLMUnavailable) as e:
-                notes.append(f"LLM urgency/impact unavailable ({str(e)[:80]}): using rule-based extraction")
-        stage["priority"] = (time.perf_counter() - t0) * 1000
-        assert P.is_consistent(pr.priority, pr.urgency, pr.impact)
+        def priority_stage() -> PriorityResult:
+            t0 = time.perf_counter()
+            entities = t.entities or ([cls.entity] if cls.entity else [])
+            pr_rules = P.rule_assess(P.AssessInput(text=text_all, service=cls.service, work_type=cls.work_type, request_type=t.request_type,
+                                                   entities=entities, unclear=cls.unclear), overrides_enabled=self.s.enable_business_overrides)
+            pr = pr_rules
+            if llm_ok:
+                try:
+                    if ctx.spec_priority and (ctx.spec_priority[1], ctx.spec_priority[2]) == (cls.service, cls.work_type):
+                        pr_llm, ver = ctx.spec_priority[0]
+                    else:
+                        from .llm_tasks import llm_urgency_impact
+                        pr_llm, ver = llm_urgency_impact(text_all, cls.service, cls.work_type)
+                    versions["urgency_impact"] = ver
+                    pr = P.sanity_clamp(pr_llm, cls.service, cls.work_type)
+                    if (pr.urgency, pr.impact) != (pr_rules.urgency, pr_rules.impact):
+                        notes.append(f"urgency/impact: LLM {pr.urgency}/{pr.impact} vs rules {pr_rules.urgency}/{pr_rules.impact}")
+                except (LLMError, LLMUnavailable) as e:
+                    notes.append(f"LLM urgency/impact unavailable ({str(e)[:80]}): using rule-based extraction")
+            stage["priority"] = (time.perf_counter() - t0) * 1000
+            assert P.is_consistent(pr.priority, pr.urgency, pr.impact)
+            return pr
 
         # ---- agent loop (retrieval tools, bounded) -------------------------------------------
-        t0 = time.perf_counter()
-        st = AgentState(ticket_id=t.id, masked_text=safe.text, summary=safe.summary, service=cls.service, team=cls.team,
-                        work_type=cls.work_type, created=t.created, request_type=t.request_type, unclear=cls.unclear,
-                        injection=safe.injection, injection_reasons=safe.injection_reasons,
-                        extra_pool=[p for p in (batch_pool or {}).get(cls.service, []) if p[1] != t.id])
-        run_agent(self.ret, st, use_llm=self.llm_on)
-        stage["agent"] = (time.perf_counter() - t0) * 1000
-        if st.mode.startswith("llm"):
-            versions["agent"] = "agent.v1"
+        def agent_stage() -> AgentState:
+            t0 = time.perf_counter()
+            st = AgentState(ticket_id=t.id, masked_text=safe.text, summary=safe.summary, service=cls.service, team=cls.team,
+                            work_type=cls.work_type, created=t.created, request_type=t.request_type, unclear=cls.unclear,
+                            injection=safe.injection, injection_reasons=safe.injection_reasons,
+                            extra_pool=[p for p in (batch_pool or {}).get(cls.service, []) if p[1] != t.id])
+            run_agent(self.ret, st, use_llm=self.llm_on and self.s.agent_mode == "llm")
+            stage["agent"] = (time.perf_counter() - t0) * 1000
+            if st.mode.startswith("llm"):
+                versions["agent"] = "agent.v1"
+            return st
+
+        if par:
+            with ThreadPoolExecutor(max_workers=2) as ex:
+                fp, fa = _submit(ex, priority_stage), _submit(ex, agent_stage)
+                pr, st = fp.result(), fa.result()
+        else:
+            pr, st = priority_stage(), agent_stage()
 
         # ---- flags ----------------------------------------------------------------------------
         best_kb = st.kb_hits[0].score if st.kb_hits else 0.0
@@ -163,25 +206,35 @@ class Triage:
                       duplicate=bool(dup_parent), injection=safe.injection, low_confidence=conf < self.s.confidence_floor,
                       pii=safe.redaction_count > 0)
 
-        # ---- resolution (status policy + note) -----------------------------------------------
-        t0 = time.perf_counter()
-        pb_hits = self.ret.resolution_playbook(safe.text, service=cls.service, k=3)
-        same = [h for h in pb_hits if cls.service in (h.meta.get("services") or [])]
-        best_pb = same[0] if same and same[0].score >= PB_MIN else None
-        status, status_why = R.decide_status(cls, flags, text_all, bool(best_pb), dup_parent)
-        refs = R.extract_refs(safe.text)
-        note, note_src = self._resolution_note(t, cls, safe, status, best_pb, same, st, refs, dup_parent, versions, notes)
-        stage["resolution"] = (time.perf_counter() - t0) * 1000
+        # ---- resolution (status policy + note) || draft --------------------------------------
+        def resolution_stage() -> tuple[str, str, str, str]:
+            t0 = time.perf_counter()
+            pb_hits = self.ret.resolution_playbook(safe.text, service=cls.service, k=3)
+            same = [h for h in pb_hits if cls.service in (h.meta.get("services") or [])]
+            best_pb = same[0] if same and same[0].score >= PB_MIN else None
+            status, why = R.decide_status(cls, flags, text_all, bool(best_pb), dup_parent)
+            refs = R.extract_refs(safe.text)
+            note, src = self._resolution_note(t, cls, safe, status, best_pb, same, st, refs, dup_parent, versions, notes)
+            stage["resolution"] = (time.perf_counter() - t0) * 1000
+            return status, why, note, src
+
+        def draft_stage() -> Draft:
+            t0 = time.perf_counter()
+            d = self._draft(t, cls, safe, st, flags, best_kb, versions, notes)
+            stage["draft"] = (time.perf_counter() - t0) * 1000
+            return d
+
+        if par:
+            with ThreadPoolExecutor(max_workers=2) as ex:
+                fr, fd = _submit(ex, resolution_stage), _submit(ex, draft_stage)
+                (status, status_why, note, note_src), draft = fr.result(), fd.result()
+        else:
+            (status, status_why, note, note_src), draft = resolution_stage(), draft_stage()
 
         # ---- assignee -------------------------------------------------------------------------
-        assignee, why = self.assigner.pick(cls.service, t.id + safe.text, commit=commit_assign)
+        assignee, why = (self.assigner.pick(cls.service, t.id + safe.text, commit=commit_assign) if assign else (None, ""))
 
-        # ---- draft -----------------------------------------------------------------------------
-        t0 = time.perf_counter()
-        draft = self._draft(t, cls, safe, st, flags, best_kb, versions, notes)
-        stage["draft"] = (time.perf_counter() - t0) * 1000
-
-        result = TriageResult(
+        return TriageResult(
             ticket_id=t.id, work_type=cls.work_type, service=cls.service, team=cls.team, assignee=assignee, assignee_reason=why,
             urgency=pr.urgency, impact=pr.impact, priority=pr.priority, resolution=status,
             resolution_note=safe.restore(note), resolution_source=note_src, confidence=conf, flags=flags,
@@ -190,7 +243,6 @@ class Triage:
             mode=("hybrid" if self.llm_on and cls.source != "rules" else "llm" if self.llm_on else "offline"),
             prompt_versions=versions, notes=notes + [f"status: {status_why}"] + safe.warnings, stage_ms={k: round(v, 1) for k, v in stage.items()},
         )
-        return result
 
     # ------------------------------------------------------------ resolution note
     def _resolution_note(self, t, cls, safe, status, best_pb, same, st, refs, dup_parent, versions, notes) -> tuple[str, str]:
@@ -255,7 +307,7 @@ class Triage:
                 from .llm_tasks import llm_draft
                 ctx_blocks = [f"[{h.meta.get('cite')}] {h.text[:400]}" for h in st.kb_hits[:4]]
                 ctx_blocks += [f"(previously approved reply for the same pattern) {e[:400]}" for e in examples]
-                text, ver = llm_draft(safe.text, ctx_blocks, lang, cls.service)
+                text, steps, ver = llm_draft(safe.text, ctx_blocks, lang, cls.service)
                 versions["draft"] = ver
                 if text.strip() == "INSUFFICIENT_EVIDENCE":
                     base.insufficient_evidence, base.text = True, "INSUFFICIENT_EVIDENCE"
@@ -263,8 +315,10 @@ class Triage:
                     cov = D.citation_coverage(text)
                     if cov >= 0.9:
                         base.text, base.citation_coverage = text, cov
+                        if steps:
+                            base.next_steps = steps
                     else:
-                        notes.append(f"LLM draft rejected: citation coverage {cov:.2f} < 0.9; deterministic draft used")
+                        notes.append(f"LLM draft rejected: citation coverage {cov:.2f} < 0.9 after one repair pass; deterministic draft used")
             except (LLMError, LLMUnavailable) as e:
                 notes.append(f"LLM draft unavailable ({str(e)[:70]}): deterministic draft used")
         elif examples and not base.insufficient_evidence:
@@ -286,28 +340,44 @@ class Triage:
         return res
 
     def run_batch(self, tickets: list[Ticket]) -> list[TriageResult]:
-        """Two passes so alert storms inside the batch can be correlated (same predicted service, 4h window)."""
-        t_start = time.perf_counter()
-        ctxs, pool = [], {}
-        for t in tickets:
+        """Two passes so alert storms inside the batch can be correlated (same predicted service, 4h window).
+        With an LLM, several tickets run concurrently; assignment is applied afterwards in ticket order (deterministic)."""
+        workers = max(1, self.s.batch_workers) if self.llm_on else 1
+
+        def prep(t: Ticket):
+            t0 = time.perf_counter()
             with track() as u:
                 c = self.prepare(t)
-            ctxs.append((c, u))
+            return c, u, time.perf_counter() - t0
+
+        def run_map(fn, items):
+            if workers == 1:
+                return [fn(i) for i in items]
+            with ThreadPoolExecutor(max_workers=workers) as ex:
+                return list(ex.map(lambda i: contextvars.copy_context().run(fn, i), items))
+
+        prepped = run_map(prep, tickets)
+        pool: dict = {}
+        for (c, _u, _s), t in zip(prepped, tickets):
             dt = _parse_dt(t.created)
             if dt and (t.status or "open").lower() in ("open", "in progress"):
                 pool.setdefault(c.cls.service, []).append((dt, t.id, t.summary, c.safety.text))
-        out = []
-        for c, u1 in ctxs:
+
+        def fin(item):
+            c, u1, s1 = item
             t1 = time.perf_counter()
             with track() as u2:
-                res = self.finish(c, pool)
-            res.latency_ms = round(c.stage_ms.get("safety", 0) + c.stage_ms.get("classify_rules", 0) + c.stage_ms.get("classify_llm", 0)
-                                   + (time.perf_counter() - t1) * 1000, 1)
+                res = self.finish(c, pool, assign=False)
+            res.latency_ms = round((s1 + (time.perf_counter() - t1)) * 1000, 1)
             res.cost_usd = round(u1.cost_usd + u2.cost_usd, 6)
             res.tokens_in, res.tokens_out = u1.tokens_in + u2.tokens_in, u1.tokens_out + u2.tokens_out
             res.llm_calls = u1.log + u2.log
+            return res
+
+        results = run_map(fin, prepped)
+        for (c, _u, _s), res in zip(prepped, results):        # deterministic, in-order assignment
+            res.assignee, res.assignee_reason = self.assigner.pick(res.service, c.ticket.id + c.safety.text)
             if self.store:
                 self.store.save_ticket(c.ticket, redacted_text=c.safety.text)
                 self.store.save_result(res)
-            out.append(res)
-        return out
+        return results

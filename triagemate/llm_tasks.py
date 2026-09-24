@@ -50,6 +50,16 @@ class LLMClassification(BaseModel):
     def _svc(cls, v: str) -> str:
         return normalise_service(v)
 
+    @field_validator("work_type", "summary_implies", "description_implies", mode="before")
+    @classmethod
+    def _wt(cls, v):
+        s = str(v or "").strip().lower()
+        if s in ("incident", "inc"):
+            return "Incident"
+        if s in ("service request", "request", "service_request", "sr"):
+            return "Service Request"
+        return "unknown" if s in ("", "unknown", "none", "n/a", "unclear") else v
+
 
 def catalogue_block() -> str:
     lines = []
@@ -84,11 +94,31 @@ def llm_classify(masked_summary: str, masked_description: str, masked_comments: 
 
 
 # ------------------------------------------------------------------ 7.2 urgency / impact extraction
+_U_ALIAS = {"highest": "critical", "urgent": "critical", "very high": "critical", "normal": "medium", "informational": "lowest", "minimal": "lowest"}
+_I_ALIAS = {"highest": "major", "widespread": "major", "major / widespread": "major", "major/widespread": "major", "high": "significant",
+            "large": "significant", "significant / large": "significant", "significant/large": "significant", "medium": "moderate",
+            "limited": "moderate", "moderate / limited": "moderate", "moderate/limited": "moderate", "low": "minor", "localized": "minor",
+            "minor / localized": "minor", "minor/localized": "minor", "lowest": "none", "no direct impact": "none", "information": "none",
+            "no impact": "none", "no direct impact / information": "none"}
+
+
 class LLMUrgencyImpact(BaseModel):
     urgency: Literal["critical", "high", "medium", "low", "lowest"]
     impact: Literal["major", "significant", "moderate", "minor", "none"]
     urgency_evidence: str = ""
     impact_evidence: str = ""
+
+    @field_validator("urgency", mode="before")
+    @classmethod
+    def _u(cls, v):
+        s = str(v or "").strip().lower()
+        return _U_ALIAS.get(s, s)
+
+    @field_validator("impact", mode="before")
+    @classmethod
+    def _i(cls, v):
+        s = str(v or "").strip().lower()
+        return _I_ALIAS.get(s, s)
 
 
 _U = {"critical": "highest", "high": "high", "medium": "medium", "low": "low", "lowest": "lowest"}
@@ -110,8 +140,8 @@ def llm_resolution_note(masked_text: str, service: str, work_type: str, playbook
     ctx = (f"{wrap_data(masked_text, 'ticket')}\n{wrap_data(chr(10).join(f'{i+1}. {t}' for i, t in enumerate(playbook)) or 'none', 'playbook')}\n"
            f"{wrap_data(chr(10).join(kb) or 'none', 'kb')}\nservice: {service}\nwork_type: {work_type}\nresolution_status: {status}\n"
            f"identifiers_to_reuse: {', '.join(refs) or 'none'}")
-    res = get_client().chat([{"role": "system", "content": p.text}, {"role": "user", "content": ctx}],
-                            model=None, temperature=0.2, max_tokens=220, name="resolution_note")
+    res = get_client("draft").chat([{"role": "system", "content": p.text}, {"role": "user", "content": ctx}],
+                            temperature=0.2, max_tokens=220, name="resolution_note")
     text = re.sub(r"\s+", " ", (res["content"] or "").strip())
     if not text:
         raise LLMError("empty resolution note")
@@ -121,22 +151,37 @@ def llm_resolution_note(masked_text: str, service: str, work_type: str, playbook
 
 
 # ------------------------------------------------------------------ 7.3 draft / 7.4 clarification
-def llm_draft(masked_text: str, context_blocks: list[str], language: str, service: str) -> tuple[str, str]:
+class LLMDraft(BaseModel):
+    reply: str
+    next_steps: list[str] = Field(default_factory=list)
+
+
+def llm_draft(masked_text: str, context_blocks: list[str], language: str, service: str) -> tuple[str, list[str], str]:
+    """Reply + internal next steps as typed JSON. If sentences lack citations, ONE repair pass names them (Sec. 6.8: no
+    citation, no claim); the pipeline still validates coverage and falls back to the deterministic draft."""
+    from .draft import citation_coverage, uncited_sentences
     p = load_prompt("draft.v1")
     ctx = f"{wrap_data(masked_text, 'ticket')}\n{wrap_data(chr(10).join(context_blocks) or 'none', 'context')}\nreply_language: {language}\nservice: {service}"
-    res = get_client().chat([{"role": "system", "content": p.text}, {"role": "user", "content": ctx}],
-                            model=get_client().s.draft_model, temperature=0.3, max_tokens=400, name="draft")
-    text = (res["content"] or "").strip()
+    client = get_client("draft")
+    out = client.chat_json(p.text, ctx, LLMDraft, max_tokens=600, temperature=0.3, name="draft")
+    text = out.reply.strip()
     if not text:
         raise LLMError("empty draft")
-    return text, p.version
+    if text != "INSUFFICIENT_EVIDENCE":
+        missing = uncited_sentences(text) + uncited_sentences("\n".join(out.next_steps))
+        if missing:
+            fix = ctx + "\n\nYour previous answer had factual sentences without a citation id at their end:\n" + "\n".join(f"- {m[:140]}" for m in missing[:6]) \
+                  + "\nRewrite the JSON so that EVERY factual sentence ends with a citation id."
+            out = client.chat_json(p.text, fix, LLMDraft, max_tokens=600, temperature=0.2, name="draft_repair")
+            text = out.reply.strip() or text
+    return text, [s.strip() for s in out.next_steps if s.strip()], p.version
 
 
 def llm_clarification(masked_text: str, language: str) -> tuple[str, str]:
     p = load_prompt("clarification.v1")
-    res = get_client().chat([{"role": "system", "content": p.text},
+    res = get_client("draft").chat([{"role": "system", "content": p.text},
                              {"role": "user", "content": f"{wrap_data(masked_text, 'ticket')}\nreply_language: {language}"}],
-                            model=get_client().s.draft_model, temperature=0.2, max_tokens=250, name="clarification")
+                            temperature=0.2, max_tokens=250, name="clarification")
     text = (res["content"] or "").strip()
     if not text:
         raise LLMError("empty clarification")

@@ -81,12 +81,13 @@ class AgentTools:
         self.r, self.st = retriever, st
 
     def search_kb(self, query: str, service: str | None = None) -> str:
-        hits = self.r.search_kb(query or self.st.summary, service=service or self.st.service, k=5)
+        # retrieval is always grounded in the (masked) ticket text; the model's own query string is only logged
+        hits = self.r.search_kb(self.st.masked_text, service=self.st.service, k=5)
         self.st.kb_hits = hits
         return "; ".join(f"{h.meta.get('cite', h.id)} {h.meta.get('section', '')} ({h.score:.2f})" for h in hits[:4]) or "no results"
 
     def find_similar_tickets(self, query: str) -> str:
-        res = self.r.find_similar_tickets(query or self.st.summary, service=self.st.service, k=3)
+        res = self.r.find_similar_tickets(self.st.masked_text, service=self.st.service, k=3)
         self.st.similar = res
         return "; ".join(f"{r['summary']} (sim {r['score']}, {r['tickets_with_same_text']} tickets)" for r in res) or "none"
 
@@ -97,10 +98,16 @@ class AgentTools:
         return "; ".join(f"{r['id']} ({r['gap_hours']}h earlier, sim {r['similarity']})" for r in res) or "no similar open ticket on this service in the last 4h"
 
     def request_clarification(self, questions: list[str]) -> str:
+        # Tools only RECOMMEND; the deterministic quality gate decides. A model misled by a template match must not turn a
+        # perfectly actionable ticket into a question machine (Sec. 6.2: over-flagging is a failure mode).
+        if not self.st.unclear:
+            return "rejected: the quality gate found enough information to act on this ticket - do not ask for clarification; finish with your answer"
         self.st.clarification = [str(q) for q in (questions or [])][:3]
         return f"recommended {len(self.st.clarification)} clarification question(s)"
 
     def escalate_to_human(self, reason: str) -> str:
+        if not (self.st.injection or self.st.unclear):
+            return "rejected: no instruction-like content and no unclear input was detected - escalation is not needed; finish with your answer"
         self.st.escalation = str(reason)[:300]
         return "escalation recommended"
 
@@ -159,7 +166,7 @@ def _run_llm(tools: AgentTools, st: AgentState) -> None:
                 {"role": "user", "content": wrap_data(st.masked_text, "ticket") + "\n" + wrap_data(meta, "intake_metadata")}]
     st.mode = "llm"
     while st.calls < TOOL_BUDGET:
-        res = client.chat(messages, model=client.s.classify_model, temperature=0.0, max_tokens=300,
+        res = client.chat(messages, temperature=0.0, max_tokens=300,
                           tools=TOOL_SCHEMAS, name="agent_step")
         if not res["tool_calls"]:
             break

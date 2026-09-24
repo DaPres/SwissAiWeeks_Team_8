@@ -1,17 +1,19 @@
 """Provider-agnostic LLM layer (Sec. 4.11 design rule): every provider speaks the OpenAI-compatible API, so the
 provider is a *config value*. No provider quirk leaks into business logic.
 
-Supported (via LLM_PROVIDER):  openai | apertus | local | azure   -> OpenAI-style /chat/completions
-                               anthropic                          -> native Messages API (adapter below)
+Providers (LLM_PROVIDER, or per role with CLASSIFY_PROVIDER / DRAFT_PROVIDER):
+   openai | apertus (Swisscom Swiss AI Platform) | local (Ollama / LM Studio) | azure   -> OpenAI-style /chat/completions
+   anthropic                                                                              -> official SDK, see llm_anthropic.py
 Guarantees:
   * every call is timed, token-counted and priced (per-ticket ``track()`` context) -> real cost-per-ticket metric
   * structured output: JSON mode when the provider supports it, tolerant extraction otherwise, Pydantic validation,
     one repair retry with the validation error appended (Sec. 4.2)
-  * retries with backoff on 429/5xx, plus a circuit breaker so a dead provider never stalls the demo:
-    callers catch ``LLMUnavailable`` and use their deterministic fallback.
+  * client-side throttle (Apertus allows 5 requests/s), Retry-After honoured, retries with backoff on 429/5xx, and a circuit
+    breaker so a dead provider never stalls the demo: callers catch ``LLMUnavailable`` and use their deterministic fallback.
 """
 from __future__ import annotations
 
+import atexit
 import contextvars
 import hashlib
 import json
@@ -20,7 +22,6 @@ import threading
 import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any, Optional, Type, TypeVar
 
 import httpx
@@ -48,14 +49,16 @@ class Usage:
     latency_ms: float = 0.0
     cost_usd: float = 0.0
     log: list[dict] = field(default_factory=list)
+    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False, compare=False)
 
     def add(self, name: str, tin: int, tout: int, ms: float, cost: float, model: str) -> None:
-        self.calls += 1
-        self.tokens_in += tin
-        self.tokens_out += tout
-        self.latency_ms += ms
-        self.cost_usd += cost
-        self.log.append({"call": name, "model": model, "in": tin, "out": tout, "ms": round(ms, 1), "usd": round(cost, 6)})
+        with self._lock:
+            self.calls += 1
+            self.tokens_in += tin
+            self.tokens_out += tout
+            self.latency_ms += ms
+            self.cost_usd += cost
+            self.log.append({"call": name, "model": model, "in": tin, "out": tout, "ms": round(ms, 1), "usd": round(cost, 6)})
 
 
 _current: contextvars.ContextVar[Optional[Usage]] = contextvars.ContextVar("triage_usage", default=None)
@@ -132,26 +135,79 @@ class _Breaker:
                 self.fails = 0
 
 
+class _Throttle:
+    """Minimum spacing between requests (e.g. 4 rps for Swisscom's 5 req/s limit). Thread-safe."""
+
+    def __init__(self, rps: float):
+        self.interval = 1.0 / rps if rps and rps > 0 else 0.0
+        self.next_at = 0.0
+        self.lock = threading.Lock()
+
+    def wait(self) -> None:
+        if not self.interval:
+            return
+        with self.lock:
+            now = time.monotonic()
+            delay = max(0.0, self.next_at - now)
+            self.next_at = max(now, self.next_at) + self.interval
+        if delay:
+            time.sleep(delay)
+
+
+
+def _placeholder(ann: Any) -> Any:
+    from typing import Literal, get_args, get_origin
+    origin, args = get_origin(ann), get_args(ann)
+    if ann is bool:
+        return True
+    if ann is int:
+        return 0
+    if ann is float:
+        return 0.5
+    if ann is str:
+        return "<string>"
+    if origin is Literal:
+        return " | ".join(str(a) for a in args)          # e.g. "critical | high | medium | low | lowest": pick exactly one
+    if origin in (list, set, tuple):
+        return [_placeholder(args[0]) if args else "<string>"]
+    if origin is not None and type(None) in args:         # Optional[X]
+        return _placeholder(next(a for a in args if a is not type(None)))
+    return "<value>"
+
+
+def _example(model_cls: Type[BaseModel]) -> dict:
+    """An example *instance* (not a JSON schema) - models imitate schema keywords ("title", "type") if you show them one."""
+    return {name: _placeholder(f.annotation) for name, f in model_cls.model_fields.items()}
+
+
 # ------------------------------------------------------------------ client
 class LLMClient:
-    def __init__(self, settings: Settings | None = None, transport: httpx.BaseTransport | None = None):
+    def __init__(self, settings: Settings | None = None, transport: httpx.BaseTransport | None = None,
+                 provider: str | None = None, role: str = "classify"):
         self.s = settings or get_settings()
+        self.role = role
+        self.provider = (provider or self.s.role_provider(role)).lower()
+        self.cfg = self.s.profile(self.provider)
         self.transport = transport
         self.breaker = _Breaker()
+        self.throttle = _Throttle(self.cfg.rps)
         self._http: httpx.Client | None = None
+        self._anth = None
         self._json_mode_ok = True
         self._embed_cache: dict[str, list[float]] = {}
         self._cache_file = self.s.outputs_dir / "cache" / "embeddings.json"
         self._cache_dirty = 0
+        self._last_flush = time.monotonic()
+        atexit.register(self._flush_cache, True)
 
     # ---- config ---------------------------------------------------------
     @property
     def enabled(self) -> bool:
-        return self.s.llm_enabled
+        return (not self.s.triage_offline) and self.cfg.enabled
 
     @property
-    def provider(self) -> str:
-        return self.s.llm_provider.lower()
+    def default_model(self) -> str:
+        return self.s.model_for(self.role) if self.provider == self.s.role_provider(self.role) else self.cfg.model
 
     def _client(self) -> httpx.Client:
         if self._http is None:
@@ -161,29 +217,24 @@ class LLMClient:
     def _headers(self) -> dict[str, str]:
         h = {"Content-Type": "application/json"}
         if self.provider == "azure":
-            h["api-key"] = self.s.llm_api_key
-        elif self.provider == "anthropic":
-            h["x-api-key"] = self.s.llm_api_key
-            h["anthropic-version"] = "2023-06-01"
-        elif self.s.llm_api_key:
-            h["Authorization"] = f"Bearer {self.s.llm_api_key}"
+            h["api-key"] = self.cfg.api_key
+        elif self.cfg.api_key:
+            h["Authorization"] = f"Bearer {self.cfg.api_key}"
         return h
 
     def _chat_url(self) -> str:
         if self.provider == "azure":
-            ep = self.s.azure_openai_endpoint.rstrip("/")
-            dep = self.s.azure_openai_deployment or self.s.llm_model
-            return f"{ep}/openai/deployments/{dep}/chat/completions?api-version={self.s.azure_openai_api_version}"
-        if self.provider == "anthropic":
-            return (self.s.llm_base_url if "anthropic" in self.s.llm_base_url else "https://api.anthropic.com/v1").rstrip("/") + "/messages"
-        return self.s.llm_base_url.rstrip("/") + "/chat/completions"
+            ep = self.cfg.azure_endpoint.rstrip("/")
+            dep = self.cfg.azure_deployment or self.cfg.model
+            return f"{ep}/openai/deployments/{dep}/chat/completions?api-version={self.cfg.azure_api_version}"
+        return self.cfg.base_url.rstrip("/") + "/chat/completions"
 
     # ---- pricing --------------------------------------------------------
     def _cost(self, tin: int, tout: int) -> float:
         return tin / 1e6 * self.s.price_in_per_1m + tout / 1e6 * self.s.price_out_per_1m
 
-    # ---- raw request with retries ---------------------------------------
-    def _post(self, url: str, payload: dict, name: str) -> dict:
+    # ---- raw request with throttle / retries ----------------------------
+    def _post(self, url: str, payload: dict, name: str, headers: dict | None = None) -> dict:
         if not self.enabled:
             raise LLMUnavailable("no LLM configured")
         if not self.breaker.allow():
@@ -192,16 +243,20 @@ class LLMClient:
         client_error = False
         for attempt in range(self.s.llm_max_retries + 1):
             try:
-                r = self._client().post(url, headers=self._headers(), json=payload)
+                self.throttle.wait()
+                r = self._client().post(url, headers=headers or self._headers(), json=payload)
                 if r.status_code in (429, 500, 502, 503, 504):
+                    ra = r.headers.get("retry-after")
+                    if ra and ra.replace(".", "", 1).isdigit():
+                        time.sleep(min(float(ra), 5.0))
                     raise LLMError(f"HTTP {r.status_code}: {r.text[:200]}")
                 if r.status_code >= 400:
-                    # 4xx is a request/config problem, not transient - do not retry blindly and do not trip the breaker
+                    # 4xx is a request/config problem (bad key, bad model): do not retry blindly, do not trip the breaker
                     client_error = True
                     raise LLMError(f"HTTP {r.status_code}: {r.text[:300]}")
                 self.breaker.ok()
                 return r.json()
-            except (httpx.HTTPError, LLMError) as e:  # network or transient
+            except (httpx.HTTPError, LLMError) as e:
                 last = e
                 if client_error:
                     break
@@ -210,15 +265,14 @@ class LLMClient:
             self.breaker.fail()
         raise LLMUnavailable(f"{name}: {last}")
 
-    # ---- OpenAI-style chat ----------------------------------------------
+    # ---- chat (OpenAI-style, or Claude via the official SDK) ---------------
     def chat(self, messages: list[dict], *, model: str | None = None, temperature: float = 0.0, max_tokens: int = 400,
              json_mode: bool = False, tools: list[dict] | None = None, tool_choice: str | None = None,
              name: str = "chat") -> dict:
-        """Returns {"content": str|None, "tool_calls": [{"id","name","arguments"(dict)}], "usage": (in, out)}."""
-        model = model or self.s.classify_model
+        """Returns {"content": str|None, "tool_calls": [{"id","name","arguments"(dict)}], "usage": (in, out), "raw_message"}."""
+        model = model or self.default_model
         if self.provider == "anthropic":
-            return self._chat_anthropic(messages, model=model, temperature=temperature, max_tokens=max_tokens,
-                                        tools=tools, name=name)
+            return self._chat_anthropic(messages, model, max_tokens, tools, name)
         payload: dict[str, Any] = {"model": model, "messages": messages, "temperature": temperature, "max_tokens": max_tokens}
         if self.provider == "azure":
             payload.pop("model", None)
@@ -234,6 +288,9 @@ class LLMClient:
             if json_mode and "response_format" in payload and "HTTP 400" in str(e):
                 self._json_mode_ok = False            # provider rejects JSON mode: fall back to prompt-only JSON
                 payload.pop("response_format")
+                data = self._post(self._chat_url(), payload, name)
+            elif "max_tokens" in str(e) and "HTTP 400" in str(e) and "max_completion_tokens" in str(e):
+                payload["max_completion_tokens"] = payload.pop("max_tokens")   # newer OpenAI models
                 data = self._post(self._chat_url(), payload, name)
             else:
                 raise
@@ -257,71 +314,42 @@ class LLMClient:
             calls.append({"id": tc.get("id"), "name": fn.get("name"), "arguments": args})
         return {"content": msg.get("content"), "tool_calls": calls, "usage": (tin, tout), "raw_message": msg}
 
-    # ---- Anthropic Messages adapter (same return shape) -----------------
-    def _chat_anthropic(self, messages: list[dict], *, model: str, temperature: float, max_tokens: int,
-                        tools: list[dict] | None, name: str) -> dict:
-        system = "\n\n".join(m["content"] for m in messages if m["role"] == "system")
-        conv = []
-        for m in messages:
-            if m["role"] == "system":
-                continue
-            if m["role"] == "tool":
-                conv.append({"role": "user", "content": [{"type": "tool_result", "tool_use_id": m["tool_call_id"],
-                                                          "content": m["content"]}]})
-            elif m["role"] == "assistant" and m.get("tool_calls"):
-                blocks = []
-                if m.get("content"):
-                    blocks.append({"type": "text", "text": m["content"]})
-                for tc in m["tool_calls"]:
-                    blocks.append({"type": "tool_use", "id": tc["id"], "name": tc["function"]["name"],
-                                   "input": json.loads(tc["function"]["arguments"] or "{}")})
-                conv.append({"role": "assistant", "content": blocks})
-            else:
-                conv.append({"role": m["role"], "content": m["content"]})
-        payload: dict[str, Any] = {"model": model, "max_tokens": max_tokens, "messages": conv}
-        if system:
-            payload["system"] = system
-        if temperature is not None:
-            payload["temperature"] = temperature
-        if tools:
-            payload["tools"] = [{"name": t["function"]["name"], "description": t["function"].get("description", ""),
-                                 "input_schema": t["function"].get("parameters", {"type": "object", "properties": {}})} for t in tools]
+    def _chat_anthropic(self, messages, model, max_tokens, tools, name) -> dict:
+        if not self.enabled:
+            raise LLMUnavailable("no LLM configured")
+        if not self.breaker.allow():
+            raise LLMUnavailable("circuit breaker open (provider recently failing)")
+        from .llm_anthropic import AnthropicChat
+        if self._anth is None:
+            self._anth = AnthropicChat(self.cfg.api_key, self.cfg.base_url, self.s.llm_timeout, self.s.llm_max_retries, self.transport)
         t0 = time.perf_counter()
-        data = self._post(self._chat_url(), payload, name)
-        ms = (time.perf_counter() - t0) * 1000
-        text, calls = "", []
-        for b in data.get("content", []):
-            if b.get("type") == "text":
-                text += b.get("text", "")
-            elif b.get("type") == "tool_use":
-                calls.append({"id": b["id"], "name": b["name"], "arguments": b.get("input", {})})
-        usage = data.get("usage") or {}
-        tin, tout = int(usage.get("input_tokens", 0)), int(usage.get("output_tokens", 0))
+        try:
+            res = self._anth.chat(messages, model=model, max_tokens=max_tokens, tools=tools, name=name)
+        except LLMUnavailable:
+            self.breaker.fail()
+            raise
+        self.breaker.ok()
         u = _current.get()
         if u is not None:
-            u.add(name, tin, tout, ms, self._cost(tin, tout), model)
-        raw = {"role": "assistant", "content": text or None}
-        if calls:
-            raw["tool_calls"] = [{"id": c["id"], "type": "function",
-                                  "function": {"name": c["name"], "arguments": json.dumps(c["arguments"])}} for c in calls]
-        return {"content": text or None, "tool_calls": calls, "usage": (tin, tout), "raw_message": raw}
+            tin, tout = res["usage"]
+            u.add(name, tin, tout, (time.perf_counter() - t0) * 1000, self._cost(tin, tout), model)
+        return res
 
     # ---- structured output ----------------------------------------------
     def chat_json(self, system: str, user: str, model_cls: Type[T], *, model: str | None = None, max_tokens: int = 350,
                   temperature: float = 0.0, name: str = "task") -> T:
         """Typed contract: JSON -> validate -> one repair retry with the error appended -> raise (caller falls back)."""
-        schema_hint = json.dumps(model_cls.model_json_schema().get("properties", {}), ensure_ascii=False)
-        sys_full = f"{system}\n\nReturn ONLY a JSON object with these fields: {schema_hint}"
+        sys_full = (f"{system}\n\nReturn ONLY one JSON object shaped exactly like this example - replace every placeholder with a real value "
+                    f"(no schema keywords, no extra fields, no prose):\n{json.dumps(_example(model_cls), ensure_ascii=False)}")
         messages = [{"role": "system", "content": sys_full}, {"role": "user", "content": user}]
         err_note = ""
-        for attempt in range(2):
+        for _ in range(2):
             if err_note:
                 messages = messages + [{"role": "user", "content": f"Your previous answer was invalid ({err_note}). "
                                                                      f"Reply again with ONLY the corrected JSON object."}]
             res = self.chat(messages, model=model, temperature=temperature, max_tokens=max_tokens, json_mode=True, name=name)
             try:
-                obj = extract_json(res["content"] or "")
-                return model_cls.model_validate(obj)
+                return model_cls.model_validate(extract_json(res["content"] or ""))
             except (ValueError, ValidationError) as e:
                 err_note = str(e)[:300].replace("\n", " ")
                 messages = messages[:2] + [{"role": "assistant", "content": res["content"] or ""}]
@@ -337,52 +365,70 @@ class LLMClient:
             self._embed_cache = {}
 
     def embed(self, texts: list[str]) -> list[list[float]]:
-        if not self.enabled:
-            raise LLMUnavailable("no LLM configured")
+        ep = self.s.embed_profile()
+        if ep is None:
+            raise LLMUnavailable("no embedding provider configured")
         self._load_cache()
-        model = self.s.embed_model
-        keyf = lambda t: hashlib.sha1(f"{model}␟{t}".encode()).hexdigest()
+        model = ep.model or self.s.embed_model
+        keyf = lambda t: hashlib.sha1(f"{ep.provider}␟{model}␟{t}".encode()).hexdigest()
         missing = [t for t in texts if keyf(t) not in self._embed_cache]
-        base = (self.s.embed_base_url or self.s.llm_base_url).rstrip("/")
-        key = self.s.embed_api_key or self.s.llm_api_key
         for i in range(0, len(missing), 64):
             batch = missing[i:i + 64]
-            if self.provider == "azure":
-                url = f"{self.s.azure_openai_endpoint.rstrip('/')}/openai/deployments/{model}/embeddings?api-version={self.s.azure_openai_api_version}"
-                headers = {"api-key": key, "Content-Type": "application/json"}
+            if ep.provider == "azure":
+                url = f"{ep.azure_endpoint.rstrip('/')}/openai/deployments/{model}/embeddings?api-version={ep.azure_api_version}"
+                headers = {"api-key": ep.api_key, "Content-Type": "application/json"}
             else:
-                url = f"{base}/embeddings"
-                headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+                url = f"{ep.base_url.rstrip('/')}/embeddings"
+                headers = {"Authorization": f"Bearer {ep.api_key}", "Content-Type": "application/json"}
+            self.throttle.wait()
             r = self._client().post(url, headers=headers, json={"model": model, "input": batch})
             if r.status_code >= 400:
                 raise LLMUnavailable(f"embeddings HTTP {r.status_code}")
             for t, item in zip(batch, r.json()["data"]):
                 self._embed_cache[keyf(t)] = item["embedding"]
                 self._cache_dirty += 1
-        if self._cache_dirty:
-            try:
-                self._cache_file.parent.mkdir(parents=True, exist_ok=True)
-                self._cache_file.write_text(json.dumps(self._embed_cache), encoding="utf-8")
-                self._cache_dirty = 0
-            except OSError:
-                pass
+        self._flush_cache()
         return [self._embed_cache[keyf(t)] for t in texts]
 
+    def _flush_cache(self, force: bool = False) -> None:
+        """Write the embedding cache at most every 20 s (it is several MB) and once more at exit."""
+        if not self._cache_dirty or (not force and time.monotonic() - self._last_flush < 20):
+            return
+        try:
+            self._cache_file.parent.mkdir(parents=True, exist_ok=True)
+            self._cache_file.write_text(json.dumps(self._embed_cache), encoding="utf-8")
+            self._cache_dirty = 0
+            self._last_flush = time.monotonic()
+        except OSError:
+            pass
 
-_CLIENT: LLMClient | None = None
+
+# ------------------------------------------------------------------ client registry
+_CLIENTS: dict[tuple[str, str], LLMClient] = {}
+_OVERRIDE: LLMClient | None = None
 
 
-def get_client(force: bool = False) -> LLMClient:
-    global _CLIENT
-    if _CLIENT is None or force:
-        _CLIENT = LLMClient()
-    return _CLIENT
+def get_client(role: str = "classify", force: bool = False) -> LLMClient:
+    """One client per (provider, role): 'classify' covers classification / extraction / agent steps, 'draft' covers drafts,
+    clarifications and resolution notes. Lets you run e.g. OpenAI for classification and Apertus for drafting."""
+    if _OVERRIDE is not None:
+        return _OVERRIDE
+    s = get_settings()
+    key = (s.role_provider(role), role)
+    if force or key not in _CLIENTS:
+        _CLIENTS[key] = LLMClient(s, role=role)
+    return _CLIENTS[key]
 
 
 def set_client(client: LLMClient | None) -> None:
-    """Tests / eval can inject a client wired to a mock transport."""
-    global _CLIENT
-    _CLIENT = client
+    """Tests / eval can inject a client (e.g. wired to a mock transport) for every role."""
+    global _OVERRIDE
+    _OVERRIDE = client
+    _CLIENTS.clear()
+
+
+def any_llm_enabled() -> bool:
+    return get_client("classify").enabled or get_client("draft").enabled
 
 
 # ------------------------------------------------------------------ prompt loading (versioned in git)

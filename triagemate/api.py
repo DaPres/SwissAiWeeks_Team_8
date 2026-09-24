@@ -142,10 +142,12 @@ def to_ticket(payload: SimpleTicket) -> Ticket:
 # ------------------------------------------------------------------ endpoints
 @app.get("/health")
 def health() -> dict:
-    ret, c = _state.get("ret") or get_retriever(), get_client()
-    s = get_settings()
-    return {"status": "ok", "version": __version__, "mode": "llm" if c.enabled else "offline", "llm_enabled": c.enabled,
-            "provider": s.llm_provider, "model": s.llm_model if c.enabled else None, "embedder": ret.embedder.name,
+    ret = _state.get("ret") or get_retriever()
+    cc, dc = get_client("classify"), get_client("draft")
+    on = cc.enabled or dc.enabled
+    return {"status": "ok", "version": __version__, "mode": "llm" if on else "offline", "llm_enabled": on,
+            "provider": cc.provider, "model": cc.default_model if cc.enabled else None,
+            "draft_provider": dc.provider, "draft_model": dc.default_model if dc.enabled else None, "embedder": ret.embedder.name,
             "kb_chunks": len(ret.kb_docs), "kb_articles": len({d.meta["article"] for d in ret.kb_docs}), "playbook_entries": len(ret.playbook),
             "training_tickets": len(ret.training), "index_build_seconds": round(ret.build_seconds, 2)}
 
