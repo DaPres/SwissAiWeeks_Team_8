@@ -62,7 +62,10 @@ Every provider whose credentials are in `.env` is enabled and offered in the **G
 | `apertus` | `APERTUS_API_KEY` | `APERTUS_MODEL` | via Foundry/OpenAI | — |
 
 Embeddings come from one model for all providers (Foundry, else OpenAI, else offline), so switching the chat model
-never invalidates the knowledge base. `LLM_MODE` picks the default provider; `--llm` does the same for `app.evaluate`.
+never invalidates the knowledge base.
+Rate limits: on HTTP 429 every provider backs off and retries (`LLM_RATE_LIMIT_RETRIES`, default 6; 2s doubling to
+60s, or the server's `Retry-After`), and Apertus is capped at `APERTUS_MAX_CONCURRENCY` (default 2) calls in flight
+across the whole app, so parallel eval runs queue instead of tripping its quota. `LLM_MODE` picks the default provider; `--llm` does the same for `app.evaluate`.
 With nothing configured (or `LLM_MODE=mock`) everything runs offline with keyword embeddings and heuristic triage.
 
 ```bash
@@ -81,6 +84,7 @@ values in the challenge are treated as unverified hints.
 uv run python -m app.evaluate                          # picks up jira_hackathon_blind_eval_challenge_*.json from the repo root
 uv run python -m app.evaluate --input ../x.json --limit 3 --workers 1
 uv run python -m app.evaluate --llm apertus            # compare chat providers
+uv run python -m app.evaluate --top-k 8 --min-score 0.4   # retrieval settings (min-score 0 = keep every match)
 LLM_MODE=mock uv run python -m app.evaluate --db /tmp/eval.db   # offline smoke run
 ```
 
@@ -88,6 +92,15 @@ Writes to `out/eval/`: `<runId>.results.json` (challenge format — the submissi
 (rationale, knowledge matches, fields changed vs input) and `<runId>.report.md` (summary table + consistency checks:
 priority matches the matrix, team matches the catalog, assignee present). Only 10 services have a documented expert
 in the history; tickets routed elsewhere are left unassigned in the owning team's queue and listed in the report.
+
+### From the UI (Evaluation tab)
+
+The **Evaluation** tab runs the same engine (`evaluate()`) from the browser: add one or more configurations
+(model, top K knowledge items, minimum RAG similarity), start them together and watch every ticket land live over
+server-sent events. Selected runs are compared side by side — per-field agreement with a baseline run, priority
+distribution, re-routing and consistency issues, and a per-ticket grid that highlights disagreements and expands to
+the resolution notes, rationale and knowledge used. Each run's `results.json` (submission format) can be downloaded.
+Runs are stored in `data/evals/` next to the knowledge base.
 
 ## API
 
@@ -103,4 +116,10 @@ in the history; tickets routed elsewhere are left unassigned in the owning team'
 | GET | `/api/curation/clusters/{id}` | cluster detail + highest-scoring sample tickets |
 | POST | `/api/curation/run` | `{threshold?}` re-analyse the history (re-publishes at the current level) |
 | POST | `/api/curation/publish` | `{min_level: gold\|silver\|bronze}` replace history knowledge with clusters ≥ level |
+| GET | `/api/eval/options` | challenge files, defaults, challenge tickets as reported |
+| POST | `/api/eval/runs` | `{configs: [{llm, top_k, min_score, label}], limit?, workers?, challenge?}` → one run per config |
+| GET | `/api/eval/runs`, `/api/eval/runs/{id}` | run summaries / one run with per-ticket results |
+| GET | `/api/eval/stream` | SSE: `snapshot`, then `run` (progress), `ticket` (`{runId, index, ticket}`), `deleted` |
+| POST / DELETE | `/api/eval/runs/{id}/cancel`, `/api/eval/runs/{id}` | stop / delete a run |
+| GET | `/api/eval/runs/{id}/results.json` | download in the challenge submission format |
 | GET | `/api/stats`, `/api/health`, `/api/catalog` | |

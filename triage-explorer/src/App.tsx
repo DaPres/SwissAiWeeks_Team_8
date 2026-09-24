@@ -7,11 +7,12 @@ import { Plan } from './Plan'
 import { Assist } from './Assist'
 import { Queue } from './Queue'
 import { Curation } from './Curation'
+import { Eval } from './Eval'
 import { api, type Catalog } from './api'
 
 const data = raw as unknown as Insights
 
-const TABS = ['Get help', 'Agent queue', 'Data curation', 'Overview', 'Services & experts', 'Priority matrix', 'Challenge tickets', 'Plan'] as const
+const TABS = ['Get help', 'Agent queue', 'Data curation', 'Evaluation', 'Overview', 'Services & experts', 'Priority matrix', 'Challenge tickets', 'Plan'] as const
 type Tab = (typeof TABS)[number]
 
 const PAGE_COPY: Record<Tab, { title: string; description: string }> = {
@@ -21,6 +22,7 @@ const PAGE_COPY: Record<Tab, { title: string; description: string }> = {
   },
   'Agent queue': { title: 'The agent workspace', description: 'Review incoming tickets, resolve issues, and turn each answer into shared knowledge.' },
   'Data curation': { title: 'Knowledge that gets better', description: 'Explore and publish the resolution patterns that make support more useful over time.' },
+  Evaluation: { title: 'Measure every change', description: 'Run the blind-eval challenge with different models and retrieval settings, watch it live and compare the answers side by side.' },
   Overview: { title: 'The support landscape', description: 'A clear view of ticket patterns, data quality, and the opportunities behind the challenge.' },
   'Services & experts': { title: 'Find the right expertise', description: 'See how services connect to teams and the people who know how to resolve them.' },
   'Priority matrix': { title: 'Priority, made consistent', description: 'Explore the urgency and impact rules behind a dependable triage decision.' },
@@ -65,7 +67,7 @@ export default function App() {
       </div>
       <nav className="tabs" role="tablist">
         {TABS.map((t, i) => (
-          <button key={t} role="tab" aria-selected={tab === t} className={`tab${tab === t ? ' active' : ''}${i === 3 ? ' tab-divider' : ''}`} onClick={() => setTab(t)}>
+          <button key={t} role="tab" aria-selected={tab === t} className={`tab${tab === t ? ' active' : ''}${i === 4 ? ' tab-divider' : ''}`} onClick={() => setTab(t)}>
             {t}
           </button>
         ))}
@@ -73,6 +75,7 @@ export default function App() {
       {tab === 'Get help' && <Assist catalog={catalog} onFoldChange={setHeroFolded} />}
       {tab === 'Agent queue' && <Queue catalog={catalog} />}
       {tab === 'Data curation' && <Curation />}
+      {tab === 'Evaluation' && <Eval />}
       {tab === 'Overview' && <Overview data={data} />}
       {tab === 'Services & experts' && <Services data={data} />}
       {tab === 'Priority matrix' && <Matrix data={data} />}
