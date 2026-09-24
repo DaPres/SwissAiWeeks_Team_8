@@ -1,5 +1,5 @@
 @baseUrl = https://api.typesafe.ai
-@apiKey = apikey_22472d92f92b0c1b4fabb915006310fae021_089823cf614011908029b8c7fc6528dd73c948712b7fa0dbcc672cb4014a5872
+@apiKey = {{$dotenv JEV_API_KEY}}
 
 ### Jev
 POST {{baseUrl}}/v1/systemone
