@@ -1,32 +1,32 @@
 {
-  "created": "2026-09-24T20:15:20",
-  "llm_enabled": false,
-  "provider": null,
-  "model": null,
-  "draft_provider": null,
-  "embedder": "tfidf-lsa",
+  "created": "2026-09-24T20:13:03",
+  "llm_enabled": true,
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "draft_provider": "openai",
+  "embedder": "api:text-embedding-3-small",
   "stress": {
     "n": 106,
-    "mode": "offline",
-    "wall_seconds": 5.3,
+    "mode": "hybrid",
+    "wall_seconds": 189.12,
     "routing_accuracy_team": 1.0,
     "service_accuracy": 1.0,
     "work_type_accuracy": 1.0,
     "work_type_accuracy_misleading_subset": 1.0,
     "clarification": {
-      "precision": 0.857,
+      "precision": 1.0,
       "recall": 1.0,
-      "f1": 0.923,
-      "f2_recall_weighted": 0.968,
+      "f1": 1.0,
+      "f2_recall_weighted": 1.0,
       "tp": 6,
-      "fp": 1,
+      "fp": 0,
       "fn": 0
     },
-    "priority_consistency_runs": 5,
-    "priority_consistency": 1.0,
+    "priority_consistency_runs": 2,
+    "priority_consistency": 0.991,
     "priority_consistency_note": "raw model stability, decision cache bypassed; with the cache on, re-triage of identical text is idempotent",
     "priority_matrix_consistent": 1.0,
-    "priority_sanity": 0.733,
+    "priority_sanity": 0.967,
     "citation_coverage": 1.0,
     "injection": {
       "resistance": 1.0,
@@ -42,9 +42,9 @@
       "f1": 1.0
     },
     "draft_language_matches_ticket": 1.0,
-    "latency_ms_p50": 47.1,
-    "latency_ms_p95": 67.9,
-    "mean_cost_usd": 0.0,
+    "latency_ms_p50": 7199.1,
+    "latency_ms_p95": 10912.3,
+    "mean_cost_usd": 0.002454,
     "per_category": {
       "paraphrase": {
         "n": 20,
@@ -111,12 +111,12 @@
   },
   "validation": {
     "n": 37,
-    "mode": "offline",
-    "wall_seconds": 1.78,
-    "routing_accuracy_team": 0.946,
-    "service_accuracy": 0.946,
-    "work_type_accuracy": 0.946,
-    "work_type_accuracy_misleading_subset": 0.75,
+    "mode": "hybrid",
+    "wall_seconds": 71.6,
+    "routing_accuracy_team": 1.0,
+    "service_accuracy": 1.0,
+    "work_type_accuracy": 1.0,
+    "work_type_accuracy_misleading_subset": 1.0,
     "clarification": {
       "precision": 1.0,
       "recall": 1.0,
@@ -130,7 +130,7 @@
     "priority_consistency": 1.0,
     "priority_consistency_note": "raw model stability, decision cache bypassed; with the cache on, re-triage of identical text is idempotent",
     "priority_matrix_consistent": 1.0,
-    "priority_sanity": 0.758,
+    "priority_sanity": 0.909,
     "citation_coverage": 1.0,
     "injection": {
       "resistance": 1.0,
@@ -146,27 +146,27 @@
       "f1": 0.0
     },
     "draft_language_matches_ticket": 0.0,
-    "latency_ms_p50": 47.9,
-    "latency_ms_p95": 60.2,
-    "mean_cost_usd": 0.0,
+    "latency_ms_p50": 7459.0,
+    "latency_ms_p95": 9703.2,
+    "mean_cost_usd": 0.002728,
     "per_category": {
       "val_incident": {
         "n": 17,
-        "team_acc": 0.941,
-        "service_acc": 0.941,
-        "work_type_acc": 0.941
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
       },
       "val_request": {
         "n": 8,
-        "team_acc": 0.875,
-        "service_acc": 0.875,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
         "work_type_acc": 1.0
       },
       "val_misleading": {
         "n": 4,
         "team_acc": 1.0,
         "service_acc": 1.0,
-        "work_type_acc": 0.75
+        "work_type_acc": 1.0
       },
       "val_multilingual": {
         "n": 4,
@@ -193,100 +193,7 @@
         "work_type_acc": 1.0
       }
     },
-    "failures": [
-      {
-        "id": "V006",
-        "category": "val_incident",
-        "summary": "Sanctions hit still open after approval",
-        "gold": [
-          "Incident",
-          "Risk & Compliance Monitoring"
-        ],
-        "pred": [
-          "Service Request",
-          "Risk & Compliance Monitoring"
-        ],
-        "top": [
-          [
-            "Risk & Compliance Monitoring",
-            7.6
-          ],
-          [
-            "CRM & Client Portal",
-            0.8
-          ]
-        ]
-      },
-      {
-        "id": "V015",
-        "category": "val_incident",
-        "summary": "Position export to the risk engine did not run",
-        "gold": [
-          "Incident",
-          "SimCorp Dimension"
-        ],
-        "pred": [
-          "Incident",
-          "Risk & Compliance Monitoring"
-        ],
-        "top": [
-          [
-            "Risk & Compliance Monitoring",
-            3.5
-          ],
-          [
-            "SimCorp Dimension",
-            3.0
-          ]
-        ]
-      },
-      {
-        "id": "V018",
-        "category": "val_request",
-        "summary": "Add Marco to the month-end reviewers",
-        "gold": [
-          "Service Request",
-          "Portfolio Accounting"
-        ],
-        "pred": [
-          "Service Request",
-          "Identity & Access Management"
-        ],
-        "top": [
-          [
-            "Identity & Access Management",
-            2.7
-          ],
-          [
-            "Portfolio Accounting",
-            1.2
-          ]
-        ]
-      },
-      {
-        "id": "V028",
-        "category": "val_misleading",
-        "summary": "License question",
-        "gold": [
-          "Incident",
-          "Tax Reporting"
-        ],
-        "pred": [
-          "Service Request",
-          "Tax Reporting"
-        ],
-        "top": [
-          [
-            "Tax Reporting",
-            13.951
-          ],
-          [
-            "Client Reporting",
-            0.8
-          ]
-        ]
-      }
-    ]
+    "failures": []
   },
   "holdout": {
     "n_unique_texts": 173,

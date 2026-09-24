@@ -72,6 +72,57 @@ the loader accepts either name, an envelope, a bare list or JSONL, and the outpu
 ## Results
 
 <!-- RESULTS:START -->
+### With an LLM (hybrid mode: rules + model, arbitrated)
+
+Mode: **hybrid** - stress set n=106, priority consistency over 2 runs.
+
+| Metric | Holdout (text-only) | Stress set | Baseline |
+|---|---|---|---|
+| Service / team routing accuracy | 1.000 (leakage) | 1.000 | TF-IDF+LogReg 1.000 (leakage) |
+| Work type, misleading subset | - | 1.000 | title keywords 0.960 |
+| Work type, overall | 0.994 | 1.000 | majority 0.803 |
+| Priority consistency (2 runs) | - | 0.991 | trained classifier 0.493 = majority 0.497 |
+| Priority == matrix(urgency, impact) | - | 1.000 | training labels 0.390 (chance) |
+| Clarification recall / F1 / F2 | - | 1.000 / 1.000 / 1.000 | - |
+| Injection resistance (FPR) | - | 1.000 (0.000) | - |
+| PII redaction recall | - | 1.000 | - |
+| Citation coverage (EN replies) | - | 1.0 | target >= 0.9 |
+| Duplicate linking P / R | - | 1.000 / 1.000 | - |
+| Latency p50 / p95 (ms/ticket) | - | 7199.1 / 10912.3 | target p95 < 6000 |
+| Cost per ticket (USD) | - | 0.002454 | - |
+
+#### Post-freeze validation set (n=37, written after the rules were frozen; hybrid numbers are post prompt-fix, see first-run files)
+
+| Metric | Value |
+|---|---|
+| Service / team routing accuracy | 1.000 / 1.000 |
+| Work type accuracy (all / misleading-title subset) | 1.000 / 1.000 |
+| Clarification recall / precision | 1.000 / 1.000 |
+| Injection resistance (false-positive rate) | 1.000 (0.000) |
+| Priority sanity / matrix-consistent | 0.909 / 1.000 |
+
+#### Per category (stress set)
+
+| Category | n | team acc | service acc | work-type acc |
+|---|---|---|---|---|
+| paraphrase | 20 | 1.000 | 1.000 | 1.000 |
+| german | 20 | 1.000 | 1.000 | 1.000 |
+| french | 12 | 1.000 | 1.000 | 1.000 |
+| service_omitted | 8 | 1.000 | 1.000 | 1.000 |
+| misleading_title | 10 | 1.000 | 1.000 | 1.000 |
+| pii | 10 | 1.000 | 1.000 | 1.000 |
+| injection | 8 | 1.000 | 1.000 | 1.000 |
+| benign | 6 | 1.000 | 1.000 | 1.000 |
+| alert_storm | 8 | 1.000 | 1.000 | 1.000 |
+| unclear | 4 | 1.000 | 1.000 | 1.000 |
+
+#### Honesty notes
+
+- The holdout number is meaningless as a generalisation estimate: 100% of test texts also occur in the training data (only 173 unique texts).
+- The stress set and the domain ontology share an author; expect an independent annotator to score lower.
+- Assignee, resolution outcome and resolution time in the training data are statistically independent of everything else, so they are not evaluated as predictions.
+- `Confidence` is a heuristic composite, not a calibrated probability.
+
 ### Offline (deterministic rules only, no key needed)
 
 Mode: **offline** - stress set n=106, priority consistency over 5 runs.
@@ -85,13 +136,13 @@ Mode: **offline** - stress set n=106, priority consistency over 5 runs.
 | Priority == matrix(urgency, impact) | - | 1.000 | training labels 0.390 (chance) |
 | Clarification recall / F1 / F2 | - | 1.000 / 0.923 / 0.968 | - |
 | Injection resistance (FPR) | - | 1.000 (0.000) | - |
-| PII redaction recall | - | 0.963 | - |
+| PII redaction recall | - | 1.000 | - |
 | Citation coverage (EN replies) | - | 1.0 | target >= 0.9 |
 | Duplicate linking P / R | - | 1.000 / 1.000 | - |
-| Latency p50 / p95 (ms/ticket) | - | 5.3 / 7.3 | target p95 < 6000 |
+| Latency p50 / p95 (ms/ticket) | - | 47.1 / 67.9 | target p95 < 6000 |
 | Cost per ticket (USD) | - | 0.0 | - |
 
-#### Post-freeze validation set (n=37, run once on the frozen system before any change)
+#### Post-freeze validation set (n=37, written after the rules were frozen; hybrid numbers are post prompt-fix, see first-run files)
 
 | Metric | Value |
 |---|---|
@@ -129,10 +180,30 @@ Mode: **offline** - stress set n=106, priority consistency over 5 runs.
 
 * **Holdout** is reported only because the plan asks for it: every test text is also in the training data (leakage).
 * The **stress set** (106 tickets) and the ontology share an author and were used while developing - treat it as a regression suite, not an unbiased estimate.
-* The **post-freeze validation set** (37 tickets, new phrasing, Italian, misleading titles) was written after the rules were frozen and run **once** before any change;
-  its first-run offline result is stored in `eval/validation_first_run_offline.json`. It is the number to quote for generalisation. It is still single-author.
+* The **post-freeze validation set** (37 tickets, new phrasing, Italian, misleading titles) was written after the rules were frozen and run **once** before any change.
+  First-run results are stored in `eval/validation_first_run_offline.json` (routing **0.946**) and `eval/validation_first_run_hybrid.json` (routing **0.892**, work type 1.000).
+  The hybrid first run exposed a *prompt* gap: the LLM filed "give X access to <service>" requests under Identity & Access Management, whereas the training data files all 1,984
+  access/removal/licence tickets under the service named in the title. Classification prompt v1.1 now states that convention. Because the validation set informed that fix,
+  the hybrid validation numbers in the table below are **post-fix and no longer untouched**; the first-run numbers above are the ones to quote for generalisation. It is still single-author.
 * `Confidence` is a heuristic composite (classifier, retrieval score, source agreement) - **not** a calibrated probability.
 * Assignee accuracy is not measured: in the data it is independent of everything.
+
+## Intake API - enrich an incident, and help while the user types
+
+Built for a separate front-end (full contract and examples in [`docs/INTAKE_HANDOFF.md`](docs/INTAKE_HANDOFF.md), JSON Schemas in `docs/intake_schema.json`).
+
+```python
+from triagemate.intake import enrich_incident, assist
+e = enrich_incident("Hi, my order is stuck in pending approval")   # only `description` is required; other Jira fields are used as hints
+e.to_json()          # service, team, assignee, urgency/impact/priority, flags, optional clientResolution / expertResolution, draft reply ...
+assist("Hi i am facing a transaction")                              # typing assist, ~5 ms, offline
+```
+
+* `POST /api/intake/enrich` (+ `/batch`) - fully enriched incident. `clientResolution` = what the requester can try or prepare right now (only when it is safe: never during an outage of a critical service);
+  `expertResolution` = resolution note, ready-to-paste Jira comment, next steps and similar past tickets for the assigned team.
+* `POST /api/intake/assist` and `WS /ws/intake/assist` - while the user types: likely issue statements, word completion, follow-up questions, and *sometimes* a cited quick fix.
+  `mode: "smart"` adds LLM-written suggestions on masked text with a 1.6 s budget and silent fallback.
+* Reference page: `/static/intake_demo.html`. CLI: `python -m triagemate.cli intake --text "..."`, `assist --text "..."`.
 
 ## Safety (Sec. 4.10 of the plan, all tested)
 
@@ -146,8 +217,8 @@ An injected ticket triggers escalation **before** any model runs: zero bytes of 
 ## Cost and latency (measured, not estimated)
 
 Every model call is timed, token-counted and priced; the UI dashboard and `results_*.json` report p50/p95 latency and mean cost per ticket.
-With `gpt-4.1-mini` a full ticket costs about **0.4 US cents** and takes ~10-15 s end to end from a laptop (independent calls run in parallel; a batch runs 4 tickets at once);
-the offline engine takes ~30 ms. `AGENT_MODE=policy` skips the LLM tool loop for a faster path.
+With `gpt-4.1-mini` a full ticket costs about **0.25 US cents** and takes p50 ~7 s / p95 ~11 s end to end from a laptop (independent calls run in parallel; a batch runs 4 tickets at once);
+the offline engine takes well under 0.1 s. `AGENT_MODE=policy` skips the LLM tool loop for a faster path.
 
 ## Jury criteria -> where to look
 
@@ -169,18 +240,18 @@ The stress and validation sets are hand-written for this event. No generic boile
 
 * KB and ontology are synthetic / author-written; a real pilot ingests the real KB and calibrates the impact rules with Swiss Life's own priority policy (question list in `docs/PITCH.md`).
 * Urgency/impact are judgement calls; the rules and the LLM disagree on about half of the challenge tickets (routing agrees on all 20). Priority is always matrix-consistent, but expert agreement is unmeasured.
-* Offline German/French coverage relies on a hand-written ontology; the LLM path generalises better.
+* Offline German/French coverage relies on a hand-written ontology. The LLM improved work-type accuracy (validation 1.000 vs 0.946) and priority sanity (0.909 vs 0.758) but, before the prompt fix above, was *worse* at routing (0.892 vs 0.946) - hence the arbitration between rules and model instead of trusting either alone.
 * Confidence is uncalibrated; calibration needs analyst judgements collected by the feedback loop.
 * Not built: fine-tuning (would memorise 173 templates), cross-encoder reranking (unnecessary with ~26 articles), real Jira write-back (read-only demo by design).
 
 ## Repo map
 
 ```
-triagemate/   safety, catalogue, classify, priority, retrieve, agent, draft, resolutions, assign, llm(+anthropic), llm_tasks, pipeline, store, api, cli, analyze, challenge
+triagemate/   safety, catalogue, classify, priority, retrieve, agent, draft, resolutions, assign, llm(+anthropic), llm_tasks, pipeline, intake, assist, store, api, cli, analyze, challenge
 prompts/      versioned prompt files (recorded with every result)
 kb/           26 synthetic knowledge-base articles          scripts/  generate_kb, smoke_llm, update_readme_results
 eval/         stress_set, validation_set, run_eval, results_*.json, dataset_analysis.json
-ui/           single-page analyst UI                         docs/     ARCHITECTURE.md, PITCH.md
-tests/        catalogue, matrix, safety, classifier, retrieval, LLM plumbing, privacy invariant, API, challenge runner, repo hygiene
+ui/           analyst UI + intake_demo.html (typing assist) docs/     ARCHITECTURE.md, PITCH.md, INTAKE_HANDOFF.md, intake_schema.json
+tests/        catalogue, matrix, safety, classifier, retrieval, LLM plumbing, privacy invariant, API, challenge runner, intake + typing assist, repo hygiene
 data/         the organiser's files + 5 demo tickets
 ```

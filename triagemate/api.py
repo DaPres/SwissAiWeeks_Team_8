@@ -24,8 +24,9 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import Body, FastAPI, HTTPException, Query
+from fastapi import Body, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.concurrency import run_in_threadpool
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -56,6 +57,8 @@ def _init() -> None:
     for agent, n in store.open_load().items():
         assigner.session_load[agent] += n
     _state.update(ret=ret, store=store, tri=Triage(retriever=ret, assigner=assigner, store=store))
+    from .intake import set_default_triage
+    set_default_triage(_state["tri"])                       # enriched incidents also show up in the analyst queue
 
 
 @asynccontextmanager
@@ -64,6 +67,9 @@ async def lifespan(app: FastAPI):
     yield
     if "store" in _state:
         _state["store"].close()
+    _state.clear()
+    from .intake import set_default_triage
+    set_default_triage(None)                                # do not leave a pipeline that points at a closed store behind
 
 
 app = FastAPI(title="TriageMate", version=__version__, lifespan=lifespan,
@@ -292,6 +298,78 @@ def dataset_analysis():
     if not p.exists():
         raise HTTPException(404, "run `python -m triagemate.cli analyze` first")
     return JSONResponse(json.loads(p.read_text(encoding="utf-8")))
+
+
+# ------------------------------------------------------------------ intake handoff + typing assist (for the UI team)
+@app.post("/api/intake/enrich", tags=["intake"])
+def intake_enrich(body: Any = Body(...), use_llm: Optional[bool] = Query(None, alias="useLlm"), preview: bool = Query(False)):
+    """Only ``description`` is required. Returns the fully enriched incident (camelCase) with optional clientResolution / expertResolution.
+    ``preview=true`` does not count the suggested assignee towards agent load."""
+    from .intake import enrich_incident, normalise_incident
+    try:
+        inc = normalise_incident(body)
+    except Exception as e:  # noqa: BLE001 - validation errors become a clean 422
+        raise HTTPException(422, f"invalid incident: {str(e)[:300]}")
+    with _lock:
+        out = enrich_incident(inc, use_llm=use_llm, commit_assign=not preview, triage=tri())
+    return JSONResponse(out.to_json())
+
+
+@app.post("/api/intake/enrich/batch", tags=["intake"])
+def intake_enrich_batch(body: Any = Body(...), use_llm: Optional[bool] = Query(None, alias="useLlm")):
+    from .intake import enrich_many, normalise_incident
+    items = body.get("incidents") if isinstance(body, dict) else body
+    if not isinstance(items, list) or not items:
+        raise HTTPException(422, "expected a non-empty list of incidents or {\"incidents\": [...]}")
+    try:
+        incs = [normalise_incident(i) for i in items]
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(422, f"invalid incident: {str(e)[:300]}")
+    with _lock:
+        outs = enrich_many(incs, use_llm=use_llm, triage=tri())
+    return JSONResponse({"count": len(outs), "incidents": [o.to_json() for o in outs]})
+
+
+class AssistRequest(BaseModel):
+    text: str = Field(default="", max_length=4000)
+    mode: str = Field(default="fast", pattern="^(fast|smart)$")
+    context: Optional[dict] = None
+
+
+@app.post("/api/intake/assist", tags=["intake"])
+def intake_assist(req: AssistRequest):
+    """Call on every debounced keystroke. ``mode=fast`` is offline (a few ms); ``mode=smart`` adds LLM suggestions with a 1.6 s budget."""
+    from .assist import assist
+    return JSONResponse(assist(req.text, mode=req.mode, context=req.context).to_json())
+
+
+@app.get("/api/intake/starters", tags=["intake"])
+def intake_starters():
+    """Common ways to begin, for an empty input box."""
+    from .assist import starters
+    return JSONResponse({"suggestions": [s.to_json() for s in starters()]})
+
+
+@app.get("/api/intake/schema", tags=["intake"])
+def intake_schema():
+    from .intake import json_schemas
+    return JSONResponse(json_schemas())
+
+
+@app.websocket("/ws/intake/assist")
+async def ws_intake_assist(ws: WebSocket):
+    """Send {"text": "...", "mode": "fast"} on every keystroke; every message gets one assist response back (same JSON as the REST call).
+    Messages that arrive while a response is being computed are answered in order; the client should simply ignore stale answers by echoing ``text``."""
+    from .assist import assist
+    await ws.accept()
+    try:
+        while True:
+            msg = await ws.receive_json()
+            text = str(msg.get("text", ""))[:4000]
+            mode = msg.get("mode", "fast") if msg.get("mode") in ("fast", "smart") else "fast"
+            await ws.send_json((await run_in_threadpool(assist, text, mode=mode)).to_json())     # smart mode may wait on a model
+    except WebSocketDisconnect:
+        return
 
 
 # ------------------------------------------------------------------ UI

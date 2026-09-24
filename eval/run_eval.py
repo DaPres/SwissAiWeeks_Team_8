@@ -236,7 +236,7 @@ def render_markdown(res: dict) -> str:
          "## Per category (stress set)", "", "| Category | n | team acc | service acc | work-type acc |", "|---|---|---|---|---|"]
     if v:
         L[L.index("## Per category (stress set)"):L.index("## Per category (stress set)")] = [
-            f"## Post-freeze validation set (n={v['n']}, run once on the frozen system before any change)", "",
+            f"## Post-freeze validation set (n={v['n']}, written after the rules were frozen; hybrid numbers are post prompt-fix, see first-run files)", "",
             "| Metric | Value |", "|---|---|",
             f"| Service / team routing accuracy | {v['routing_accuracy_team']:.3f} / {v['service_accuracy']:.3f} |",
             f"| Work type accuracy (all / misleading-title subset) | {v['work_type_accuracy']:.3f} / {v['work_type_accuracy_misleading_subset']:.3f} |",

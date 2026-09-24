@@ -3,11 +3,20 @@ from __future__ import annotations
 
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 Level = Literal["lowest", "low", "medium", "high", "highest"]
 LEVELS: tuple[str, ...] = ("lowest", "low", "medium", "high", "highest")
 WorkType = Literal["Incident", "Service Request"]
+
+
+class CamelModel(BaseModel):
+    """Base for the UI-facing contracts: Python field names are snake_case, JSON is camelCase (workType, clientResolution ...)."""
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    def to_json(self) -> dict:
+        return self.model_dump(mode="json", by_alias=True)
 
 
 class Ticket(BaseModel):

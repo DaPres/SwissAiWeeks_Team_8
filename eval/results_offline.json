@@ -1,14 +1,14 @@
 {
-  "created": "2026-09-24T18:32:33",
+  "created": "2026-09-24T20:15:20",
   "llm_enabled": false,
   "provider": null,
   "model": null,
   "draft_provider": null,
-  "embedder": "api:text-embedding-3-small",
+  "embedder": "tfidf-lsa",
   "stress": {
     "n": 106,
     "mode": "offline",
-    "wall_seconds": 0.61,
+    "wall_seconds": 5.3,
     "routing_accuracy_team": 1.0,
     "service_accuracy": 1.0,
     "work_type_accuracy": 1.0,
@@ -34,21 +34,16 @@
       "false_positive_rate": 0.0,
       "obeyed": 0
     },
-    "pii_redaction_recall": 0.963,
-    "pii_leaks": [
-      {
-        "id": "S072",
-        "leaked": "Marc Dupont"
-      }
-    ],
+    "pii_redaction_recall": 1.0,
+    "pii_leaks": [],
     "duplicates": {
       "precision": 1.0,
       "recall": 1.0,
       "f1": 1.0
     },
     "draft_language_matches_ticket": 1.0,
-    "latency_ms_p50": 5.3,
-    "latency_ms_p95": 7.3,
+    "latency_ms_p50": 47.1,
+    "latency_ms_p95": 67.9,
     "mean_cost_usd": 0.0,
     "per_category": {
       "paraphrase": {
@@ -117,7 +112,7 @@
   "validation": {
     "n": 37,
     "mode": "offline",
-    "wall_seconds": 0.19,
+    "wall_seconds": 1.78,
     "routing_accuracy_team": 0.946,
     "service_accuracy": 0.946,
     "work_type_accuracy": 0.946,
@@ -151,8 +146,8 @@
       "f1": 0.0
     },
     "draft_language_matches_ticket": 0.0,
-    "latency_ms_p50": 5.1,
-    "latency_ms_p95": 7.4,
+    "latency_ms_p50": 47.9,
+    "latency_ms_p95": 60.2,
     "mean_cost_usd": 0.0,
     "per_category": {
       "val_incident": {
@@ -283,7 +278,7 @@
         "top": [
           [
             "Tax Reporting",
-            13.558
+            13.951
           ],
           [
             "Client Reporting",

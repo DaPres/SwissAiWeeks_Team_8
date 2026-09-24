@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intake demo</title>
+<style>
+  :root{--bg:#f5f6f8;--panel:#fff;--ink:#14212b;--muted:#5d6b78;--line:#e2e6ea;--brand:#1f6f6b;--chip:#eef2f4;--ai:#5b3fa0}
+  @media (prefers-color-scheme:dark){:root{--bg:#0f1417;--panel:#171e23;--ink:#e6edf2;--muted:#93a3b0;--line:#27323a;--chip:#212b32;--brand:#5cb9b0;--ai:#b9a6ff}}
+  *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,sans-serif}
+  main{max-width:820px;margin:0 auto;padding:24px 16px}
+  h1{font-size:20px;margin:0 0 4px} p.sub{color:var(--muted);margin:0 0 16px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  .box{position:relative}
+  textarea{width:100%;min-height:120px;border:1px solid var(--line);border-radius:10px;padding:12px;font:inherit;color:var(--ink);background:var(--panel);resize:vertical}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .chip{background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:14px;text-align:left}
+  .chip:hover{border-color:var(--brand)} .chip small{color:var(--muted);margin-left:6px}
+  .tip{border-left:4px solid var(--ai);background:var(--chip);border-radius:8px;padding:10px 14px;margin:10px 0}
+  .tip b{color:var(--ai)} ol{margin:6px 0 0 18px;padding:0}
+  .ask{color:var(--muted);font-size:13px;margin:2px 0} .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  button{background:var(--brand);color:#fff;border:0;border-radius:8px;padding:9px 16px;font:inherit;font-weight:600;cursor:pointer}
+  button.sec{background:var(--chip);color:var(--ink)} .muted{color:var(--muted);font-size:13px}
+  pre{background:var(--chip);border-radius:8px;padding:12px;overflow:auto;font-size:12px;max-height:420px}
+  .badge{display:inline-block;border-radius:6px;padding:1px 8px;font-size:12px;font-weight:700;background:var(--brand);color:#fff;margin-right:6px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Describe your issue</h1>
+  <p class="sub">Reference implementation of the intake handoff: live suggestions while typing (WebSocket, with REST fallback), then one call to enrich the incident.</p>
+
+  <div class="panel">
+    <div class="box"><textarea id="txt" placeholder="Start typing, e.g. “Hi i am facing a transaction …”" autofocus></textarea></div>
+    <div class="muted" id="hint"></div>
+    <div class="chips" id="chips"></div>
+    <div id="quick"></div>
+    <div id="asks"></div>
+    <div class="row" style="margin-top:10px"><button id="send">Submit incident</button><button class="sec" id="clear">Clear</button><span class="muted" id="msg"></span></div>
+  </div>
+
+  <div class="panel" id="result" hidden>
+    <div id="summary"></div>
+    <div id="client"></div>
+    <details><summary class="muted">Full enriched JSON (what your UI receives)</summary><pre id="json"></pre></details>
+  </div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s), esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const txt = $("#txt");
+let ws = null, wsOk = false, timer = null, lastSent = "";
+
+/* ---- live suggestions: WebSocket first, REST fallback ------------------------------------------------ */
+function connect() {
+  try {
+    ws = new WebSocket((location.protocol === "https:" ? "wss://" : "ws://") + location.host + "/ws/intake/assist");
+    ws.onopen = () => { wsOk = true; ask(); };
+    ws.onmessage = e => { const r = JSON.parse(e.data); if (r.text === txt.value) render(r); };   // ignore stale answers
+    ws.onclose = ws.onerror = () => { wsOk = false; };
+  } catch { wsOk = false; }
+}
+async function ask() {
+  const text = txt.value; lastSent = text;
+  if (wsOk && ws.readyState === 1) { ws.send(JSON.stringify({ text, mode: "fast" })); return; }
+  const r = await fetch("/api/intake/assist", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text, mode: "fast" }) });
+  const j = await r.json(); if (j.text === txt.value) render(j);
+}
+txt.addEventListener("input", () => { clearTimeout(timer); timer = setTimeout(ask, 120); });       // debounce ~120 ms
+txt.addEventListener("keydown", e => {                                                              // Tab accepts the word completion
+  if (e.key === "Tab" && current?.wordCompletion) { e.preventDefault(); txt.value += current.wordCompletion; ask(); }
+});
+
+let current = null;
+function render(r) {
+  current = r;
+  $("#hint").textContent = r.stage === "empty" ? "Common ways to start:" :
+    r.likelyService ? `Looks like: ${r.likelyService.name} → ${r.likelyService.team} (${Math.round(r.likelyService.confidence * 100)}%)` +
+      (r.wordCompletion ? `  ·  Tab completes “…${r.wordCompletion}”` : "") : (r.wordCompletion ? `Tab completes “…${r.wordCompletion}”` : "Are you facing one of these?");
+  $("#chips").innerHTML = (r.suggestions || []).map((s, i) =>
+    `<button class="chip" data-i="${i}">${esc(s.text)}<small>${esc(s.service)}${s.hasQuickSolution ? " · tip available" : ""}</small></button>`).join("");
+  const q = r.quickSolution;                                                                        // shown only SOMETIMES
+  $("#quick").innerHTML = q ? `<div class="tip"><b>Quick fix you can try now</b> <small class="muted">(${esc(q.citations?.[0]?.id || "")}, ${Math.round(q.confidence * 100)}%)</small>
+      <ol>${q.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol><div class="muted" style="margin-top:6px">${esc(q.escalation)}</div></div>` : "";
+  $("#asks").innerHTML = (r.followUpQuestions || []).map(a => `<div class="ask">💡 ${esc(a)}</div>`).join("");
+}
+$("#chips").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if (!b || !current) return;
+  txt.value = current.suggestions[+b.dataset.i].text; txt.focus(); ask();
+});
+
+/* ---- submit: one call returns the fully enriched incident -------------------------------------------- */
+$("#send").onclick = async () => {
+  if (txt.value.trim().length < 3) { $("#msg").textContent = "Please describe the issue first."; return; }
+  $("#msg").textContent = "enriching…";
+  const r = await fetch("/api/intake/enrich", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ description: txt.value }) });
+  const d = await r.json(); $("#msg").textContent = r.ok ? "" : "error";
+  if (!r.ok) { $("#msg").textContent = JSON.stringify(d); return; }
+  $("#result").hidden = false; $("#json").textContent = JSON.stringify(d, null, 2);
+  $("#summary").innerHTML = `<div><span class="badge">${esc(d.priorityLabel)}</span><b>${esc(d.summary)}</b></div>
+    <div class="muted">${esc(d.workType)} · ${esc(d.service || "service not identified")} → ${esc(d.team)} · assignee ${esc(d.assignee || "-")} · confidence ${Math.round(d.confidence * 100)}%</div>` +
+    (d.escalation ? `<div class="tip"><b>Escalated for review</b><div>${esc(d.escalation.message)}</div></div>` : "") +
+    (d.clarification ? `<div class="tip"><b>We need a little more information</b><ol>${d.clarification.questions.map(q => `<li>${esc(q)}</li>`).join("")}</ol></div>` : "");
+  $("#client").innerHTML = d.clientResolution ? `<div class="tip"><b>${esc(d.clientResolution.title)}</b><ol>${d.clientResolution.steps.map(s => `<li>${esc(s)}</li>`).join("")}</ol><div class="muted">${esc(d.clientResolution.escalation)}</div></div>` : "";
+};
+$("#clear").onclick = () => { txt.value = ""; $("#result").hidden = true; ask(); };
+connect(); ask();
+</script>
+</body>
+</html>

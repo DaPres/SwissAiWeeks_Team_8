@@ -1,0 +1,179 @@
+{
+  "n": 37,
+  "mode": "hybrid",
+  "wall_seconds": 90.51,
+  "routing_accuracy_team": 0.892,
+  "service_accuracy": 0.892,
+  "work_type_accuracy": 1.0,
+  "work_type_accuracy_misleading_subset": 1.0,
+  "clarification": {
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "f2_recall_weighted": 1.0,
+    "tp": 2,
+    "fp": 0,
+    "fn": 0
+  },
+  "priority_consistency_runs": 1,
+  "priority_consistency": 1.0,
+  "priority_consistency_note": "raw model stability, decision cache bypassed; with the cache on, re-triage of identical text is idempotent",
+  "priority_matrix_consistent": 1.0,
+  "priority_sanity": 0.909,
+  "citation_coverage": 1.0,
+  "injection": {
+    "resistance": 1.0,
+    "n_injected": 1,
+    "false_positive_rate": 0.0,
+    "obeyed": 0
+  },
+  "pii_redaction_recall": 0.0,
+  "pii_leaks": [],
+  "duplicates": {
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0
+  },
+  "draft_language_matches_ticket": 0.0,
+  "latency_ms_p50": 9312.1,
+  "latency_ms_p95": 13874.8,
+  "mean_cost_usd": 0.002636,
+  "per_category": {
+    "val_incident": {
+      "n": 17,
+      "team_acc": 1.0,
+      "service_acc": 1.0,
+      "work_type_acc": 1.0
+    },
+    "val_request": {
+      "n": 8,
+      "team_acc": 0.5,
+      "service_acc": 0.5,
+      "work_type_acc": 1.0
+    },
+    "val_misleading": {
+      "n": 4,
+      "team_acc": 1.0,
+      "service_acc": 1.0,
+      "work_type_acc": 1.0
+    },
+    "val_multilingual": {
+      "n": 4,
+      "team_acc": 1.0,
+      "service_acc": 1.0,
+      "work_type_acc": 1.0
+    },
+    "val_unclear": {
+      "n": 2,
+      "team_acc": 1.0,
+      "service_acc": 1.0,
+      "work_type_acc": 1.0
+    },
+    "val_injection": {
+      "n": 1,
+      "team_acc": 1.0,
+      "service_acc": 1.0,
+      "work_type_acc": 1.0
+    },
+    "val_benign": {
+      "n": 1,
+      "team_acc": 1.0,
+      "service_acc": 1.0,
+      "work_type_acc": 1.0
+    }
+  },
+  "failures": [
+    {
+      "id": "V018",
+      "category": "val_request",
+      "summary": "Add Marco to the month-end reviewers",
+      "gold": [
+        "Service Request",
+        "Portfolio Accounting"
+      ],
+      "pred": [
+        "Service Request",
+        "Identity & Access Management"
+      ],
+      "top": [
+        [
+          "Identity & Access Management",
+          2.7
+        ],
+        [
+          "Portfolio Accounting",
+          1.2
+        ]
+      ]
+    },
+    {
+      "id": "V020",
+      "category": "val_request",
+      "summary": "Treasury intern needs cash system access",
+      "gold": [
+        "Service Request",
+        "Cash Management"
+      ],
+      "pred": [
+        "Service Request",
+        "Identity & Access Management"
+      ],
+      "top": [
+        [
+          "Cash Management",
+          15.5
+        ],
+        [
+          "Identity & Access Management",
+          1.5
+        ]
+      ]
+    },
+    {
+      "id": "V021",
+      "category": "val_request",
+      "summary": "Remove elections approval rights after transfer",
+      "gold": [
+        "Service Request",
+        "Corporate Actions"
+      ],
+      "pred": [
+        "Service Request",
+        "Identity & Access Management"
+      ],
+      "top": [
+        [
+          "Corporate Actions",
+          13.5
+        ],
+        [
+          "Identity & Access Management",
+          1.5
+        ]
+      ]
+    },
+    {
+      "id": "V023",
+      "category": "val_request",
+      "summary": "Read-only access for the external auditor",
+      "gold": [
+        "Service Request",
+        "Regulatory Reporting"
+      ],
+      "pred": [
+        "Service Request",
+        "Identity & Access Management"
+      ],
+      "top": [
+        [
+          "Regulatory Reporting",
+          6.0
+        ],
+        [
+          "Identity & Access Management",
+          1.5
+        ]
+      ]
+    }
+  ]
+}

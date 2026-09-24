@@ -44,6 +44,23 @@ def detect_intent(text: str, work_type: str) -> str:
     return "incident"
 
 
+_INTENT_WORDS = {
+    "access": re.compile(r"\b(access|entitlement|role|permission|profile)\b", re.I),
+    "license": re.compile(r"\blicen[sc]e", re.I),
+    "removal": re.compile(r"\b(remov|revok|deactivat|offboard)", re.I),
+    "provision": re.compile(r"\b(provision|mailbox|distribution|set up|created|site)\b", re.I),
+}
+
+
+def playbook_fits_intent(note: str, intent: str) -> bool:
+    """A historical note about a margin sweep must not become the resolution of an access request just because both mention 'Cash'.
+    Request intents (access / licence / removal / provision) reuse a note only when the note is about that kind of request."""
+    if intent in ("incident", "vendor_notice"):                 # ...and an incident must not reuse a request-fulfilment note
+        return not re.search(r"\b(provision\w*|licen[sc]e|granted|set up the shared|reclassified the ticket as a service request)\b", note, re.I)
+    rx = _INTENT_WORDS.get(intent)
+    return True if rx is None else bool(rx.search(note))
+
+
 # ------------------------------------------------------------------ note templates (authored from the KB procedures)
 INCIDENT_NOTE = {
     "Trading Platform": "Resolution: Isolated the fault to the affected execution connector, restarted the FIX session and replayed the queued messages after checking for duplicates; confirmed with the trading desk that orders and quotes flow normally again.",

@@ -94,6 +94,8 @@ class MockLLM:
                 args = {"query": "ticket"} if name in ("search_kb", "find_similar_tickets") else {}
                 return reply(None, [{"id": f"call{done}", "type": "function", "function": {"name": name, "arguments": json.dumps(args)}}])
             return reply("done")
+        if "describe an incident or request" in system:
+            return reply(json.dumps({"suggestions": ["My order is stuck in pending approval since this morning.", "The broker rejects my order."], "tip": ""}))
         if "triage classifier" in system:
             c = self.classification or {"summary_implies": "Incident", "description_implies": "Incident", "work_type": "Incident",
                                         "title_mismatch": False, "service": "Trading Platform", "service_confidence": 0.9,

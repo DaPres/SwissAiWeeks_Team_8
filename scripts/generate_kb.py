@@ -386,11 +386,99 @@ Tickets whose service is recorded as Emailed Support Tickets.
 ]
 
 
+# Client self-service: what the *requester* can try or prepare before/while the team works (synthetic, like the rest of the KB).
+# Kept as its own "## Client self-service" section so the intake feature can offer it as a quick solution.
+SELF_SERVICE = {
+    "KB-01": """Applies when: your trading screen freezes, quotes look stale or a single workstation cannot connect.
+- Reload your workstation session and check the connectivity indicator on the trading screen.
+- Try a second workstation or a colleague's login to see whether the problem is only on your machine.
+- Note the exact time and the venue or instrument affected and send it to us.
+""",
+    "KB-02": """Applies when: your order stays in pending approval, does not reach the broker or is routed to the wrong account.
+- Check with the approver that the order was really released; ask them to release it again if the status did not change.
+- Confirm that the broker account and clearing account selected on the order are the ones you normally trade with.
+- Enter one small test order; if it also stays pending, send us its order reference.
+""",
+    "KB-03": """Applies when: a broker confirmation or an allocation does not match your booking.
+- Compare quantity, price, trade date and account on your booking with the broker's confirmation.
+- If a reference or account differs, correct your booking and send the allocation again.
+- Send us the broker name, the adapter name and two example references of rejected messages.
+""",
+    "KB-04": """Applies when: a trade did not settle on the intended settlement date or the custodian shows it as unmatched.
+- Check the settlement instruction status in the settlement dashboard (matched, unmatched or pending).
+- If it is unmatched, verify that the counterparty's standing settlement instructions are current.
+- Send us the trade reference, the custodian and the intended settlement date.
+""",
+    "KB-05": """Applies when: a corporate action event looks wrong or an election cannot be entered.
+- Compare the event's record date, ex-date and option codes with the custodian's notification.
+- Note the event identifier and the election deadline and send both to us.
+""",
+    "KB-09": """Applies when: a cash balance, sweep or payment looks wrong.
+- Check the bank's statement cut-off time and the value date of the movement.
+- Compare the balance with yesterday's closing balance to see which movement explains the difference.
+- Send us the account, the currency and the booking date.
+""",
+    "KB-10": """Applies when: a compliance dashboard shows stale or wrong breach statuses.
+- Open the breach detail page: it refreshes independently of the overview screen and is usually current.
+- Refresh the dashboard (Ctrl+F5) after the latest rule run has finished.
+- Note two example breach identifiers and the time of the last rule update.
+""",
+    "KB-13": """Applies when: a generated client report or factsheet looks incomplete or has wrong figures.
+- Regenerate the report for a single client and check the reporting period and the entity selected.
+- Compare the result with the staging preview to see whether only the final PDF is affected.
+- Attach one example PDF and the batch date.
+""",
+    "KB-14": """Applies when: you need a tax reporting licence or a tax extract is empty.
+- Check that the reporting period, entity and fund filters of the extract are set correctly.
+- For a licence, send the user, the entity, the business justification and the tax team lead's approval.
+""",
+    "KB-15": """Applies when: an investor cannot log in to the client portal, sees an error page or documents are missing.
+- Ask the investor to use the "Forgot password" link and then a private browser window.
+- Clear the browser cache and cookies, or try another browser.
+- If it still fails, send the time of the attempt and the error text (never the password).
+""",
+    "KB-16": """Applies when: you are locked out, your password expired or multi-factor prompts keep failing.
+- Use the self-service password reset page.
+- Re-enrol your multi-factor device from the security-info page using your backup sign-in method.
+- After several failed attempts wait 15 minutes before trying again.
+- If none of this works, we reset your account once your identity is verified.
+""",
+    "KB-17": """Applies when: you get access denied on a site or library.
+- Use the "Request access" button on the site page and name the site owner.
+- Check that you are signed in with your company account and not a personal one.
+Applies when: files or folders do not synchronise or you cannot upload files.
+- Pause and resume synchronisation, then sign out and back in.
+- Check that the file name has no special characters and that the file is under the size limit.
+Applies when: a colleague or contractor has left and their access must be removed.
+- Send us the list of sites and the effective date so that all permissions can be removed.
+""",
+    "KB-18": """Applies when: your mailbox is full or you cannot receive new emails.
+- Archive or delete large items and empty the Deleted Items folder.
+- Check the mailbox size in your settings; new mail arrives again a few minutes after space has been freed.
+Applies when: the calendar does not sync with your phone or tablet.
+- Remove and re-add the account on the mobile device and restart Outlook.
+- Check that the mobile app is up to date and that the calendar is enabled in its sync settings.
+Applies when: a new shared mailbox or distribution list is not visible yet.
+- A new shared mailbox can take up to 60 minutes to appear; restart Outlook and use "Open shared mailbox".
+- Check that you are listed as a member; if not, ask the owner to add you.
+""",
+    "KB-20": """Applies when: you need access to any business or IT service.
+- Prepare the role profile you need, your business entity and the name of your approving manager.
+- Send all three with the request so that no follow-up is needed.
+""",
+    "KB-21": """Applies when: you need a licence for an application.
+- Prepare the user, the business entity, the justification and the approver.
+- Send them with the request; the licence is usually assigned once the approval is on the ticket.
+""",
+}
+
+
 def main() -> None:
     KB.mkdir(exist_ok=True)
     for aid, title, services, typ, body in ARTICLES:
+        extra = f"## Client self-service\n{SELF_SERVICE[aid]}" if aid in SELF_SERVICE else ""
         (KB / f"{aid}.md").write_text(
-            f"---\nid: {aid}\ntitle: {title}\nservices: {services}\ntype: {typ}\nsynthetic: true\n---\n# {title}\n\n{body}",
+            f"---\nid: {aid}\ntitle: {title}\nservices: {services}\ntype: {typ}\nsynthetic: true\n---\n# {title}\n\n{body.rstrip()}\n{extra}",
             encoding="utf-8",
         )
     print(f"{len(ARTICLES)} articles written to {KB}")

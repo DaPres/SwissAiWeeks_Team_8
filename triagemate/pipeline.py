@@ -220,6 +220,8 @@ class Triage:
             t0 = time.perf_counter()
             pb_hits = self.ret.resolution_playbook(safe.text, service=cls.service, k=3)
             same = [h for h in pb_hits if cls.service in (h.meta.get("services") or [])]
+            intent = R.detect_intent(text_all, cls.work_type)
+            same = [h for h in same if R.playbook_fits_intent(h.text, intent)]
             best_pb = same[0] if same and same[0].score >= PB_MIN else None
             status, why = R.decide_status(cls, flags, text_all, bool(best_pb), dup_parent)
             refs = R.extract_refs(safe.text)

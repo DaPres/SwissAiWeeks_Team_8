@@ -370,7 +370,10 @@ class Retriever:
                  [u["summary"] + "\n" + u["description"] for u in self.uniq]
         self.embedder = embedder or make_embedder()
         self.embedder.fit(corpus)
-        self.kb = HybridIndex(self.kb_docs, self.embedder)
+        self.ss_docs = [d for d in self.kb_docs if d.meta.get("section", "").startswith("client self-service")]
+        main_docs = [d for d in self.kb_docs if d not in self.ss_docs]      # main pipeline retrieval is unchanged by the self-service sections
+        self.kb = HybridIndex(main_docs, self.embedder)
+        self.selfservice = HybridIndex(self.ss_docs, self.embedder) if self.ss_docs else None
         self.pb_docs = [Doc(e.id, e.service, e.text, {"services": [e.service], "cite": e.id, "count": e.count})
                         for e in self.playbook]
         self.pb = HybridIndex(self.pb_docs, self.embedder) if self.pb_docs else None

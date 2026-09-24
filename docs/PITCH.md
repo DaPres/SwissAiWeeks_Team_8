@@ -12,7 +12,7 @@ Quote **measured** facts only; every estimate is labelled as an assumption. Numb
 >
 > [demo 2] This external e-mail tells the AI to escalate itself. It is **flagged, not obeyed**, and no model ever saw the text.
 >
-> On our stress and validation sets - paraphrased, German, French, misleading titles, injections - routing is [X] and [Y]; priority is always consistent with your matrix because the model supplies evidence and code applies the policy.
+> Tested on paraphrased, German, French, misleading-title and injection tickets: routing is 100% on our 106-ticket stress set (a regression suite we tuned on) and 94.6% offline / 89.2% with the LLM on the 37-ticket validation set on its first, untouched run (100% after a prompt fix we report separately); priority is always consistent with your matrix because the model supplies evidence and code applies the policy.
 > It runs on Swisscom's Apertus in Switzerland or on your Azure OpenAI, with one config line."
 
 ## Demo - five tickets, ~40 s (all in `data/demo_tickets.json`, button "Load demo tickets")
@@ -49,7 +49,7 @@ their average triage time (expert question 6); (2) integration: REST API behind 
 | Prompt injection? | Ticket text is delimited data; instruction-like content is detected (EN/DE/FR, hidden HTML, zero-width) **before** any model runs; tools are read-only; the worst case is a suggestion a human rejects. 8/8 stress injections and 1/1 validation injection escalated, 0 false positives on look-alike tickets. |
 | How does it integrate? | REST API (`/api/triage`, `/api/challenge/predict`), behind Jira Service Management, or the same tools in Semantic Kernel. |
 | Why not Copilot Studio? | It could sit behind it; our contribution is the triage logic, the consistency guarantee and the evaluation. |
-| Cost per ticket? | Measured from token usage: about 0.2-0.4 US cents with `gpt-4.1-mini` (dashboard shows the live number); free offline. |
+| Cost per ticket? | Measured from token usage: about 0.25 US cents with `gpt-4.1-mini` (measured), p50 ~7 s per ticket; free and ~50 ms offline. |
 | French and Italian? | German/French have ontology terms and localised drafts; the LLM path generalises further (Italian works in the validation set). Multilingual embeddings via OpenAI when configured. |
 | Does it learn? | Accepted edits become the base for drafts of the same service/work-type pattern; the dashboard tracks acceptance and edit distance over the session. Demonstrated, not claimed as a trained model. |
 | What about the assignee? | In the data the assignee is independent of service, team, entity, work type and priority (Cramer's V ~ 0.04), so nobody can predict the historical one. We assign by policy (spread, lowest backlog) and say so. |

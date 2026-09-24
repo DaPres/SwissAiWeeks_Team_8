@@ -40,7 +40,7 @@ _STOP_NAMES = {"team", "support", "service", "desk", "all", "everyone", "colleag
                "thanks", "please", "monitoring", "operations", "sir", "madam", "compliance", "risk", "trading"}
 
 _FIRST_NAMES = {'adam', 'alexander', 'alexandra', 'ali', 'alice', 'amelia', 'anders', 'andre', 'andrea', 'andreas', 'anna', 'anne', 'antoine', 'antonio', 'beat', 'beatrice', 'benjamin', 'bernard', 'bernhard', 'birgit', 'björn', 'carla', 'carlos', 'carmen', 'caroline', 'cecilia', 'charles', 'charlotte', 'chiara', 'christian', 'christine', 'christoph', 'claire', 'clara', 'claude', 'claudia', 'clemens', 'cora', 'daniel', 'daniela', 'david', 'denis', 'diana', 'dieter', 'dominique', 'dorothea', 'eduard', 'elena', 'elisabeth', 'elise', 'emil', 'emilie', 'emma', 'eric', 'erik', 'erika', 'ernst', 'eva', 'fabian', 'fabio', 'felix', 'filip', 'florian', 'francesca', 'francois', 'frank', 'franz', 'frederic', 'friedrich', 'gabriel', 'gabriele', 'georg', 'gerard', 'gina', 'giovanni', 'giulia', 'gregor', 'gustav', 'hanna', 'hannah', 'hans', 'harald', 'heidi', 'heinrich', 'helen', 'helena', 'helene', 'henri', 'henry', 'hugo', 'ines', 'ingrid', 'irina', 'isabel', 'isabelle', 'jacques', 'jan', 'jana', 'jean', 'jens', 'jessica', 'joachim', 'johan', 'johann', 'johanna', 'jonas', 'josef', 'joseph', 'julia', 'julien', 'jurg', 'karen', 'karin', 'karl', 'katharina', 'katrin', 'kevin', 'klaus', 'konrad', 'kurt', 'lars', 'laura', 'lea', 'lena', 'leo', 'leon', 'lisa', 'lorenz', 'louis', 'louise', 'luca', 'lucas', 'lucia', 'ludwig', 'luis', 'lukas', 'luke', 'maia', 'manuel', 'marc', 'marco', 'marcus', 'margaret', 'maria', 'marie', 'marina', 'mario', 'mark', 'markus', 'marta', 'martin', 'martina', 'mathias', 'matthias', 'maurice', 'max', 'maya', 'melanie', 'michael', 'michel', 'michelle', 'miriam', 'monika', 'monique', 'nadia', 'nadine', 'natalie', 'nico', 'nicolas', 'nicole', 'nina', 'nora', 'oliver', 'olivia', 'oscar', 'otto', 'pascal', 'patrick', 'paul', 'paula', 'peter', 'petra', 'philipp', 'philippe', 'pierre', 'rachel', 'rafael', 'ralf', 'raphael', 'regula', 'reto', 'richard', 'robert', 'roger', 'roland', 'rolf', 'rosa', 'ruth', 'sabine', 'sabrina', 'samuel', 'sandra', 'sara', 'sarah', 'sebastian', 'sebastien', 'silvia', 'simon', 'simone', 'sofia', 'sophie', 'stefan', 'stefanie', 'stephan', 'stephanie', 'susanne', 'sven', 'tamara', 'tania', 'theo', 'thomas', 'tim', 'tobias', 'ulrich', 'ursula', 'valentin', 'vera', 'veronika', 'vicky', 'victor', 'viktor', 'vincent', 'walter', 'wendy', 'werner', 'wilhelm', 'william', 'xavier', 'xena', 'yannick', 'yasmine', 'yves', 'zoe'}
-_NAME_PAIR = re.compile(r"([A-ZÀ-Ý][a-zà-ÿ]+)\s+([A-ZÀ-Ý][a-zà-ÿ'\-]{2,})")
+_NAME_PAIR = re.compile(r"(?=\b([A-ZÀ-Ý][a-zà-ÿ]+)\s+([A-ZÀ-Ý][a-zà-ÿ'\-]{2,})\b)")     # lookahead: overlapping pairs ("Contact Marc Dupont")
 
 _BOT_LOCAL = re.compile(r"^(?:sa[_\-]|svc[_\-]|monitoring|service[._-]?desk|noreply|no-reply|alerts?|bot|system|info$)", re.I)
 
@@ -123,14 +123,21 @@ class Redactor:
 
     def _gazetteer_names(self, text: str) -> str:
         """First-name gazetteer + a capitalised surname: catches "Marc Dupont" with no honorific or greeting."""
-        def repl(m: re.Match) -> str:
+        spans: list[tuple[int, int]] = []
+        last_end = -1
+        for m in _NAME_PAIR.finditer(text):
             first, last = m.group(1), m.group(2)
-            if first.lower() not in _FIRST_NAMES:
-                return m.group(0)
-            if last.lower() in _STOP_NAMES or last.lower() in _PROTECTED or any(p in m.group(0).lower() for p in _PROTECTED):
-                return m.group(0)
-            return self._token("PERSON", m.group(0))
-        return _NAME_PAIR.sub(repl, text)
+            start, end = m.start(1), m.end(2)
+            if start < last_end or first.lower() not in _FIRST_NAMES:
+                continue
+            whole = text[start:end].lower()
+            if last.lower() in _STOP_NAMES or last.lower() in _PROTECTED or any(p in whole for p in _PROTECTED):
+                continue
+            spans.append((start, end))
+            last_end = end
+        for start, end in reversed(spans):
+            text = text[:start] + self._token("PERSON", text[start:end]) + text[end:]
+        return text
 
     def _sub_names(self, rx: re.Pattern, text: str) -> str:
         def repl(m: re.Match) -> str:

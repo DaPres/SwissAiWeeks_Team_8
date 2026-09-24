@@ -229,7 +229,7 @@ def test_hybrid_mode_uses_llm_and_stays_consistent(retriever, mk, mock_llm):
     assert r.mode in ("hybrid", "llm") and r.classification.source == "ensemble"
     assert r.resolution_source == "llm" and r.resolution_note.startswith("Resolution:")
     assert is_consistent(r.priority, r.urgency, r.impact) and r.urgency == "high" and r.impact == "high"
-    assert r.cost_usd > 0 and r.tokens_in > 0 and r.prompt_versions.get("classify", "").startswith("1.0")
+    assert r.cost_usd > 0 and r.tokens_in > 0 and r.prompt_versions.get("classify", "").startswith("1.1")
     assert r.draft.text.startswith("Hello") and r.draft.next_steps[0].startswith("Confirm") and r.prompt_versions["draft"].startswith("1.1")   # typed LLM draft used
     assert {s.mode for s in r.trace} <= {"llm", "policy", "policy (fill-in)"} and len(r.trace) <= 5
 

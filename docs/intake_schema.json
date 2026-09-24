@@ -1,0 +1,1001 @@
+{
+  "IncidentIn": {
+    "description": "Only ``description`` is required. Everything else is an optional hint.",
+    "properties": {
+      "description": {
+        "description": "what the user wrote (the only required field)",
+        "maxLength": 20000,
+        "minLength": 3,
+        "title": "Description",
+        "type": "string"
+      },
+      "id": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Id"
+      },
+      "summary": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "title; derived from the description when missing",
+        "title": "Summary"
+      },
+      "workType": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Incident | Service Request (a hint - the text decides)",
+        "title": "Worktype"
+      },
+      "requestType": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Requesttype"
+      },
+      "service": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "affected service as selected by the user (a hint - the text decides)",
+        "title": "Service"
+      },
+      "entity": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "Luxembourg | Nordics | Switzerland | Germany | France",
+        "title": "Entity"
+      },
+      "reporter": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Reporter"
+      },
+      "priority": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Priority"
+      },
+      "urgency": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Urgency"
+      },
+      "impact": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Impact"
+      },
+      "created": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "description": "YYYY-MM-DD HH:MM; defaults to now",
+        "title": "Created"
+      },
+      "comments": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Comments",
+        "type": "array"
+      },
+      "linkedIssues": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Linkedissues",
+        "type": "array"
+      }
+    },
+    "required": [
+      "description"
+    ],
+    "title": "IncidentIn",
+    "type": "object"
+  },
+  "EnrichedIncident": {
+    "$defs": {
+      "Citation": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "title": {
+            "default": "",
+            "title": "Title",
+            "type": "string"
+          },
+          "snippet": {
+            "default": "",
+            "title": "Snippet",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "title": "Citation",
+        "type": "object"
+      },
+      "Clarification": {
+        "properties": {
+          "questions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "questions",
+          "message"
+        ],
+        "title": "Clarification",
+        "type": "object"
+      },
+      "ClientResolution": {
+        "properties": {
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "escalation": {
+            "title": "Escalation",
+            "type": "string"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/$defs/Citation"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "source": {
+            "default": "kb-self-service",
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "text",
+          "steps",
+          "confidence",
+          "language",
+          "escalation"
+        ],
+        "title": "ClientResolution",
+        "type": "object"
+      },
+      "Correction": {
+        "properties": {
+          "field": {
+            "title": "Field",
+            "type": "string"
+          },
+          "provided": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Provided"
+          },
+          "final": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Final"
+          }
+        },
+        "required": [
+          "field"
+        ],
+        "title": "Correction",
+        "type": "object"
+      },
+      "DraftReply": {
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "language": {
+            "title": "Language",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "nextSteps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Nextsteps",
+            "type": "array"
+          },
+          "citationCoverage": {
+            "default": 1.0,
+            "title": "Citationcoverage",
+            "type": "number"
+          }
+        },
+        "required": [
+          "kind",
+          "language",
+          "text"
+        ],
+        "title": "DraftReply",
+        "type": "object"
+      },
+      "ExpertResolution": {
+        "properties": {
+          "note": {
+            "title": "Note",
+            "type": "string"
+          },
+          "jiraComment": {
+            "title": "Jiracomment",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "assignee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Assignee"
+          },
+          "team": {
+            "default": "",
+            "title": "Team",
+            "type": "string"
+          },
+          "similarPast": {
+            "items": {
+              "$ref": "#/$defs/SimilarResolution"
+            },
+            "title": "Similarpast",
+            "type": "array"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/$defs/Citation"
+            },
+            "title": "Citations",
+            "type": "array"
+          }
+        },
+        "required": [
+          "note",
+          "jiraComment",
+          "source"
+        ],
+        "title": "ExpertResolution",
+        "type": "object"
+      },
+      "Flags": {
+        "properties": {
+          "unclear": {
+            "default": false,
+            "title": "Unclear",
+            "type": "boolean"
+          },
+          "mismatch": {
+            "default": false,
+            "title": "Mismatch",
+            "type": "boolean"
+          },
+          "duplicate": {
+            "default": false,
+            "title": "Duplicate",
+            "type": "boolean"
+          },
+          "injection": {
+            "default": false,
+            "title": "Injection",
+            "type": "boolean"
+          },
+          "lowConfidence": {
+            "default": false,
+            "title": "Lowconfidence",
+            "type": "boolean"
+          },
+          "containsPersonalData": {
+            "default": false,
+            "title": "Containspersonaldata",
+            "type": "boolean"
+          }
+        },
+        "title": "Flags",
+        "type": "object"
+      },
+      "Meta": {
+        "properties": {
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "latencyMs": {
+            "title": "Latencyms",
+            "type": "number"
+          },
+          "costUsd": {
+            "title": "Costusd",
+            "type": "number"
+          },
+          "tokensIn": {
+            "default": 0,
+            "title": "Tokensin",
+            "type": "integer"
+          },
+          "tokensOut": {
+            "default": 0,
+            "title": "Tokensout",
+            "type": "integer"
+          },
+          "promptVersions": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Promptversions",
+            "type": "object"
+          },
+          "notes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "trace": {
+            "items": {
+              "$ref": "#/$defs/TraceStepOut"
+            },
+            "title": "Trace",
+            "type": "array"
+          }
+        },
+        "required": [
+          "mode",
+          "latencyMs",
+          "costUsd"
+        ],
+        "title": "Meta",
+        "type": "object"
+      },
+      "PriorityReason": {
+        "properties": {
+          "urgency": {
+            "default": "",
+            "title": "Urgency",
+            "type": "string"
+          },
+          "impact": {
+            "default": "",
+            "title": "Impact",
+            "type": "string"
+          },
+          "overrides": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Overrides",
+            "type": "array"
+          }
+        },
+        "title": "PriorityReason",
+        "type": "object"
+      },
+      "SimilarResolution": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "service",
+          "text",
+          "score"
+        ],
+        "title": "SimilarResolution",
+        "type": "object"
+      },
+      "TraceStepOut": {
+        "properties": {
+          "step": {
+            "title": "Step",
+            "type": "integer"
+          },
+          "tool": {
+            "title": "Tool",
+            "type": "string"
+          },
+          "args": {
+            "default": "",
+            "title": "Args",
+            "type": "string"
+          },
+          "result": {
+            "default": "",
+            "title": "Result",
+            "type": "string"
+          },
+          "latencyMs": {
+            "default": 0.0,
+            "title": "Latencyms",
+            "type": "number"
+          },
+          "mode": {
+            "default": "",
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "step",
+          "tool"
+        ],
+        "title": "TraceStepOut",
+        "type": "object"
+      }
+    },
+    "properties": {
+      "id": {
+        "title": "Id",
+        "type": "string"
+      },
+      "summary": {
+        "title": "Summary",
+        "type": "string"
+      },
+      "description": {
+        "title": "Description",
+        "type": "string"
+      },
+      "language": {
+        "title": "Language",
+        "type": "string"
+      },
+      "workType": {
+        "title": "Worktype",
+        "type": "string"
+      },
+      "service": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "title": "Service"
+      },
+      "serviceIdentified": {
+        "title": "Serviceidentified",
+        "type": "boolean"
+      },
+      "team": {
+        "title": "Team",
+        "type": "string"
+      },
+      "businessCritical": {
+        "title": "Businesscritical",
+        "type": "boolean"
+      },
+      "entity": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Entity"
+      },
+      "assignee": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Assignee"
+      },
+      "assigneeReason": {
+        "default": "",
+        "title": "Assigneereason",
+        "type": "string"
+      },
+      "urgency": {
+        "title": "Urgency",
+        "type": "string"
+      },
+      "impact": {
+        "title": "Impact",
+        "type": "string"
+      },
+      "priority": {
+        "title": "Priority",
+        "type": "string"
+      },
+      "priorityLabel": {
+        "title": "Prioritylabel",
+        "type": "string"
+      },
+      "priorityReason": {
+        "$ref": "#/$defs/PriorityReason"
+      },
+      "resolutionStatus": {
+        "title": "Resolutionstatus",
+        "type": "string"
+      },
+      "confidence": {
+        "title": "Confidence",
+        "type": "number"
+      },
+      "flags": {
+        "$ref": "#/$defs/Flags"
+      },
+      "reasons": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Reasons",
+        "type": "array"
+      },
+      "corrections": {
+        "items": {
+          "$ref": "#/$defs/Correction"
+        },
+        "title": "Corrections",
+        "type": "array"
+      },
+      "clarification": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/Clarification"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "clientResolution": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ClientResolution"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "expertResolution": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/ExpertResolution"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "escalation": {
+        "anyOf": [
+          {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Escalation"
+      },
+      "draftReply": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/DraftReply"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "relatedIncidents": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Relatedincidents",
+        "type": "array"
+      },
+      "provided": {
+        "additionalProperties": true,
+        "title": "Provided",
+        "type": "object"
+      },
+      "meta": {
+        "$ref": "#/$defs/Meta"
+      }
+    },
+    "required": [
+      "id",
+      "summary",
+      "description",
+      "language",
+      "workType",
+      "service",
+      "serviceIdentified",
+      "team",
+      "businessCritical",
+      "urgency",
+      "impact",
+      "priority",
+      "priorityLabel",
+      "priorityReason",
+      "resolutionStatus",
+      "confidence",
+      "flags",
+      "meta"
+    ],
+    "title": "EnrichedIncident",
+    "type": "object"
+  },
+  "AssistResponse": {
+    "$defs": {
+      "LikelyService": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "team": {
+            "title": "Team",
+            "type": "string"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "critical": {
+            "title": "Critical",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "team",
+          "confidence",
+          "critical"
+        ],
+        "title": "LikelyService",
+        "type": "object"
+      },
+      "QuickSolution": {
+        "properties": {
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Steps",
+            "type": "array"
+          },
+          "confidence": {
+            "title": "Confidence",
+            "type": "number"
+          },
+          "citations": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "escalation": {
+            "title": "Escalation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "service",
+          "steps",
+          "confidence",
+          "citations",
+          "escalation"
+        ],
+        "title": "QuickSolution",
+        "type": "object"
+      },
+      "Suggestion": {
+        "properties": {
+          "text": {
+            "title": "Text",
+            "type": "string"
+          },
+          "service": {
+            "title": "Service",
+            "type": "string"
+          },
+          "team": {
+            "title": "Team",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "score": {
+            "title": "Score",
+            "type": "number"
+          },
+          "hasQuickSolution": {
+            "default": false,
+            "title": "Hasquicksolution",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "text",
+          "service",
+          "team",
+          "kind",
+          "score"
+        ],
+        "title": "Suggestion",
+        "type": "object"
+      }
+    },
+    "properties": {
+      "text": {
+        "title": "Text",
+        "type": "string"
+      },
+      "stage": {
+        "title": "Stage",
+        "type": "string"
+      },
+      "wordCompletion": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null,
+        "title": "Wordcompletion"
+      },
+      "suggestions": {
+        "items": {
+          "$ref": "#/$defs/Suggestion"
+        },
+        "title": "Suggestions",
+        "type": "array"
+      },
+      "likelyService": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/LikelyService"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "quickSolution": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/QuickSolution"
+          },
+          {
+            "type": "null"
+          }
+        ],
+        "default": null
+      },
+      "followUpQuestions": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Followupquestions",
+        "type": "array"
+      },
+      "language": {
+        "default": "en",
+        "title": "Language",
+        "type": "string"
+      },
+      "mode": {
+        "default": "fast",
+        "title": "Mode",
+        "type": "string"
+      },
+      "blocked": {
+        "default": false,
+        "title": "Blocked",
+        "type": "boolean"
+      },
+      "notes": {
+        "items": {
+          "type": "string"
+        },
+        "title": "Notes",
+        "type": "array"
+      },
+      "latencyMs": {
+        "default": 0.0,
+        "title": "Latencyms",
+        "type": "number"
+      }
+    },
+    "required": [
+      "text",
+      "stage"
+    ],
+    "title": "AssistResponse",
+    "type": "object"
+  }
+}

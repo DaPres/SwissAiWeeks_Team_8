@@ -4,6 +4,9 @@
   run-challenge    triage a challenge file                    -> outputs/challenge_predictions.{json,csv}
   eval             run the stress set + holdout               -> eval/results.json
   triage           triage one pasted ticket (text on stdin or --text)
+  intake           enrich ONE incident from just its description        -> JSON for the UI (see docs/INTAKE_HANDOFF.md)
+  assist           typing-assist suggestions for partial text          -> JSON
+  schema           write the JSON Schemas of the intake contracts      -> docs/intake_schema.json
   serve            start the API + UI                         -> http://127.0.0.1:8000
   smoke            provider smoke test (chat, JSON, tools, embeddings)
 """
@@ -39,6 +42,13 @@ def main(argv: list[str] | None = None) -> int:
     tr.add_argument("--text", default=None)
     tr.add_argument("--service", default=None)
     tr.add_argument("--offline", action="store_true")
+    ik = sub.add_parser("intake")
+    ik.add_argument("--text", default=None)
+    ik.add_argument("--offline", action="store_true")
+    asx = sub.add_parser("assist")
+    asx.add_argument("--text", default="")
+    asx.add_argument("--mode", default="fast", choices=["fast", "smart"])
+    sub.add_parser("schema")
     sv = sub.add_parser("serve")
     sv.add_argument("--host", default="127.0.0.1")
     sv.add_argument("--port", type=int, default=8000)
@@ -70,6 +80,23 @@ def main(argv: list[str] | None = None) -> int:
         t = Ticket(id="PASTE-1", summary=summary.strip(), description=(desc or summary).strip(), services=[a.service] if a.service else [], source="paste")
         r = Triage(use_llm=False if a.offline else None).run_ticket(t)
         print(r.model_dump_json(indent=2))
+        return 0
+    if a.cmd == "intake":
+        from .intake import enrich_incident
+        text = a.text or sys.stdin.read()
+        print(json.dumps(enrich_incident(text, use_llm=False if a.offline else None, commit_assign=False).to_json(), indent=2, ensure_ascii=False))
+        return 0
+    if a.cmd == "assist":
+        from .assist import assist
+        print(json.dumps(assist(a.text, mode=a.mode).to_json(), indent=2, ensure_ascii=False))
+        return 0
+    if a.cmd == "schema":
+        from pathlib import Path
+        from .config import ROOT
+        from .intake import json_schemas
+        out = Path(ROOT) / "docs" / "intake_schema.json"
+        out.write_text(json.dumps(json_schemas(), indent=2, ensure_ascii=False), encoding="utf-8")
+        print("written", out)
         return 0
     if a.cmd == "serve":
         import uvicorn
