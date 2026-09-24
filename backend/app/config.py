@@ -26,6 +26,8 @@ class Settings:
     training_file: Path = Path(os.getenv("TRAINING_FILE", str(REPO_DIR / "jira_first_20000_requested_fields_synthetic.json")))
 
     top_k: int = int(os.getenv("TOP_K", "6"))
+    # cosine similarity a knowledge match must exceed to reach the assistant
+    min_knowledge_score: float = float(os.getenv("MIN_KNOWLEDGE_SCORE", "0.4"))
     # cosine similarity above which an open ticket counts as "already reported"
     duplicate_threshold: float = float(os.getenv("DUPLICATE_THRESHOLD", "0.82"))
     max_images: int = int(os.getenv("MAX_IMAGES", "4"))

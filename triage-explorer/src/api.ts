@@ -40,6 +40,16 @@ export interface AssistResult {
   duplicates: { id: number; summary: string; service: string; score: number }[]
 }
 
+export interface AssistProgress {
+  step: 'vision' | 'embedding' | 'knowledge' | 'duplicates' | 'decision' | 'routing' | 'complete'
+  status: 'started' | 'completed'
+  title: string
+  tool?: string | null
+  detail?: string | null
+  durationMs?: number | null
+  data?: Record<string, unknown> | null
+}
+
 export interface Ticket {
   id: number
   created_at: number
@@ -86,10 +96,58 @@ async function call<T>(path: string, init?: RequestInit): Promise<T> {
 
 const post = <T,>(path: string, body: unknown) => call<T>(path, { method: 'POST', body: JSON.stringify(body) })
 
+async function assistStream(text: string, images: string[], debug: boolean,
+                            onProgress: (event: AssistProgress) => void, signal?: AbortSignal): Promise<AssistResult> {
+  const res = await fetch('/api/assist/stream', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    body: JSON.stringify({ text, images, debug }),
+    signal,
+  })
+  if (!res.ok) {
+    let detail = res.statusText
+    try { detail = (await res.json()).detail ?? detail } catch { /* not json */ }
+    throw new Error(typeof detail === 'string' ? detail : JSON.stringify(detail))
+  }
+  if (!res.body) throw new Error('The analysis stream is unavailable')
+
+  const reader = res.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  let result: AssistResult | null = null
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      buffer = (buffer + decoder.decode(value, { stream: !done })).replace(/\r\n/g, '\n')
+      let boundary = buffer.indexOf('\n\n')
+      while (boundary !== -1) {
+        const block = buffer.slice(0, boundary)
+        buffer = buffer.slice(boundary + 2)
+        const event = block.match(/^event: (.+)$/m)?.[1]
+        const data = block.match(/^data: (.+)$/m)?.[1]
+        if (event && data) {
+          const payload = JSON.parse(data)
+          if (event === 'progress') onProgress(payload as AssistProgress)
+          if (event === 'result') result = payload as AssistResult
+          if (event === 'error') throw new Error(payload.message ?? 'Analysis failed')
+        }
+        boundary = buffer.indexOf('\n\n')
+      }
+      if (done) break
+    }
+  } finally {
+    reader.releaseLock()
+  }
+  if (!result) throw new Error('The analysis ended before returning a result')
+  return result
+}
+
 export const api = {
   catalog: () => call<Catalog>('/catalog'),
   stats: () => call<Stats>('/stats'),
   assist: (text: string, images: string[]) => post<AssistResult>('/assist', { text, images }),
+  assistStream,
   feedback: (assistId: string, helpful: boolean) => post<{ ok: boolean }>(`/assist/${assistId}/feedback`, { helpful }),
   createTicket: (assistId: string, d: Draft) =>
     post<Ticket>('/tickets', {

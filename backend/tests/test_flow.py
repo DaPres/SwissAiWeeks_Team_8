@@ -1,9 +1,11 @@
 """End-to-end learning loop in mock mode (no Azure calls)."""
 import os
 import tempfile
+import json
 
 os.environ["LLM_MODE"] = "mock"
 os.environ["DB_PATH"] = os.path.join(tempfile.mkdtemp(), "test.db")
+os.environ["MIN_KNOWLEDGE_SCORE"] = "0"  # mock hash embeddings score far below real ones
 
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -51,6 +53,42 @@ def test_assist_routes_to_precedent_expert():
         assert r["draft"]["assignee"] == "quinn.anderson@intcom.com"
         assert r["draft"]["priority"] == "high"  # high x high from the matrix
         assert len(r["imageDescriptions"]) == 1
+
+
+def test_streamed_assist_reports_real_steps_and_debug_details():
+    def read_events(response):
+        events = []
+        kind = None
+        for line in response.iter_lines():
+            if line.startswith("event: "):
+                kind = line[7:]
+            elif line.startswith("data: "):
+                events.append((kind, json.loads(line[6:])))
+        return events
+
+    with TestClient(app) as c:
+        request = {"text": "Trade matching adapter TMA-402 rejected 16 allocations", "debug": True}
+        with c.stream("POST", "/api/assist/stream", json=request) as response:
+            assert response.status_code == 200
+            assert response.headers["content-type"].startswith("text/event-stream")
+            events = read_events(response)
+
+        progress = [data for kind, data in events if kind == "progress"]
+        assert [step["step"] for step in progress if step["status"] == "completed"] == [
+            "embedding", "knowledge", "duplicates", "decision", "routing", "complete",
+        ]
+        retrieval = next(step for step in progress if step["step"] == "knowledge" and step["status"] == "completed")
+        assert retrieval["tool"] == "store.search_knowledge"
+        assert retrieval["data"]["matches"]
+        assert retrieval["data"]["matches"][0]["score"] >= 0
+        assert retrieval["durationMs"] >= 0
+        assert events[-1][0] == "result"
+        assert events[-1][1]["draft"]["service"] == "Trade Matching"
+
+        with c.stream("POST", "/api/assist/stream", json={**request, "debug": False}) as response:
+            brief = read_events(response)
+        assert brief[-1][0] == "result"
+        assert all("tool" not in data and "data" not in data for kind, data in brief if kind == "progress")
 
 
 def test_resolve_teaches_the_next_user():

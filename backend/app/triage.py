@@ -1,7 +1,9 @@
 """User-facing assist pipeline: describe images -> retrieve knowledge -> LLM decides -> deterministic routing."""
 import collections
 import re
+import time
 import uuid
+from collections.abc import Callable
 
 from . import catalog
 from .config import settings
@@ -10,6 +12,19 @@ from .llm import get_llm
 from .store import Hit, Store
 
 SERVICE_NAMES = list(catalog.SERVICES)
+ProgressCallback = Callable[[dict], None]
+
+
+def _progress(callback: ProgressCallback | None, debug: bool, step: str, status: str,
+              title: str, tool: str | None = None, started: float | None = None,
+              detail: str | None = None, data: dict | None = None) -> None:
+    if callback is None:
+        return
+    event = {"step": step, "status": status, "title": title}
+    if debug:
+        event.update({"tool": tool, "detail": detail, "data": data,
+                      "durationMs": round((time.perf_counter() - started) * 1000) if started else None})
+    callback(event)
 
 DECISION_SCHEMA = {
     "type": "object",
@@ -45,6 +60,10 @@ Rules:
   Regulatory Reporting, custodian settlement-status delays are Securities Settlement).
 - Work type comes from the substance, not the wording: requests for access, licences, mailboxes, removals or
   clean-ups are Service Requests even when phrased as an outage; something broken or degraded is an Incident.
+- Access, licence and access-removal requests for a named business application belong to that application's
+  service (e.g. Portfolio Accounting access -> Portfolio Accounting), not Identity & Access Management. Use Identity
+  & Access Management only for identity-level work: joiner/mover/leaver accounts, deactivated-user clean-ups,
+  role provisioning not tied to one application.
 - Urgency definitions: {catalog.URGENCY_DEFINITIONS}
 - Impact definitions: {catalog.IMPACT_DEFINITIONS}
 - Critical services: {[s for s in SERVICE_NAMES if catalog.is_critical(s)]}. Failures there justify higher
@@ -115,16 +134,8 @@ def pick_assignee(service: str, hits: list[Hit]) -> tuple[str | None, str]:
     return None, f"no precedent resolver - route to {catalog.team_for(service)} queue"
 
 
-def assist(store: Store, text: str, images: list[str], reporter: str | None = None) -> dict:
-    llm = get_llm()
-    image_descriptions = [llm.describe_image(img, text) for img in images[: settings.max_images]]
-    query = "\n".join([text, *(f"Screenshot: {d}" for d in image_descriptions)])
-    qv = llm.embed([query])[0]
-
-    hits = store.search_knowledge(qv, settings.top_k)
-    duplicates = [h for h in store.search_open_tickets(qv, 3) if h.score >= settings.duplicate_threshold]
-
-    user_prompt = (
+def build_prompt(text: str, image_descriptions: list[str], hits: list[Hit], duplicates: list[Hit] = ()) -> str:
+    return (
         f"Service catalog (service -> owning team):\n"
         + "\n".join(f"- {s}: {catalog.team_for(s)}{' [critical]' if catalog.is_critical(s) else ''}" for s in SERVICE_NAMES)
         + f"\n\nUser problem:\n{text or '(no text)'}\n"
@@ -132,14 +143,97 @@ def assist(store: Store, text: str, images: list[str], reporter: str | None = No
         + f"\n\nKnowledge base matches:\n{_format_hits(hits)}"
         + ("\n\nSimilar OPEN tickets already reported:\n" + "\n".join(f"- #{d.row['id']} {d.row['summary']} (similarity {d.score:.2f})" for d in duplicates) if duplicates else "")
     )
-    decision = llm.complete_json(SYSTEM_PROMPT, user_prompt, DECISION_SCHEMA, "triage_decision",
-                                 fallback=lambda: _heuristic_decision(query, hits))
 
-    # Deterministic post-processing: never trust the model with lookups or arithmetic.
+
+def route(decision: dict, hits: list[Hit]) -> dict:
+    """Deterministic post-processing: never trust the model with lookups or arithmetic."""
     service = decision["service"] if decision.get("service") in catalog.SERVICES else (hits[0].row["service"] if hits else SERVICE_NAMES[0])
     urgency = decision.get("urgency") if decision.get("urgency") in catalog.LEVELS else "low"
     impact = decision.get("impact") if decision.get("impact") in catalog.LEVELS else "low"
     assignee, assignee_reason = pick_assignee(service, hits)
+    return {
+        "workType": decision.get("work_type") if decision.get("work_type") in ("Incident", "Service Request") else "Incident",
+        "service": service,
+        "team": catalog.team_for(service),
+        "critical": catalog.is_critical(service),
+        "assignee": assignee,
+        "assigneeReason": assignee_reason,
+        "urgency": urgency,
+        "impact": impact,
+        "priority": catalog.priority(urgency, impact),
+    }
+
+
+def triage(text: str, image_descriptions: list[str], hits: list[Hit], duplicates: list[Hit] = (),
+           progress: ProgressCallback | None = None, debug: bool = False) -> tuple[dict, dict]:
+    """LLM decision over the retrieved knowledge, then deterministic routing. Returns (decision, routing)."""
+    query = "\n".join([text, *(f"Screenshot: {d}" for d in image_descriptions)])
+    llm = get_llm()
+    started = time.perf_counter()
+    tool = "llm.complete_json" if llm.mode == "azure" else "heuristic_decision"
+    _progress(progress, debug, "decision", "started", "Analysing the issue", tool,
+              detail="Comparing your description with the retrieved precedents")
+    decision = llm.complete_json(SYSTEM_PROMPT, build_prompt(text, image_descriptions, hits, duplicates),
+                                 DECISION_SCHEMA, "triage_decision",
+                                 fallback=lambda: _heuristic_decision(query, hits))
+    _progress(progress, debug, "decision", "completed", "Issue analysed", tool, started,
+              detail="Generated a support recommendation from the retrieved evidence",
+              data={"mode": llm.mode, "model": settings.chat_deployment if llm.mode == "azure" else "heuristic fallback",
+                    "service": decision.get("service"), "workType": decision.get("work_type"),
+                    "usedKnowledgeIds": decision.get("used_knowledge_ids", [])})
+
+    started = time.perf_counter()
+    _progress(progress, debug, "routing", "started", "Checking routing and priority", "catalog.route")
+    routing = route(decision, hits)
+    _progress(progress, debug, "routing", "completed", "Routing and priority ready", "catalog.route", started,
+              detail="Applied the service owner and urgency × impact priority matrix",
+              data={"service": routing["service"], "team": routing["team"], "priority": routing["priority"],
+                    "urgency": routing["urgency"], "impact": routing["impact"],
+                    "assignee": routing["assignee"], "assigneeReason": routing["assigneeReason"]})
+    return decision, routing
+
+
+def assist(store: Store, text: str, images: list[str], reporter: str | None = None,
+           progress: ProgressCallback | None = None, debug: bool = False) -> dict:
+    total_started = time.perf_counter()
+    llm = get_llm()
+    image_descriptions = []
+    if images:
+        started = time.perf_counter()
+        _progress(progress, debug, "vision", "started", "Reading screenshots", "llm.describe_image",
+                  detail=f"Describing {min(len(images), settings.max_images)} attached screenshot(s)")
+        for image in images[: settings.max_images]:
+            image_descriptions.append(llm.describe_image(image, text))
+        _progress(progress, debug, "vision", "completed", "Screenshots understood", "llm.describe_image", started,
+                  data={"count": len(image_descriptions), "mode": llm.mode})
+
+    query = "\n".join([text, *(f"Screenshot: {d}" for d in image_descriptions)])
+    started = time.perf_counter()
+    _progress(progress, debug, "embedding", "started", "Preparing a knowledge search", "llm.embed",
+              detail="Turning the problem into a search vector")
+    qv = llm.embed([query])[0]
+    _progress(progress, debug, "embedding", "completed", "Search vector ready", "llm.embed", started,
+              data={"model": llm.embedding_model, "dimensions": int(qv.shape[0])})
+
+    started = time.perf_counter()
+    _progress(progress, debug, "knowledge", "started", "Searching relevant knowledge", "store.search_knowledge",
+              detail="Looking for the closest curated, catalog, and learned solutions")
+    hits = [h for h in store.search_knowledge(qv, settings.top_k) if h.score > settings.min_knowledge_score]
+    _progress(progress, debug, "knowledge", "completed", f"Found {len(hits)} knowledge matches",
+              "store.search_knowledge", started,
+              data={"topK": settings.top_k, "minScore": settings.min_knowledge_score, "matches": [
+                  {"id": h.row["id"], "title": h.row["title"], "source": h.row["source"],
+                   "service": h.row["service"], "score": round(h.score, 3)} for h in hits]})
+
+    started = time.perf_counter()
+    _progress(progress, debug, "duplicates", "started", "Checking open tickets", "store.search_open_tickets",
+              detail="Comparing the problem with current open cases")
+    duplicates = [h for h in store.search_open_tickets(qv, 3) if h.score >= settings.duplicate_threshold]
+    _progress(progress, debug, "duplicates", "completed", f"Found {len(duplicates)} possible duplicates",
+              "store.search_open_tickets", started,
+              data={"threshold": settings.duplicate_threshold, "matches": [
+                  {"id": h.row["id"], "summary": h.row["summary"], "score": round(h.score, 3)} for h in duplicates]})
+    decision, routing = triage(text, image_descriptions, hits, duplicates, progress, debug)
 
     assist_id = uuid.uuid4().hex[:12]
     result = {
@@ -156,15 +250,7 @@ def assist(store: Store, text: str, images: list[str], reporter: str | None = No
         "draft": {
             "summary": decision.get("ticket_summary") or text[:120],
             "description": decision.get("ticket_description") or text,
-            "workType": decision.get("work_type", "Incident"),
-            "service": service,
-            "team": catalog.team_for(service),
-            "critical": catalog.is_critical(service),
-            "assignee": assignee,
-            "assigneeReason": assignee_reason,
-            "urgency": urgency,
-            "impact": impact,
-            "priority": catalog.priority(urgency, impact),
+            **routing,
         },
         "rationale": decision.get("rationale", ""),
         "usedKnowledgeIds": decision.get("used_knowledge_ids", []),
@@ -182,6 +268,9 @@ def assist(store: Store, text: str, images: list[str], reporter: str | None = No
         ],
     }
     store.save_assist(assist_id, text, image_descriptions, result)
+    _progress(progress, debug, "complete", "completed", "Analysis complete", "assist.pipeline",
+              total_started, detail="Saved the result after retrieval, analysis, and routing",
+              data={"assistId": assist_id, "mode": llm.mode})
     return result
 
 

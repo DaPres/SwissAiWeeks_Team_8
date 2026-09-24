@@ -1,0 +1,1830 @@
+{
+  "meta": {
+    "evaluatedAtUtc": "2026-09-24T11:59:04Z",
+    "llmMode": "azure",
+    "chatDeployment": "gpt-5.6-terra",
+    "embeddingModel": "azure:text-embedding-3-small",
+    "knowledge": {
+      "bySource": {
+        "catalog": 19,
+        "training": 21
+      },
+      "byLevel": {
+        "gold": 21
+      },
+      "total": 40,
+      "helpfulVotes": 0,
+      "minLevel": "gold"
+    },
+    "source": "jira_hackathon_blind_eval_challenge_20260923083915-1141.json"
+  },
+  "tickets": [
+    {
+      "summary": "New license requested for quarterly withholding tax workflow",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Tax & Reporting"
+          ]
+        },
+        "Assignee": {
+          "input": null,
+          "output": "tania.gupta@intcom.com"
+        },
+        "Urgency": {
+          "input": "Lowest",
+          "output": "Low"
+        },
+        "Impact": {
+          "input": "High",
+          "output": "Low"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "The Germany operations team needs one additional Tax Reporting user licence for a colleague who prepares quarterly withholding-tax extracts and validates tax packs. This is a tax-output workflow, not a regulatory-submission issue.",
+      "rationale": "This is a named business application's licence/provisioning request, so it is a Service Request routed to Tax Reporting rather than Identity & Access Management. The work concerns withholding-tax extracts, tax packs and quarterly filings, matching the Tax Reporting catalogue definition and prior licence/entitlement precedents. It is a single-user routine request in a non-critical service, with no reported outage or immediate compliance breach; therefore urgency and impact are low.",
+      "assigneeReason": "resolver of the most similar resolved tickets",
+      "resolutionText": "Provisioned one additional Tax Reporting user licence for the Germany quarterly withholding-tax workflow, including the standard processing entitlement. Verified the colleague could access the quarterly extract tool and tax-output workspace to prepare extracts and validate generated tax packs.",
+      "matches": [
+        {
+          "id": "cluster-6",
+          "service": "Tax Reporting",
+          "resolver": "tania.gupta@intcom.com",
+          "score": 0.642,
+          "title": "Confirmed the withholding tax workflow license was provisioned and validated the user could access the quarterly extract tool"
+        },
+        {
+          "id": "catalog-tax-reporting",
+          "service": "Tax Reporting",
+          "resolver": null,
+          "score": 0.607,
+          "title": "Service catalog: Tax Reporting"
+        },
+        {
+          "id": "cluster-1",
+          "service": "Tax Reporting",
+          "resolver": "tania.gupta@intcom.com",
+          "score": 0.54,
+          "title": "Reviewed the request with the tax team lead, granted the standard processing entitlement, and verified access to the output workspace"
+        },
+        {
+          "id": "catalog-client-reporting",
+          "service": "Client Reporting",
+          "resolver": null,
+          "score": 0.436,
+          "title": "Service catalog: Client Reporting"
+        },
+        {
+          "id": "cluster-4",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.424,
+          "title": "Submission was rejected due to missing classification data on new entity records"
+        },
+        {
+          "id": "catalog-regulatory-reporting",
+          "service": "Regulatory Reporting",
+          "resolver": null,
+          "score": 0.399,
+          "title": "Service catalog: Regulatory Reporting"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-6",
+          "resolution": "Confirmed the withholding tax workflow license was provisioned and validated the user could access the quarterly extract tool.",
+          "score": 0.642
+        },
+        {
+          "id": "cluster-1",
+          "resolution": "Reviewed the request with the tax team lead, granted the standard processing entitlement, and verified access to the output workspace.",
+          "score": 0.54
+        }
+      ]
+    },
+    {
+      "summary": "Access requested for Portfolio Accounting to support month-end reconciliation",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Investment Operations"
+          ]
+        },
+        "Urgency": {
+          "input": "High",
+          "output": "Low"
+        },
+        "Impact": {
+          "input": "High",
+          "output": "Low"
+        },
+        "Priority": {
+          "input": "High",
+          "output": "Low"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "A new Luxembourg operations employee requires the standard Portfolio Accounting processing role and read-only access to reconciliation dashboards for month-end reconciliation and exception review.",
+      "rationale": "This is a named-application access provisioning request, so it is a Service Request routed to Portfolio Accounting rather than Identity & Access Management. Portfolio Accounting covers month-end reconciliation and exception review. The request concerns one new user and does not indicate an active outage or immediate operational failure; it should be handled through the normal access workflow with low urgency and localized impact.",
+      "assigneeReason": "no precedent resolver - route to Investment Operations queue",
+      "resolutionText": "Provisioned the standard Portfolio Accounting processing role and read-only access to the reconciliation dashboards for the new Luxembourg operations joiner; verified the requested month-end reconciliation and exception-review access.",
+      "matches": [
+        {
+          "id": "catalog-portfolio-accounting",
+          "service": "Portfolio Accounting",
+          "resolver": null,
+          "score": 0.638,
+          "title": "Service catalog: Portfolio Accounting"
+        },
+        {
+          "id": "cluster-1",
+          "service": "Tax Reporting",
+          "resolver": "tania.gupta@intcom.com",
+          "score": 0.507,
+          "title": "Reviewed the request with the tax team lead, granted the standard processing entitlement, and verified access to the output workspace"
+        },
+        {
+          "id": "cluster-11",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.473,
+          "title": "Traced the gateway rejection to incomplete counterparty classification"
+        },
+        {
+          "id": "catalog-identity-access-management",
+          "service": "Identity & Access Management",
+          "resolver": null,
+          "score": 0.462,
+          "title": "Service catalog: Identity & Access Management"
+        },
+        {
+          "id": "catalog-regulatory-reporting",
+          "service": "Regulatory Reporting",
+          "resolver": null,
+          "score": 0.457,
+          "title": "Service catalog: Regulatory Reporting"
+        },
+        {
+          "id": "cluster-4",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.454,
+          "title": "Submission was rejected due to missing classification data on new entity records"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-1",
+          "resolution": "Reviewed the request with the tax team lead, granted the standard processing entitlement, and verified access to the output workspace.",
+          "score": 0.507
+        },
+        {
+          "id": "cluster-11",
+          "resolution": "Traced the gateway rejection to incomplete counterparty classification; corrected the records, regenerated the submission, and confirmed acceptance.",
+          "score": 0.473
+        },
+        {
+          "id": "cluster-4",
+          "resolution": "Submission was rejected due to missing classification data on new entity records. Updated the master data, regenerated the file, and resubmitted successfully.",
+          "score": 0.454
+        }
+      ]
+    },
+    {
+      "summary": "New license requested for sanctions screening dashboard",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Risk & Controls"
+          ]
+        },
+        "Urgency": {
+          "input": "High",
+          "output": "Low"
+        },
+        "Impact": {
+          "input": "High",
+          "output": "Low"
+        },
+        "Priority": {
+          "input": "High",
+          "output": "Low"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "A new compliance analyst, maia.berg@intcom.com, requires a standard licence for the sanctions screening dashboard used to monitor rule exceptions and review escalated alerts.",
+      "rationale": "This is a named application licence request, so it is a Service Request routed to Risk & Compliance Monitoring rather than Identity & Access Management. The dashboard supports sanctions screening and compliance rule/breach monitoring, matching the Risk & Compliance Monitoring catalog definition. It is a single-user standard licence request with no reported outage, breach, or operational degradation; therefore low urgency and localized/low impact are appropriate.",
+      "assigneeReason": "no precedent resolver - route to Risk & Controls queue",
+      "resolutionText": "Provisioned the standard compliance analyst license for maia.berg@intcom.com for the sanctions screening dashboard in Germany. Verified access to monitor rule exceptions and review escalated alerts.",
+      "matches": [
+        {
+          "id": "catalog-risk-compliance-monitoring",
+          "service": "Risk & Compliance Monitoring",
+          "resolver": null,
+          "score": 0.542,
+          "title": "Service catalog: Risk & Compliance Monitoring"
+        },
+        {
+          "id": "cluster-4",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.458,
+          "title": "Submission was rejected due to missing classification data on new entity records"
+        },
+        {
+          "id": "cluster-17",
+          "service": "Outlook & Email",
+          "resolver": "jack.martin@intcom.com",
+          "score": 0.446,
+          "title": "Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions"
+        },
+        {
+          "id": "cluster-11",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.439,
+          "title": "Traced the gateway rejection to incomplete counterparty classification"
+        },
+        {
+          "id": "cluster-1",
+          "service": "Tax Reporting",
+          "resolver": "tania.gupta@intcom.com",
+          "score": 0.437,
+          "title": "Reviewed the request with the tax team lead, granted the standard processing entitlement, and verified access to the output workspace"
+        },
+        {
+          "id": "catalog-regulatory-reporting",
+          "service": "Regulatory Reporting",
+          "resolver": null,
+          "score": 0.433,
+          "title": "Service catalog: Regulatory Reporting"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-4",
+          "resolution": "Submission was rejected due to missing classification data on new entity records. Updated the master data, regenerated the file, and resubmitted successfully.",
+          "score": 0.458
+        },
+        {
+          "id": "cluster-17",
+          "resolution": "Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions.",
+          "score": 0.446
+        },
+        {
+          "id": "cluster-11",
+          "resolution": "Traced the gateway rejection to incomplete counterparty classification; corrected the records, regenerated the submission, and confirmed acceptance.",
+          "score": 0.439
+        }
+      ]
+    },
+    {
+      "summary": "Custodian notice says MT536 settlement status messages are delayed for France books",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Securities Operations"
+          ]
+        },
+        "Assignee": {
+          "input": null,
+          "output": "xena.schmidt@intcom.com"
+        },
+        "Urgency": {
+          "input": "Lowest",
+          "output": "High"
+        },
+        "Impact": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Priority": {
+          "input": "Low",
+          "output": "High"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "Custodian MT536 settlement-status messages are delayed for several France books. The trades are already matched, but post-matching custody settlement updates are not arriving in time.",
+      "rationale": "This is an Incident because a production settlement-status feed is delayed. It belongs to Securities Settlement, not an upstream matching or order-processing service: MT536/MT548 custody messages and post-matching settlement confirmation are explicitly in this service scope. Several books within the France entity are affected in a critical service, creating a significant operational impact; prompt action is needed, though the custodian has acknowledged the delay and a vendor update is pending, so highest urgency is not established. The relevant precedents cover late custodian status updates, queue review, and backlog reconciliation.",
+      "assigneeReason": "resolver of the most similar resolved tickets",
+      "resolutionText": "Traced the delayed France-book MT536 updates to a stalled settlement-queue consumer; restarted the listener and replayed the pending custody-status backlog. Confirmed the matched trades' downstream custody records caught up after replay.",
+      "matches": [
+        {
+          "id": "cluster-21",
+          "service": "Securities Settlement",
+          "resolver": "ursula.klassen@intcom.com",
+          "score": 0.607,
+          "title": "Custodian was late sending status updates"
+        },
+        {
+          "id": "cluster-18",
+          "service": "Securities Settlement",
+          "resolver": "xena.schmidt@intcom.com",
+          "score": 0.564,
+          "title": "Reviewed the settlement message queue, cleared several stuck acknowledgements, and replayed the pending confirmations so custody statuses synced back to the dashboard"
+        },
+        {
+          "id": "catalog-securities-settlement",
+          "service": "Securities Settlement",
+          "resolver": null,
+          "score": 0.541,
+          "title": "Service catalog: Securities Settlement"
+        },
+        {
+          "id": "cluster-20",
+          "service": "Securities Settlement",
+          "resolver": "xena.schmidt@intcom.com",
+          "score": 0.538,
+          "title": "Root cause was a stalled consumer on the settlement queue"
+        },
+        {
+          "id": "cluster-3",
+          "service": "Order Management",
+          "resolver": "victor.hamon@intcom.com",
+          "score": 0.53,
+          "title": "A stale clearing account mapping from a recent broker change was blocking order routing"
+        },
+        {
+          "id": "cluster-16",
+          "service": "Cash Management",
+          "resolver": "vincent.lange@intcom.com",
+          "score": 0.488,
+          "title": "Traced the shortfall to a missed banking cutoff on the margin sweep"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-21",
+          "resolution": "Custodian was late sending status updates; paused automated fail-chasing while we waited, then matched statements and reconciled the backlog once messages came through.",
+          "score": 0.607
+        },
+        {
+          "id": "cluster-18",
+          "resolution": "Reviewed the settlement message queue, cleared several stuck acknowledgements, and replayed the pending confirmations so custody statuses synced back to the dashboard.",
+          "score": 0.564
+        },
+        {
+          "id": "cluster-20",
+          "resolution": "Root cause was a stalled consumer on the settlement queue. Restarted the listener, replayed the backlog, and confirmed downstream custody records caught up.",
+          "score": 0.538
+        }
+      ]
+    },
+    {
+      "summary": "Trade matching adapter TMA-402 rejected 16 allocations from broker JPM",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Investment Operations"
+          ]
+        },
+        "Assignee": {
+          "input": null,
+          "output": "quinn.anderson@intcom.com"
+        },
+        "Urgency": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Impact": {
+          "input": "Low",
+          "output": "High"
+        },
+        "Priority": {
+          "input": "Low",
+          "output": "High"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "Trade Matching adapter TMA-402 has rejected 16 JPM allocation messages because inbound execution references could not be paired with staged allocations in time. The trades are booked, but confirmations remain blocked while the matching backlog is pending.",
+      "rationale": "This is an operational failure in the broker execution-to-allocation matching process, so it belongs to the critical Trade Matching service (Investment Operations), not the machine-alert intake channel. It is an Incident because messages are being rejected and a confirmation workflow is blocked. Although the trades are booked and the issue is limited to 16 allocations for one broker/entity, the blocked confirmation process in a critical service requires rapid resolution; impact is significant but not a full service outage. Similar Trade Matching incidents were resolved by correcting broker account/SSI mappings and replaying rejected messages (cluster-7 and cluster-15).",
+      "assigneeReason": "resolver of the most similar resolved tickets",
+      "resolutionText": "Traced the TMA-402 rejection of 16 JPM allocation messages to inbound execution references not pairing with staged allocations before the matching timeout; reprocessed the rejected messages after clearing the matching backlog and confirmed all affected trades matched, unblocking confirmations.",
+      "matches": [
+        {
+          "id": "cluster-7",
+          "service": "Trade Matching",
+          "resolver": "quinn.anderson@intcom.com",
+          "score": 0.822,
+          "title": "Adapter was rejecting allocations due to an incomplete broker account setup"
+        },
+        {
+          "id": "cluster-15",
+          "service": "Trade Matching",
+          "resolver": "quinn.anderson@intcom.com",
+          "score": 0.789,
+          "title": "Found a missing broker SSI mapping causing allocation rejections"
+        },
+        {
+          "id": "catalog-trade-matching",
+          "service": "Trade Matching",
+          "resolver": null,
+          "score": 0.669,
+          "title": "Service catalog: Trade Matching"
+        },
+        {
+          "id": "cluster-3",
+          "service": "Order Management",
+          "resolver": "victor.hamon@intcom.com",
+          "score": 0.632,
+          "title": "A stale clearing account mapping from a recent broker change was blocking order routing"
+        },
+        {
+          "id": "cluster-5",
+          "service": "Order Management",
+          "resolver": "victor.hamon@intcom.com",
+          "score": 0.592,
+          "title": "Diagnosed a broken broker routing link after the account switch"
+        },
+        {
+          "id": "cluster-11",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.591,
+          "title": "Traced the gateway rejection to incomplete counterparty classification"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-7",
+          "resolution": "Adapter was rejecting allocations due to an incomplete broker account setup. Corrected the setup, reprocessed the batch, and validated matching status for all affected trades.",
+          "score": 0.822
+        },
+        {
+          "id": "cluster-15",
+          "resolution": "Found a missing broker SSI mapping causing allocation rejections. Added the mapping, replayed the rejected messages, and confirmed the trades matched successfully.",
+          "score": 0.789
+        }
+      ]
+    },
+    {
+      "summary": "Client report PDFs for the Nordics entity were generated with a blank fee section",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Client Services"
+          ]
+        },
+        "Assignee": {
+          "input": null,
+          "output": "pierre.johnson@intcom.com"
+        },
+        "Urgency": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Impact": {
+          "input": "Low",
+          "output": "High"
+        },
+        "Priority": {
+          "input": "Low",
+          "output": "High"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "The Nordics quarterly Client Reporting PDF batch is rendering with the management-fee section blank, although values display correctly in staging preview. The reports can be opened but are incomplete and must not be released in their current form.",
+      "rationale": "This is a production output defect in the Client Reporting generation/template-rendering stage, not an access or request issue, so it is an Incident for Client Services. Client Reporting is critical, and an entity-wide quarterly batch is affected with no acceptable release workaround; urgency and impact are high. KB precedents cluster-12 and cluster-10 describe the same symptom pattern caused by an incorrect production template conditional and require correction, batch rerun, and output validation.",
+      "assigneeReason": "resolver of the most similar resolved tickets",
+      "resolutionText": "Traced the blank Nordics management-fee section to a report-template conditional that evaluated incorrectly during PDF generation; corrected the condition and regenerated the Nordics quarterly batch. We verified the management-fee table rendered with values in the regenerated PDFs before release.",
+      "matches": [
+        {
+          "id": "cluster-12",
+          "service": "Client Reporting",
+          "resolver": "pierre.johnson@intcom.com",
+          "score": 0.649,
+          "title": "The fee section was suppressed by a broken conditional in the report template"
+        },
+        {
+          "id": "catalog-client-reporting",
+          "service": "Client Reporting",
+          "resolver": null,
+          "score": 0.567,
+          "title": "Service catalog: Client Reporting"
+        },
+        {
+          "id": "cluster-10",
+          "service": "Client Reporting",
+          "resolver": "pierre.johnson@intcom.com",
+          "score": 0.553,
+          "title": "Traced the defect to a template rendering condition that evaluated incorrectly in production"
+        },
+        {
+          "id": "cluster-4",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.466,
+          "title": "Submission was rejected due to missing classification data on new entity records"
+        },
+        {
+          "id": "cluster-1",
+          "service": "Tax Reporting",
+          "resolver": "tania.gupta@intcom.com",
+          "score": 0.433,
+          "title": "Reviewed the request with the tax team lead, granted the standard processing entitlement, and verified access to the output workspace"
+        },
+        {
+          "id": "cluster-11",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.433,
+          "title": "Traced the gateway rejection to incomplete counterparty classification"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-12",
+          "resolution": "The fee section was suppressed by a broken conditional in the report template; fixed the condition, regenerated the client batch, and confirmed the fee table now renders correctly.",
+          "score": 0.649
+        },
+        {
+          "id": "cluster-10",
+          "resolution": "Traced the defect to a template rendering condition that evaluated incorrectly in production. Corrected the template logic, reran the affected batch, and spot-checked output PDFs before release.",
+          "score": 0.553
+        }
+      ]
+    },
+    {
+      "summary": "Cash not there pls fix asap for yesterday margin sweep",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Treasury & Cash"
+          ]
+        },
+        "Assignee": {
+          "input": null,
+          "output": "vincent.lange@intcom.com"
+        },
+        "Urgency": {
+          "input": "Highest",
+          "output": "High"
+        },
+        "Priority": {
+          "input": "Highest",
+          "output": "High"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "clarification"
+        }
+      },
+      "understanding": "Cash appears to be missing or incorrect following yesterday's margin sweep for the Nordics entity. This is a treasury cash movement/reconciliation issue; the affected account and exact booking/value date still need confirmation.",
+      "rationale": "The failing business process is a margin cash sweep and resulting liquidity/cash balance, which belongs to Cash Management (Treasury & Cash), not a general platform issue. This is an Incident because cash is reportedly missing/incorrect, rather than a request for a standard service. Cash Management is critical and an unresolved margin cash shortfall may affect a business entity's liquidity obligations, so rapid investigation is warranted. The scope and amount are unknown, so impact is assessed as significant rather than widespread. Similar cash-management precedents involved missed sweep/banking cutoffs and ledger-to-bank reconciliation (cluster-19 and cluster-16).",
+      "assigneeReason": "resolver of the most similar resolved tickets",
+      "resolutionText": "We requested the affected Nordics cash account and the exact sweep booking/value date to reconcile the reported margin-sweep shortfall and determine whether a cutoff adjustment is required.",
+      "matches": [
+        {
+          "id": "cluster-19",
+          "service": "Cash Management",
+          "resolver": "vincent.lange@intcom.com",
+          "score": 0.716,
+          "title": "Reconciled the cash ledger against the bank statement and found the sweep missed the prior day's cutoff"
+        },
+        {
+          "id": "cluster-16",
+          "service": "Cash Management",
+          "resolver": "vincent.lange@intcom.com",
+          "score": 0.713,
+          "title": "Traced the shortfall to a missed banking cutoff on the margin sweep"
+        },
+        {
+          "id": "catalog-cash-management",
+          "service": "Cash Management",
+          "resolver": null,
+          "score": 0.558,
+          "title": "Service catalog: Cash Management"
+        },
+        {
+          "id": "cluster-21",
+          "service": "Securities Settlement",
+          "resolver": "ursula.klassen@intcom.com",
+          "score": 0.527,
+          "title": "Custodian was late sending status updates"
+        },
+        {
+          "id": "cluster-3",
+          "service": "Order Management",
+          "resolver": "victor.hamon@intcom.com",
+          "score": 0.523,
+          "title": "A stale clearing account mapping from a recent broker change was blocking order routing"
+        },
+        {
+          "id": "cluster-12",
+          "service": "Client Reporting",
+          "resolver": "pierre.johnson@intcom.com",
+          "score": 0.517,
+          "title": "The fee section was suppressed by a broken conditional in the report template"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-19",
+          "resolution": "Reconciled the cash ledger against the bank statement and found the sweep missed the prior day's cutoff; booked a value-dated adjustment and confirmed the balance with the desk.",
+          "score": 0.716
+        },
+        {
+          "id": "cluster-16",
+          "resolution": "Traced the shortfall to a missed banking cutoff on the margin sweep; corrected with an intraday adjustment and confirmed with Treasury.",
+          "score": 0.713
+        }
+      ]
+    },
+    {
+      "summary": "Rimes overnight benchmark file DM_RIMES_FU_PR_BBG3_EODD_20260918_1.txt arrived after the downstream cutoff",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Market Data Services"
+          ]
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "Rimes delivered benchmark file DM_RIMES_FU_PR_BBG3_EODD_20260918_1.txt after its agreed cutoff. This caused the Germany price-mastering job to start with stale data and puts the downstream valuation chain at risk.",
+      "rationale": "The failed business process is late delivery of a Rimes benchmark data file, which routes to Rimes Data Feed rather than the email intake channel or downstream valuation service. This is an Incident because an agreed feed window was missed and processing may be degraded. Rimes Data Feed is critical; the issue affects the Germany business entity and threatens valuation processing, requiring rapid investigation within hours, but no confirmed regulatory breach, complete outage, or absence of workaround has been established.",
+      "assigneeReason": "no precedent resolver - route to Market Data Services queue",
+      "resolutionText": "Traced the stale Germany price-mastering input to Rimes delivering DM_RIMES_FU_PR_BBG3_EODD_20260918_1.txt after the agreed cutoff; ingested the completed file and reran the affected price-mastering job. Confirmed the job processed the updated benchmark data and the downstream valuation chain could proceed.",
+      "matches": [
+        {
+          "id": "catalog-rimes-data-feed",
+          "service": "Rimes Data Feed",
+          "resolver": null,
+          "score": 0.659,
+          "title": "Service catalog: Rimes Data Feed"
+        },
+        {
+          "id": "cluster-11",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.538,
+          "title": "Traced the gateway rejection to incomplete counterparty classification"
+        },
+        {
+          "id": "cluster-3",
+          "service": "Order Management",
+          "resolver": "victor.hamon@intcom.com",
+          "score": 0.509,
+          "title": "A stale clearing account mapping from a recent broker change was blocking order routing"
+        },
+        {
+          "id": "cluster-5",
+          "service": "Order Management",
+          "resolver": "victor.hamon@intcom.com",
+          "score": 0.502,
+          "title": "Diagnosed a broken broker routing link after the account switch"
+        },
+        {
+          "id": "cluster-10",
+          "service": "Client Reporting",
+          "resolver": "pierre.johnson@intcom.com",
+          "score": 0.502,
+          "title": "Traced the defect to a template rendering condition that evaluated incorrectly in production"
+        },
+        {
+          "id": "cluster-21",
+          "service": "Securities Settlement",
+          "resolver": "ursula.klassen@intcom.com",
+          "score": 0.498,
+          "title": "Custodian was late sending status updates"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-11",
+          "resolution": "Traced the gateway rejection to incomplete counterparty classification; corrected the records, regenerated the submission, and confirmed acceptance.",
+          "score": 0.538
+        },
+        {
+          "id": "cluster-3",
+          "resolution": "A stale clearing account mapping from a recent broker change was blocking order routing. Corrected the mapping, tested with one order, then released the remaining held orders.",
+          "score": 0.509
+        },
+        {
+          "id": "cluster-5",
+          "resolution": "Diagnosed a broken broker routing link after the account switch; updated the routing table and confirmed subsequent orders flowed through without manual intervention.",
+          "score": 0.502
+        }
+      ]
+    },
+    {
+      "summary": "Vendor notice: Americas benchmark publication delayed beyond the publishing window",
+      "changed": {
+        "Affected Business or IT Services": {
+          "input": [
+            "SharePoint & File Storage"
+          ],
+          "output": [
+            "Rimes Data Feed"
+          ]
+        },
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Market Data Services"
+          ]
+        },
+        "Urgency": {
+          "input": "Low",
+          "output": "High"
+        },
+        "Impact": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Priority": {
+          "input": "Low",
+          "output": "High"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "An external market-data vendor has delayed publication of the Americas benchmark files. Downstream consumers may receive incomplete price snapshots until corrected files are posted later today; the issue is not with the email channel or SharePoint.",
+      "rationale": "This is an operational degradation in the market-data feed process, so it routes to Rimes Data Feed rather than Outlook & Email or SharePoint & File Storage. It is an Incident because expected benchmark data is delayed and downstream snapshots may be incomplete. Rimes Data Feed is critical and the delay can affect downstream valuation/investment processes across the Americas universe; rapid handling is needed, but the vendor has provided a same-day correction ETA, so highest urgency is not justified.",
+      "assigneeReason": "no precedent resolver - route to Market Data Services queue",
+      "resolutionText": "Traced the incomplete Americas price snapshots to the external vendor's delayed benchmark publication, rather than SharePoint or the email channel; monitored for the corrected Rimes Data Feed files and confirmed publication was restored after the vendor reposted them.",
+      "matches": [
+        {
+          "id": "cluster-17",
+          "service": "Outlook & Email",
+          "resolver": "jack.martin@intcom.com",
+          "score": 0.535,
+          "title": "Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions"
+        },
+        {
+          "id": "cluster-11",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.516,
+          "title": "Traced the gateway rejection to incomplete counterparty classification"
+        },
+        {
+          "id": "cluster-10",
+          "service": "Client Reporting",
+          "resolver": "pierre.johnson@intcom.com",
+          "score": 0.506,
+          "title": "Traced the defect to a template rendering condition that evaluated incorrectly in production"
+        },
+        {
+          "id": "cluster-16",
+          "service": "Cash Management",
+          "resolver": "vincent.lange@intcom.com",
+          "score": 0.502,
+          "title": "Traced the shortfall to a missed banking cutoff on the margin sweep"
+        },
+        {
+          "id": "cluster-3",
+          "service": "Order Management",
+          "resolver": "victor.hamon@intcom.com",
+          "score": 0.499,
+          "title": "A stale clearing account mapping from a recent broker change was blocking order routing"
+        },
+        {
+          "id": "cluster-21",
+          "service": "Securities Settlement",
+          "resolver": "ursula.klassen@intcom.com",
+          "score": 0.497,
+          "title": "Custodian was late sending status updates"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-17",
+          "resolution": "Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions.",
+          "score": 0.535
+        },
+        {
+          "id": "cluster-11",
+          "resolution": "Traced the gateway rejection to incomplete counterparty classification; corrected the records, regenerated the submission, and confirmed acceptance.",
+          "score": 0.516
+        },
+        {
+          "id": "cluster-10",
+          "resolution": "Traced the defect to a template rendering condition that evaluated incorrectly in production. Corrected the template logic, reran the affected batch, and spot-checked output PDFs before release.",
+          "score": 0.506
+        }
+      ]
+    },
+    {
+      "summary": "Vendor onboarding mail says LEI submission file was rejected by the regulator gateway",
+      "changed": {
+        "Work type": {
+          "input": "Service Request",
+          "output": "Incident"
+        },
+        "Affected Business or IT Services": {
+          "input": [
+            "CRM & Client Portal"
+          ],
+          "output": [
+            "Regulatory Reporting"
+          ]
+        },
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Risk & Controls"
+          ]
+        },
+        "Assignee": {
+          "input": null,
+          "output": "tara.singh@intcom.com"
+        },
+        "Urgency": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "The latest LEI regulatory submission file for the Luxembourg entity was rejected by the regulator gateway because a mandatory classification segment in the payload is empty. This is a failed regulatory-reporting submission process, not a CRM issue or an email-service request.",
+      "rationale": "The failure occurs at the LEI regulatory-submission gateway, which is within the critical Regulatory Reporting service owned by Risk & Controls; the vendor-onboarding email is only the notification channel. A rejected submission caused by missing classification data is a service failure requiring investigation and remediation, so it is an Incident rather than a request. High urgency and impact are appropriate because a Luxembourg regulatory submission is currently rejected and may create a compliance risk, but there is no evidence yet of a broad outage, confirmed breach, or no-workaround condition that would justify highest severity. KB precedents cluster-11 and cluster-4 describe the same gateway rejection pattern and remediation through correction of classification master data and file regeneration/resubmission.",
+      "assigneeReason": "resolver of the most similar resolved tickets",
+      "resolutionText": "Traced the regulator gateway rejection for the Luxembourg LEI submission to an empty mandatory classification segment on the affected entity records; corrected the classification master data, regenerated the submission file, and confirmed the gateway accepted the resubmission.",
+      "matches": [
+        {
+          "id": "cluster-11",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.604,
+          "title": "Traced the gateway rejection to incomplete counterparty classification"
+        },
+        {
+          "id": "cluster-4",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.602,
+          "title": "Submission was rejected due to missing classification data on new entity records"
+        },
+        {
+          "id": "catalog-regulatory-reporting",
+          "service": "Regulatory Reporting",
+          "resolver": null,
+          "score": 0.538,
+          "title": "Service catalog: Regulatory Reporting"
+        },
+        {
+          "id": "cluster-12",
+          "service": "Client Reporting",
+          "resolver": "pierre.johnson@intcom.com",
+          "score": 0.462,
+          "title": "The fee section was suppressed by a broken conditional in the report template"
+        },
+        {
+          "id": "cluster-17",
+          "service": "Outlook & Email",
+          "resolver": "jack.martin@intcom.com",
+          "score": 0.455,
+          "title": "Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions"
+        },
+        {
+          "id": "cluster-10",
+          "service": "Client Reporting",
+          "resolver": "pierre.johnson@intcom.com",
+          "score": 0.447,
+          "title": "Traced the defect to a template rendering condition that evaluated incorrectly in production"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-11",
+          "resolution": "Traced the gateway rejection to incomplete counterparty classification; corrected the records, regenerated the submission, and confirmed acceptance.",
+          "score": 0.604
+        },
+        {
+          "id": "cluster-4",
+          "resolution": "Submission was rejected due to missing classification data on new entity records. Updated the master data, regenerated the file, and resubmitted successfully.",
+          "score": 0.602
+        }
+      ]
+    },
+    {
+      "summary": "SimCorp replication job SCD_POS_SYNC failed on host EAPW8504",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Enterprise Applications"
+          ]
+        },
+        "Assignee": {
+          "input": null,
+          "output": "xena.schmidt@intcom.com"
+        },
+        "Urgency": {
+          "input": "Highest",
+          "output": "High"
+        },
+        "Impact": {
+          "input": "Low",
+          "output": "High"
+        },
+        "Priority": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "The SimCorp Dimension position replication job SCD_POS_SYNC failed on host EAPW8504 due to a timeout. As a result, position updates have not reached the reporting layer and Nordics operations may be viewing stale holdings.",
+      "rationale": "This is an Incident because an automated production replication process has failed, not an access or provisioning request. It belongs to SimCorp Dimension because SCD_POS_SYNC is a SimCorp position sync/replication job feeding the reporting layer. SimCorp Dimension is critical, and stale holdings can affect an operational business entity; rapid remediation is needed, though the stated impact is limited to reporting synchronization rather than confirmed full platform unavailability. Similar KB cases involved database/staging locks, job restart, and post-recovery position reconciliation.",
+      "assigneeReason": "resolver of the most similar resolved tickets",
+      "resolutionText": "Traced the SCD_POS_SYNC timeout on EAPW8504 to a locked replication staging table; cleared the blocking session and restarted the job from its last checkpoint. Reconciled the Nordics position output against the reporting layer and confirmed holdings were synchronized.",
+      "matches": [
+        {
+          "id": "cluster-13",
+          "service": "SimCorp Dimension",
+          "resolver": "xena.schmidt@intcom.com",
+          "score": 0.763,
+          "title": "Diagnosed a timeout on the position sync job caused by a locked staging table"
+        },
+        {
+          "id": "cluster-2",
+          "service": "SimCorp Dimension",
+          "resolver": "xena.schmidt@intcom.com",
+          "score": 0.756,
+          "title": "Replication job had stalled due to a temporary database lock"
+        },
+        {
+          "id": "catalog-simcorp-dimension",
+          "service": "SimCorp Dimension",
+          "resolver": null,
+          "score": 0.641,
+          "title": "Service catalog: SimCorp Dimension"
+        },
+        {
+          "id": "cluster-21",
+          "service": "Securities Settlement",
+          "resolver": "ursula.klassen@intcom.com",
+          "score": 0.587,
+          "title": "Custodian was late sending status updates"
+        },
+        {
+          "id": "cluster-18",
+          "service": "Securities Settlement",
+          "resolver": "xena.schmidt@intcom.com",
+          "score": 0.572,
+          "title": "Reviewed the settlement message queue, cleared several stuck acknowledgements, and replayed the pending confirmations so custody statuses synced back to the dashboard"
+        },
+        {
+          "id": "cluster-15",
+          "service": "Trade Matching",
+          "resolver": "quinn.anderson@intcom.com",
+          "score": 0.572,
+          "title": "Found a missing broker SSI mapping causing allocation rejections"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-13",
+          "resolution": "Diagnosed a timeout on the position sync job caused by a locked staging table; cleared the session and reran the sync, confirming holdings matched afterward.",
+          "score": 0.763
+        },
+        {
+          "id": "cluster-2",
+          "resolution": "Replication job had stalled due to a temporary database lock. Cleared the lock, restarted the job from its last checkpoint, and reconciled positions against downstream reporting.",
+          "score": 0.756
+        }
+      ]
+    },
+    {
+      "summary": "NAV_EOD_GE_375 stopped after valuation tolerance breach on 4 funds",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Valuation & Pricing"
+          ]
+        },
+        "Urgency": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Impact": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Priority": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "The end-of-day NAV batch NAV_EOD_GE_375 breached valuation tolerance thresholds for four German funds and did not publish its NAV snapshot success event to the downstream control queue. This requires investigation and resolution before the next accounting cycle.",
+      "rationale": "This is an actual failure in the NAV Calculation process: valuation tolerance checking and downstream NAV publication are both NAV Calculation functions. It is an Incident, not a request, because an EOD batch has failed to complete its required publication. NAV Calculation is critical, and four funds within the Germany entity are affected ahead of the next accounting cycle; rapid action is needed, though the information does not establish a current regulatory breach, total service outage, or absence of any operational workaround.",
+      "assigneeReason": "no precedent resolver - route to Valuation & Pricing queue",
+      "resolutionText": "Traced the NAV_EOD_GE_375 halt to valuation-tolerance exceptions affecting four German funds; corrected the valuation exceptions, reran the end-of-day batch, and confirmed that the NAV snapshot success event was published to the downstream control queue.",
+      "matches": [
+        {
+          "id": "cluster-11",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.631,
+          "title": "Traced the gateway rejection to incomplete counterparty classification"
+        },
+        {
+          "id": "cluster-16",
+          "service": "Cash Management",
+          "resolver": "vincent.lange@intcom.com",
+          "score": 0.608,
+          "title": "Traced the shortfall to a missed banking cutoff on the margin sweep"
+        },
+        {
+          "id": "catalog-nav-calculation",
+          "service": "NAV Calculation",
+          "resolver": null,
+          "score": 0.602,
+          "title": "Service catalog: NAV Calculation"
+        },
+        {
+          "id": "cluster-3",
+          "service": "Order Management",
+          "resolver": "victor.hamon@intcom.com",
+          "score": 0.6,
+          "title": "A stale clearing account mapping from a recent broker change was blocking order routing"
+        },
+        {
+          "id": "cluster-4",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.584,
+          "title": "Submission was rejected due to missing classification data on new entity records"
+        },
+        {
+          "id": "cluster-20",
+          "service": "Securities Settlement",
+          "resolver": "xena.schmidt@intcom.com",
+          "score": 0.584,
+          "title": "Root cause was a stalled consumer on the settlement queue"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-11",
+          "resolution": "Traced the gateway rejection to incomplete counterparty classification; corrected the records, regenerated the submission, and confirmed acceptance.",
+          "score": 0.631
+        },
+        {
+          "id": "cluster-16",
+          "resolution": "Traced the shortfall to a missed banking cutoff on the margin sweep; corrected with an intraday adjustment and confirmed with Treasury.",
+          "score": 0.608
+        },
+        {
+          "id": "cluster-3",
+          "resolution": "A stale clearing account mapping from a recent broker change was blocking order routing. Corrected the mapping, tested with one order, then released the remaining held orders.",
+          "score": 0.6
+        }
+      ]
+    },
+    {
+      "summary": "Compliance monitoring dashboard shows stale breach statuses after yesterday's rule update",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Risk & Controls"
+          ]
+        },
+        "Urgency": {
+          "input": "Highest",
+          "output": "High"
+        },
+        "Impact": {
+          "input": "Low",
+          "output": "High"
+        },
+        "Priority": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "The Risk & Compliance Monitoring breach dashboard is displaying stale open-breach statuses following yesterday's rule update, although the underlying portfolio checks and breach detail pages are current. Analysts can manually inspect cases, but the dashboard overview is unreliable and is generating unnecessary escalations.",
+      "rationale": "This is an Incident because an existing critical compliance-monitoring function is degraded, not an access or provisioning request. The failed business process is compliance breach monitoring: the dashboard/summary is stale despite successfully rerun checks, so Risk & Compliance Monitoring is the correct service. The issue affects a Luxembourg business entity and an important compliance-control overview; a manual but time-consuming workaround exists, so urgency is high rather than highest. Impact is high because a critical service's monitoring overview is partially unavailable/unreliable for the entity, though detailed records remain usable.",
+      "assigneeReason": "no precedent resolver - route to Risk & Controls queue",
+      "resolutionText": "Traced the stale Luxembourg breach-dashboard statuses to the dashboard summary cache not being refreshed after yesterday's rule update; refreshed and reprocessed the summary data, then confirmed the overview matched the current breach detail pages and rerun portfolio checks.",
+      "matches": [
+        {
+          "id": "cluster-11",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.559,
+          "title": "Traced the gateway rejection to incomplete counterparty classification"
+        },
+        {
+          "id": "cluster-14",
+          "service": "Corporate Actions",
+          "resolver": "ursula.klassen@intcom.com",
+          "score": 0.555,
+          "title": "Several events were missing option code mappings after ingestion"
+        },
+        {
+          "id": "catalog-risk-compliance-monitoring",
+          "service": "Risk & Compliance Monitoring",
+          "resolver": null,
+          "score": 0.551,
+          "title": "Service catalog: Risk & Compliance Monitoring"
+        },
+        {
+          "id": "cluster-3",
+          "service": "Order Management",
+          "resolver": "victor.hamon@intcom.com",
+          "score": 0.548,
+          "title": "A stale clearing account mapping from a recent broker change was blocking order routing"
+        },
+        {
+          "id": "cluster-4",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.543,
+          "title": "Submission was rejected due to missing classification data on new entity records"
+        },
+        {
+          "id": "cluster-9",
+          "service": "Corporate Actions",
+          "resolver": "ursula.klassen@intcom.com",
+          "score": 0.543,
+          "title": "Root cause was an incomplete option-code mapping for a batch of events"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-11",
+          "resolution": "Traced the gateway rejection to incomplete counterparty classification; corrected the records, regenerated the submission, and confirmed acceptance.",
+          "score": 0.559
+        },
+        {
+          "id": "cluster-14",
+          "resolution": "Several events were missing option code mappings after ingestion. Updated the mapping table, reprocessed the feed, and confirmed elections displayed correctly.",
+          "score": 0.555
+        },
+        {
+          "id": "cluster-3",
+          "resolution": "A stale clearing account mapping from a recent broker change was blocking order routing. Corrected the mapping, tested with one order, then released the remaining held orders.",
+          "score": 0.548
+        }
+      ]
+    },
+    {
+      "summary": "Access requested for CRM & Client Portal for a new relationship manager in France",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Client Services"
+          ]
+        },
+        "Urgency": {
+          "input": "Lowest",
+          "output": "Low"
+        },
+        "Priority": {
+          "input": "Lowest",
+          "output": "Low"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "A new France distribution relationship manager requires the standard, non-elevated CRM & Client Portal sales profile to review investor interactions and record follow-up actions. The line manager has approved the starter-access request.",
+      "rationale": "This is a named-application access provisioning request, so it is a Service Request routed to CRM & Client Portal rather than Identity & Access Management. The requested standard profile has no stated operational outage, compliance issue, elevated privileges, or time-critical deadline; it is therefore low urgency and low, individual-level impact. Access provisioning requires a ticket and cannot be completed through self-service.",
+      "assigneeReason": "no precedent resolver - route to Client Services queue",
+      "resolutionText": "Provisioned the approved standard France distribution sales profile for the new relationship manager in CRM & Client Portal, with no elevated rights. Verified access permits review of investor interactions and recording of follow-up actions.",
+      "matches": [
+        {
+          "id": "catalog-crm-client-portal",
+          "service": "CRM & Client Portal",
+          "resolver": null,
+          "score": 0.577,
+          "title": "Service catalog: CRM & Client Portal"
+        },
+        {
+          "id": "catalog-identity-access-management",
+          "service": "Identity & Access Management",
+          "resolver": null,
+          "score": 0.421,
+          "title": "Service catalog: Identity & Access Management"
+        },
+        {
+          "id": "cluster-17",
+          "service": "Outlook & Email",
+          "resolver": "jack.martin@intcom.com",
+          "score": 0.412,
+          "title": "Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions"
+        },
+        {
+          "id": "cluster-4",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.402,
+          "title": "Submission was rejected due to missing classification data on new entity records"
+        },
+        {
+          "id": "catalog-regulatory-reporting",
+          "service": "Regulatory Reporting",
+          "resolver": null,
+          "score": 0.401,
+          "title": "Service catalog: Regulatory Reporting"
+        },
+        {
+          "id": "cluster-11",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.396,
+          "title": "Traced the gateway rejection to incomplete counterparty classification"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-17",
+          "resolution": "Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions.",
+          "score": 0.412
+        },
+        {
+          "id": "cluster-4",
+          "resolution": "Submission was rejected due to missing classification data on new entity records. Updated the master data, regenerated the file, and resubmitted successfully.",
+          "score": 0.402
+        },
+        {
+          "id": "cluster-11",
+          "resolution": "Traced the gateway rejection to incomplete counterparty classification; corrected the records, regenerated the submission, and confirmed acceptance.",
+          "score": 0.396
+        }
+      ]
+    },
+    {
+      "summary": "Access removal requested for SharePoint & File Storage after contractor offboarding",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Enterprise Applications"
+          ]
+        },
+        "Urgency": {
+          "input": "Low",
+          "output": "High"
+        },
+        "Impact": {
+          "input": "High",
+          "output": "Low"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "A contractor, nadia.morgan@intcom.com, has left today and requires removal of all SharePoint and File Storage access, including direct site permissions, synchronized project folders, and inherited project-group access, by end of day.",
+      "rationale": "This is a Service Request for removal of access to a named business application/service, so it is routed to SharePoint & File Storage rather than Identity & Access Management. The contractor offboarding creates a time-sensitive access-control risk, warranting high urgency, but the stated impact is limited to one individual on a non-critical service, so impact is low. Support action is required; it is not suitable for user self-service.",
+      "assigneeReason": "no precedent resolver - route to Enterprise Applications queue",
+      "resolutionText": "Removed nadia.morgan@intcom.com from direct SharePoint site permissions, synchronized project folders, and inherited project-group memberships following contractor offboarding. Verified that the account no longer held SharePoint or File Storage access.",
+      "matches": [
+        {
+          "id": "catalog-sharepoint-file-storage",
+          "service": "SharePoint & File Storage",
+          "resolver": null,
+          "score": 0.468,
+          "title": "Service catalog: SharePoint & File Storage"
+        },
+        {
+          "id": "cluster-17",
+          "service": "Outlook & Email",
+          "resolver": "jack.martin@intcom.com",
+          "score": 0.437,
+          "title": "Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions"
+        },
+        {
+          "id": "cluster-1",
+          "service": "Tax Reporting",
+          "resolver": "tania.gupta@intcom.com",
+          "score": 0.411,
+          "title": "Reviewed the request with the tax team lead, granted the standard processing entitlement, and verified access to the output workspace"
+        },
+        {
+          "id": "catalog-identity-access-management",
+          "service": "Identity & Access Management",
+          "resolver": null,
+          "score": 0.401,
+          "title": "Service catalog: Identity & Access Management"
+        },
+        {
+          "id": "cluster-6",
+          "service": "Tax Reporting",
+          "resolver": "tania.gupta@intcom.com",
+          "score": 0.372,
+          "title": "Confirmed the withholding tax workflow license was provisioned and validated the user could access the quarterly extract tool"
+        },
+        {
+          "id": "cluster-8",
+          "service": "Outlook & Email",
+          "resolver": "jack.martin@intcom.com",
+          "score": 0.356,
+          "title": "Set up the shared mailbox and DL as requested, granted the team the necessary send/access rights, and confirmed visibility in Outlook"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-17",
+          "resolution": "Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions.",
+          "score": 0.437
+        },
+        {
+          "id": "cluster-1",
+          "resolution": "Reviewed the request with the tax team lead, granted the standard processing entitlement, and verified access to the output workspace.",
+          "score": 0.411
+        },
+        {
+          "id": "cluster-6",
+          "resolution": "Confirmed the withholding tax workflow license was provisioned and validated the user could access the quarterly extract tool.",
+          "score": 0.372
+        }
+      ]
+    },
+    {
+      "summary": "Production outage in Outlook & Email for shared mailbox creation",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Enterprise Applications"
+          ]
+        },
+        "Assignee": {
+          "input": null,
+          "output": "jack.martin@intcom.com"
+        },
+        "Urgency": {
+          "input": "Lowest",
+          "output": "Low"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "Cora Russell requests provisioning of a new shared mailbox and distribution list for a temporary campaign before next week. No Outlook or email service disruption has been reported.",
+      "rationale": "This is a standard mailbox and distribution-list provisioning request, not an incident, despite the outage wording in the intake title. It belongs to Outlook & Email because the requested resources are email services. As a routine, single-requester provisioning activity with no reported disruption or compliance impact, urgency is low and impact is lowest. KB precedents cluster-17 and cluster-8 similarly reclassified apparent Outlook alerts as service requests and provisioned shared mailboxes/DLs with the required permissions.",
+      "assigneeReason": "resolver of the most similar resolved tickets",
+      "resolutionText": "Reclassified the mislabelled outage as a standard service request, obtained the normal approval and provisioned the temporary campaign shared mailbox and distribution list for Cora Russell. Granted the requested send/access permissions and confirmed the mailbox and DL were visible in Outlook.",
+      "matches": [
+        {
+          "id": "cluster-17",
+          "service": "Outlook & Email",
+          "resolver": "jack.martin@intcom.com",
+          "score": 0.668,
+          "title": "Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions"
+        },
+        {
+          "id": "cluster-8",
+          "service": "Outlook & Email",
+          "resolver": "jack.martin@intcom.com",
+          "score": 0.626,
+          "title": "Set up the shared mailbox and DL as requested, granted the team the necessary send/access rights, and confirmed visibility in Outlook"
+        },
+        {
+          "id": "catalog-outlook-email",
+          "service": "Outlook & Email",
+          "resolver": null,
+          "score": 0.569,
+          "title": "Service catalog: Outlook & Email"
+        },
+        {
+          "id": "cluster-1",
+          "service": "Tax Reporting",
+          "resolver": "tania.gupta@intcom.com",
+          "score": 0.445,
+          "title": "Reviewed the request with the tax team lead, granted the standard processing entitlement, and verified access to the output workspace"
+        },
+        {
+          "id": "cluster-10",
+          "service": "Client Reporting",
+          "resolver": "pierre.johnson@intcom.com",
+          "score": 0.444,
+          "title": "Traced the defect to a template rendering condition that evaluated incorrectly in production"
+        },
+        {
+          "id": "cluster-9",
+          "service": "Corporate Actions",
+          "resolver": "ursula.klassen@intcom.com",
+          "score": 0.443,
+          "title": "Root cause was an incomplete option-code mapping for a batch of events"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-17",
+          "resolution": "Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions.",
+          "score": 0.668
+        },
+        {
+          "id": "cluster-8",
+          "resolution": "Set up the shared mailbox and DL as requested, granted the team the necessary send/access rights, and confirmed visibility in Outlook.",
+          "score": 0.626
+        }
+      ]
+    },
+    {
+      "summary": "Corporate action ingestion CAEV-874 is missing a mandatory option code on 1 events",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Securities Operations"
+          ]
+        },
+        "Assignee": {
+          "input": null,
+          "output": "ursula.klassen@intcom.com"
+        },
+        "Urgency": {
+          "input": "Highest",
+          "output": "High"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "Corporate action ingestion CAEV-874 received one event with a missing mandatory option-code mapping. As a result, the election cannot be published to the downstream operations screen and users cannot process the related instruction.",
+      "rationale": "This is a broken Corporate Actions ingestion/election-publication process, not merely a machine-created alert. It is an Incident because a received event cannot be processed until support corrects the mapping. Corporate Actions is critical, and the blocked instruction needs rapid remediation; however, the stated scope is one event in one business entity, so impact is moderate rather than widespread. The matching precedents identify incomplete option-code mappings resolved by updating the mapping and reprocessing.",
+      "assigneeReason": "resolver of the most similar resolved tickets",
+      "resolutionText": "Traced CAEV-874 to an incomplete mandatory option-code mapping affecting 1 ingested event; corrected the mapping and reprocessed the event. Confirmed the election published to the downstream operations screen and the instruction can now be processed.",
+      "matches": [
+        {
+          "id": "cluster-14",
+          "service": "Corporate Actions",
+          "resolver": "ursula.klassen@intcom.com",
+          "score": 0.775,
+          "title": "Several events were missing option code mappings after ingestion"
+        },
+        {
+          "id": "cluster-9",
+          "service": "Corporate Actions",
+          "resolver": "ursula.klassen@intcom.com",
+          "score": 0.709,
+          "title": "Root cause was an incomplete option-code mapping for a batch of events"
+        },
+        {
+          "id": "catalog-corporate-actions",
+          "service": "Corporate Actions",
+          "resolver": null,
+          "score": 0.68,
+          "title": "Service catalog: Corporate Actions"
+        },
+        {
+          "id": "cluster-4",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.598,
+          "title": "Submission was rejected due to missing classification data on new entity records"
+        },
+        {
+          "id": "cluster-11",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.578,
+          "title": "Traced the gateway rejection to incomplete counterparty classification"
+        },
+        {
+          "id": "cluster-12",
+          "service": "Client Reporting",
+          "resolver": "pierre.johnson@intcom.com",
+          "score": 0.559,
+          "title": "The fee section was suppressed by a broken conditional in the report template"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-14",
+          "resolution": "Several events were missing option code mappings after ingestion. Updated the mapping table, reprocessed the feed, and confirmed elections displayed correctly.",
+          "score": 0.775
+        },
+        {
+          "id": "cluster-9",
+          "resolution": "Root cause was an incomplete option-code mapping for a batch of events; corrected the mapping and reprocessed, verifying elections appeared on the dashboard.",
+          "score": 0.709
+        }
+      ]
+    },
+    {
+      "summary": "Orders remain in pending approval after broker account switch in OMS",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Trading Support"
+          ]
+        },
+        "Assignee": {
+          "input": null,
+          "output": "victor.hamon@intcom.com"
+        },
+        "Urgency": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Impact": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Priority": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "Following a broker account switch, newly submitted OMS orders for the Switzerland entity remain in Pending Approval and are not routed to the configured broker for execution. The issue has been reproduced on three orders and currently requires manual handling.",
+      "rationale": "This is an Incident because a functioning OMS workflow is degraded: orders can be entered but cannot complete approval and automated execution routing. It belongs to Order Management, since broker account mapping and routing are OMS functions, rather than Trade Matching, which occurs later in the trade lifecycle. OMS is critical, and the failure affects execution routing for a business entity; manual processing is available but operationally difficult, supporting high urgency and high impact. The symptoms closely match prior OMS cases involving broken/stale broker routing or clearing-account mappings after an account switch (cluster-5 and cluster-3).",
+      "assigneeReason": "resolver of the most similar resolved tickets",
+      "resolutionText": "Traced the Switzerland OMS Pending Approval orders to a stale broker account routing mapping following the account switch; corrected the routing table and released the three held orders. Reprocessed and verified that subsequent orders progressed to the configured broker execution path without manual intervention.",
+      "matches": [
+        {
+          "id": "cluster-5",
+          "service": "Order Management",
+          "resolver": "victor.hamon@intcom.com",
+          "score": 0.677,
+          "title": "Diagnosed a broken broker routing link after the account switch"
+        },
+        {
+          "id": "cluster-3",
+          "service": "Order Management",
+          "resolver": "victor.hamon@intcom.com",
+          "score": 0.674,
+          "title": "A stale clearing account mapping from a recent broker change was blocking order routing"
+        },
+        {
+          "id": "catalog-order-management",
+          "service": "Order Management",
+          "resolver": null,
+          "score": 0.615,
+          "title": "Service catalog: Order Management"
+        },
+        {
+          "id": "cluster-15",
+          "service": "Trade Matching",
+          "resolver": "quinn.anderson@intcom.com",
+          "score": 0.561,
+          "title": "Found a missing broker SSI mapping causing allocation rejections"
+        },
+        {
+          "id": "cluster-7",
+          "service": "Trade Matching",
+          "resolver": "quinn.anderson@intcom.com",
+          "score": 0.543,
+          "title": "Adapter was rejecting allocations due to an incomplete broker account setup"
+        },
+        {
+          "id": "cluster-11",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.507,
+          "title": "Traced the gateway rejection to incomplete counterparty classification"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-5",
+          "resolution": "Diagnosed a broken broker routing link after the account switch; updated the routing table and confirmed subsequent orders flowed through without manual intervention.",
+          "score": 0.677
+        },
+        {
+          "id": "cluster-3",
+          "resolution": "A stale clearing account mapping from a recent broker change was blocking order routing. Corrected the mapping, tested with one order, then released the remaining held orders.",
+          "score": 0.674
+        }
+      ]
+    },
+    {
+      "summary": "Settlement confirmation queue SECLINK-7549 backlog exceeded the operational threshold",
+      "changed": {
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Securities Operations"
+          ]
+        },
+        "Assignee": {
+          "input": null,
+          "output": "xena.schmidt@intcom.com"
+        },
+        "Urgency": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Impact": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Priority": {
+          "input": "Medium",
+          "output": "High"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "The SECLINK-7549 settlement-confirmation queue has built up 164 unmatched confirmations over 15 minutes. Trades have already matched, but final settlement acknowledgements are not reaching the operations dashboard for the Nordics entity.",
+      "rationale": "This is a live degradation of the settlement-confirmation stage, not a front-office booking or trade-matching issue, so it belongs to Securities Settlement. It is an Incident because acknowledgements are failing to process/post. The backlog affects a critical service and a business entity, requiring rapid investigation within hours; no realistic user-side workaround exists. Similar Securities Settlement alerts involved stuck queue acknowledgements, stalled consumers, or delayed custodian status updates (cluster-18, cluster-20, cluster-21).",
+      "assigneeReason": "resolver of the most similar resolved tickets",
+      "resolutionText": "Traced the SECLINK-7549 backlog to a stalled settlement-confirmation consumer; restarted the listener and replayed the 164 pending acknowledgements. Confirmed the queue drained and final settlement acknowledgements posted to the Nordics operations dashboard.",
+      "matches": [
+        {
+          "id": "cluster-18",
+          "service": "Securities Settlement",
+          "resolver": "xena.schmidt@intcom.com",
+          "score": 0.761,
+          "title": "Reviewed the settlement message queue, cleared several stuck acknowledgements, and replayed the pending confirmations so custody statuses synced back to the dashboard"
+        },
+        {
+          "id": "cluster-20",
+          "service": "Securities Settlement",
+          "resolver": "xena.schmidt@intcom.com",
+          "score": 0.737,
+          "title": "Root cause was a stalled consumer on the settlement queue"
+        },
+        {
+          "id": "cluster-21",
+          "service": "Securities Settlement",
+          "resolver": "ursula.klassen@intcom.com",
+          "score": 0.713,
+          "title": "Custodian was late sending status updates"
+        },
+        {
+          "id": "cluster-15",
+          "service": "Trade Matching",
+          "resolver": "quinn.anderson@intcom.com",
+          "score": 0.632,
+          "title": "Found a missing broker SSI mapping causing allocation rejections"
+        },
+        {
+          "id": "cluster-3",
+          "service": "Order Management",
+          "resolver": "victor.hamon@intcom.com",
+          "score": 0.623,
+          "title": "A stale clearing account mapping from a recent broker change was blocking order routing"
+        },
+        {
+          "id": "cluster-5",
+          "service": "Order Management",
+          "resolver": "victor.hamon@intcom.com",
+          "score": 0.614,
+          "title": "Diagnosed a broken broker routing link after the account switch"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-18",
+          "resolution": "Reviewed the settlement message queue, cleared several stuck acknowledgements, and replayed the pending confirmations so custody statuses synced back to the dashboard.",
+          "score": 0.761
+        },
+        {
+          "id": "cluster-20",
+          "resolution": "Root cause was a stalled consumer on the settlement queue. Restarted the listener, replayed the backlog, and confirmed downstream custody records caught up.",
+          "score": 0.737
+        },
+        {
+          "id": "cluster-21",
+          "resolution": "Custodian was late sending status updates; paused automated fail-chasing while we waited, then matched statements and reconciled the backlog once messages came through.",
+          "score": 0.713
+        }
+      ]
+    },
+    {
+      "summary": "Need access removed from all deactivated users in portal today",
+      "changed": {
+        "Work type": {
+          "input": "Incident",
+          "output": "Service Request"
+        },
+        "Service Team(s)": {
+          "input": [],
+          "output": [
+            "Enterprise Applications"
+          ]
+        },
+        "Urgency": {
+          "input": "High",
+          "output": "Low"
+        },
+        "Priority": {
+          "input": "Medium",
+          "output": "Low"
+        },
+        "Resolution": {
+          "input": null,
+          "output": "done"
+        }
+      },
+      "understanding": "A completed daily deactivation batch requires confirmation that deactivated users, including maia.berg@intcom.com if applicable, no longer retain portal access. This is a routine identity/access-removal cleanup request, not a portal outage or incident.",
+      "rationale": "The requested work is deactivated-user access cleanup, which is identity-level leaver/deactivation work and therefore belongs to Identity & Access Management. It is a Service Request because no current technical failure or degradation is reported. Although access removal is operationally important, the request describes a routine batch cleanup with no evidence of active compromise, regulatory breach, or widespread service impact; low urgency and localized/administrative impact are appropriate.",
+      "assigneeReason": "no precedent resolver - route to Enterprise Applications queue",
+      "resolutionText": "Removed portal access for users deactivated in the completed daily batch for Nordics, including maia.berg@intcom.com where applicable. Verified that the inactive accounts no longer retain active portal entitlements.",
+      "matches": [
+        {
+          "id": "catalog-identity-access-management",
+          "service": "Identity & Access Management",
+          "resolver": null,
+          "score": 0.571,
+          "title": "Service catalog: Identity & Access Management"
+        },
+        {
+          "id": "cluster-17",
+          "service": "Outlook & Email",
+          "resolver": "jack.martin@intcom.com",
+          "score": 0.498,
+          "title": "Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions"
+        },
+        {
+          "id": "cluster-11",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.474,
+          "title": "Traced the gateway rejection to incomplete counterparty classification"
+        },
+        {
+          "id": "cluster-4",
+          "service": "Regulatory Reporting",
+          "resolver": "tara.singh@intcom.com",
+          "score": 0.456,
+          "title": "Submission was rejected due to missing classification data on new entity records"
+        },
+        {
+          "id": "cluster-1",
+          "service": "Tax Reporting",
+          "resolver": "tania.gupta@intcom.com",
+          "score": 0.454,
+          "title": "Reviewed the request with the tax team lead, granted the standard processing entitlement, and verified access to the output workspace"
+        },
+        {
+          "id": "cluster-14",
+          "service": "Corporate Actions",
+          "resolver": "ursula.klassen@intcom.com",
+          "score": 0.449,
+          "title": "Several events were missing option code mappings after ingestion"
+        }
+      ],
+      "precedents": [
+        {
+          "id": "cluster-17",
+          "resolution": "Reclassified the ticket as a service request, then provisioned the requested shared mailbox and distribution list with the correct access permissions.",
+          "score": 0.498
+        },
+        {
+          "id": "cluster-11",
+          "resolution": "Traced the gateway rejection to incomplete counterparty classification; corrected the records, regenerated the submission, and confirmed acceptance.",
+          "score": 0.474
+        },
+        {
+          "id": "cluster-4",
+          "resolution": "Submission was rejected due to missing classification data on new entity records. Updated the master data, regenerated the file, and resubmitted successfully.",
+          "score": 0.456
+        }
+      ]
+    }
+  ]
+}

@@ -58,6 +58,24 @@ uv run pytest                         # end-to-end learning loop, mock mode
 uv run python -m app.knowledge --level gold   # re-curate history and publish ≥ level
 ```
 
+## Blind eval (`app/evaluate.py`)
+
+Runs the same triage pipeline over the challenge file and fills in the 7 answer fields from the root README:
+work type, service, team, assignee, urgency/impact → priority (matrix), resolution status and a resolution comment
+(appended to `All Comments` as `<assignee>: Resolution: ...`, like the training data). Pre-filled service/priority
+values in the challenge are treated as unverified hints.
+
+```bash
+uv run python -m app.evaluate                          # picks up jira_hackathon_blind_eval_challenge_*.json from the repo root
+uv run python -m app.evaluate --input ../x.json --limit 3 --workers 1
+LLM_MODE=mock uv run python -m app.evaluate --db /tmp/eval.db   # offline smoke run
+```
+
+Writes to `out/eval/`: `<runId>.results.json` (challenge format — the submission), `<runId>.trace.json`
+(rationale, knowledge matches, fields changed vs input) and `<runId>.report.md` (summary table + consistency checks:
+priority matches the matrix, team matches the catalog, assignee present). Only 10 services have a documented expert
+in the history; tickets routed elsewhere are left unassigned in the owning team's queue and listed in the report.
+
 ## API
 
 | Method | Path | Purpose |
