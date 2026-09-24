@@ -8,3 +8,5 @@ __pycache__/
 http-client.private.env.json
 .DS_Store
 node_modules/
+dist/
+data/

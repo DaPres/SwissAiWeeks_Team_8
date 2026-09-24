@@ -1,0 +1,44 @@
+{
+  "Affected Business or IT Services": [
+    "CRM & Client Portal",
+    "Cash Management",
+    "Client Reporting",
+    "Corporate Actions",
+    "Emailed Support Tickets",
+    "Fund Pricing",
+    "Identity & Access Management",
+    "NAV Calculation",
+    "Order Management",
+    "Outlook & Email",
+    "Portfolio Accounting",
+    "Regulatory Reporting",
+    "Rimes Data Feed",
+    "Risk & Compliance Monitoring",
+    "Securities Settlement",
+    "SharePoint & File Storage",
+    "SimCorp Dimension",
+    "Tax Reporting",
+    "Trade Matching",
+    "Trading Platform"
+  ],
+  "Business Entity": [
+    "France",
+    "Germany",
+    "Luxembourg",
+    "Nordics",
+    "Switzerland"
+  ],
+  "Service Team(s)": [
+    "Client Services",
+    "Enterprise Applications",
+    "Investment Operations",
+    "Market Data Services",
+    "Risk & Controls",
+    "Securities Operations",
+    "Service Desk",
+    "Tax & Reporting",
+    "Trading Support",
+    "Treasury & Cash",
+    "Valuation & Pricing"
+  ]
+}
