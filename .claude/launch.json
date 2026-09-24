@@ -1,0 +1,45 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "aspire",
+      "runtimeExecutable": "aspire",
+      "runtimeArgs": [
+        "run",
+        "--non-interactive"
+      ],
+      "port": 17161,
+      "url": "https://localhost:17161"
+    },
+    {
+      "name": "triage-explorer",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "triage-explorer",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5178"
+      ],
+      "port": 5178
+    },
+    {
+      "name": "backend",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": [
+        "run",
+        "--directory",
+        "backend",
+        "uvicorn",
+        "app.main:app",
+        "--reload",
+        "--port",
+        "8000"
+      ],
+      "port": 8000,
+      "autoPort": false
+    }
+  ]
+}

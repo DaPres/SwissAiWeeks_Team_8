@@ -1,0 +1,35 @@
+"""Runtime settings, read from environment / backend/.env."""
+import os
+from dataclasses import dataclass
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+BACKEND_DIR = Path(__file__).resolve().parent.parent
+REPO_DIR = BACKEND_DIR.parent
+load_dotenv(BACKEND_DIR / ".env")
+
+
+@dataclass(frozen=True)
+class Settings:
+    # Azure AI Foundry (OpenAI v1-compatible endpoint), e.g. https://<resource>.openai.azure.com/openai/v1/
+    foundry_endpoint: str = os.getenv("AZURE_FOUNDRY_ENDPOINT", "")
+    # API key; when empty and an endpoint is set, Entra ID (DefaultAzureCredential) is used
+    foundry_api_key: str = os.getenv("AZURE_FOUNDRY_API_KEY", "")
+    chat_deployment: str = os.getenv("CHAT_DEPLOYMENT", "gpt-4.1")
+    vision_deployment: str = os.getenv("VISION_DEPLOYMENT", "") or os.getenv("CHAT_DEPLOYMENT", "gpt-4.1")
+    embedding_deployment: str = os.getenv("EMBEDDING_DEPLOYMENT", "text-embedding-3-large")
+    # "azure" or "mock"; defaults to mock when no endpoint is configured
+    llm_mode: str = os.getenv("LLM_MODE", "azure" if os.getenv("AZURE_FOUNDRY_ENDPOINT") else "mock")
+
+    db_path: Path = Path(os.getenv("DB_PATH", str(BACKEND_DIR / "data" / "knowledge.db")))
+    training_file: Path = Path(os.getenv("TRAINING_FILE", str(REPO_DIR / "jira_first_20000_requested_fields_synthetic.json")))
+
+    top_k: int = int(os.getenv("TOP_K", "6"))
+    # cosine similarity above which an open ticket counts as "already reported"
+    duplicate_threshold: float = float(os.getenv("DUPLICATE_THRESHOLD", "0.82"))
+    max_images: int = int(os.getenv("MAX_IMAGES", "4"))
+    max_image_bytes: int = int(os.getenv("MAX_IMAGE_BYTES", str(5 * 1024 * 1024)))
+
+
+settings = Settings()
