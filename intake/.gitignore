@@ -2,5 +2,9 @@ __pycache__/
 *.py[cod]
 .venv/
 .env
+.env.*
+!.env.example
+*.private.env.json
+http-client.private.env.json
 .DS_Store
 node_modules/
