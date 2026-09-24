@@ -25,3 +25,4 @@ Thumbs.db
 data/jira.json
 data/challenge_20.json
 data/triagemate.db
+data/llm_cache/

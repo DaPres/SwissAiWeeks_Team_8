@@ -1,1 +1,0 @@
-{"value": {"urgency": {"value": "low", "quote": "This request is for standard role-based access and is aligned to the employee's business duties."}, "impact": {"value": "medium", "quote": "A user needs access to CRM & Client Portal to complete their daily tasks."}}, "source": "ok", "provider": "swisscom-apertus", "error": null, "cached_at": 1790248902.1513517}

@@ -1,1 +1,0 @@
-{"value": {"urgency": {"value": "high", "quote": "The log shows repeated execution errors, service degradation, or a processing delay."}, "impact": {"value": "highest", "quote": "Service: Regulatory Reporting (CRITICAL per the organisers' list)"}}, "source": "ok", "provider": "swisscom-apertus", "error": null, "cached_at": 1790248712.155114}
