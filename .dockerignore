@@ -1,0 +1,14 @@
+**/node_modules
+**/.venv
+**/__pycache__
+**/dist
+**/.env
+**/.env.*
+backend/data
+backend/out
+.git
+.aspire
+core
+intake
+analysis
+*.md

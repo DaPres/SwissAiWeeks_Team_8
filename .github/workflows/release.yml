@@ -1,0 +1,80 @@
+# Push a version tag (e.g. `git tag v1.2.0 && git push origin v1.2.0`) to:
+#   1. build the single app image (frontend + backend) and push it to ACR as :1.2.0 and :latest
+#   2. roll the Azure Container App to the new image
+#   3. create a GitHub release with generated notes
+# Azure login uses OIDC (federated credential on environment "production"); see infra/setup-azure.sh.
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  ACR: aiweeksteam8
+  RESOURCE_GROUP: ai-weeks
+  CONTAINER_APP: triage
+  IMAGE_NAME: triage
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Log in to ACR
+        run: az acr login --name "$ACR"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: VERSION=${{ steps.version.outputs.version }}
+          tags: |
+            ${{ env.ACR }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ${{ env.ACR }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Deploy to Container App
+        id: deploy
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          # revision suffix: lowercase alphanumerics and dashes only (1.2.0-rc.1 -> v1-2-0-rc-1)
+          suffix="v$(echo "$version" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9\n' '-')"
+          az containerapp update -n "$CONTAINER_APP" -g "$RESOURCE_GROUP" \
+            --image "$ACR.azurecr.io/$IMAGE_NAME:$version" --revision-suffix "$suffix" -o none
+          fqdn=$(az containerapp show -n "$CONTAINER_APP" -g "$RESOURCE_GROUP" --query properties.configuration.ingress.fqdn -o tsv)
+          echo "url=https://$fqdn" >> "$GITHUB_OUTPUT"
+          for i in $(seq 1 40); do
+            curl -sf "https://$fqdn/api/health" && exit 0
+            sleep 15
+          done
+          echo "::error::health check failed at https://$fqdn/api/health"; exit 1
+
+      - name: GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "$GITHUB_REF_NAME" --verify-tag

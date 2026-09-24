@@ -10,7 +10,8 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from . import catalog
@@ -318,3 +319,17 @@ def stats():
             "resolved": sum(t["status"] == "resolved" for t in tickets),
         },
     }
+
+
+# Container image: the built frontend is served from the same origin (SPA fallback to index.html).
+if settings.static_dir and (settings.static_dir / "index.html").is_file():
+    app.mount("/assets", StaticFiles(directory=settings.static_dir / "assets"), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def spa(path: str):
+        if path.startswith("api/"):
+            raise HTTPException(404)
+        file = (settings.static_dir / path).resolve()
+        if path and file.is_file() and file.is_relative_to(settings.static_dir.resolve()):
+            return FileResponse(file)
+        return FileResponse(settings.static_dir / "index.html")
