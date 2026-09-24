@@ -11,8 +11,10 @@ any single provider hiccup hard-failing the demo.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
+import os
 import re
 import time
 from dataclasses import dataclass
@@ -21,9 +23,32 @@ from typing import TypeVar
 from pydantic import BaseModel, ValidationError
 
 from app.agent.llm_client import AllProvidersFailed, LLMClient
+from app.llm import cache
 
 log = logging.getLogger(__name__)
 T = TypeVar("T", bound=BaseModel)
+
+def assert_redacted(text: str, where: str = "llm") -> str:
+    """HARD RULE: no unredacted text reaches a provider.
+
+    Enforcement, not assertion: any PII the caller missed is redacted here and logged
+    loudly. Set LLM_STRICT_REDACTION=1 to raise instead (used by the test suite), so a
+    regression fails the build rather than silently leaking in production.
+    """
+    from app.safety import redact  # local import: safety must not import the model layer
+
+    clean, counts = redact(text)
+    if counts:
+        msg = f"unredacted PII reached the model layer at {where}: {counts}"
+        if os.getenv("LLM_STRICT_REDACTION", "0") == "1":
+            raise RedactionError(msg)
+        log.error("%s - redacted before sending", msg)
+    return clean
+
+
+class RedactionError(RuntimeError):
+    """Raised when unredacted text would have reached a provider (strict mode)."""
+
 
 # Ticket text is data, never instructions. The fence is repeated in the user turn too.
 GUARD = (
@@ -67,6 +92,10 @@ class ValidatedLLM:
     def __init__(self, client: LLMClient | None = None):
         self.client = client or LLMClient()
 
+    def model_fingerprint(self) -> str:
+        """Identifies the provider chain, so a routing change invalidates cached results."""
+        return ",".join(f"{p.name}:{p.model}" for p in getattr(self.client, "providers", []))
+
     def call(
         self,
         model: type[T],
@@ -75,9 +104,31 @@ class ValidatedLLM:
         fallback: T,
         temperature: float = 0.0,
         max_tokens: int = 800,
+        ticket_id: str | None = None,
+        task: str | None = None,
     ) -> Validated[T]:
-        """Ask for `model`-shaped JSON. Validate, repair once, else return `fallback`."""
+        """Ask for `model`-shaped JSON. Validate, repair once, else return `fallback`.
+
+        With ticket_id + task, the result is cached on disk: re-running a batch never
+        re-calls a provider for a ticket already processed.
+        """
         t0 = time.perf_counter()
+
+        # HARD RULE: no unredacted text may reach a provider. This is enforcement, not a
+        # check — anything the caller missed is redacted here before the request is built.
+        user = assert_redacted(user, where=f"{task or 'llm'}:{ticket_id or '-'}")
+
+        cache_key = None
+        if ticket_id and task:
+            fingerprint = hashlib.sha256(f"{self.model_fingerprint()}|{system}|{user}|{temperature}".encode()).hexdigest()[:16]
+            cache_key = cache.key(ticket_id, task, fingerprint)
+            if hit := cache.get(cache_key):
+                try:
+                    # Always reported as "cached" so a cache hit is visible in the trace.
+                    return Validated(model.model_validate(hit["value"]), "cached",
+                                     hit.get("provider"), 0.0, hit.get("error"))
+                except ValidationError:
+                    pass  # stale schema; fall through and re-call
         sys_prompt = f"{system}\n\n{GUARD}\nJSON schema you must satisfy:\n{_schema_hint(model)}"
         raw, provider, err = "", None, None
         try:
@@ -87,7 +138,10 @@ class ValidatedLLM:
                 max_tokens=max_tokens,
             )
             raw, provider = resp.text, resp.provider
-            return Validated(model.model_validate(extract_json(raw)), "ok", provider, _ms(t0))
+            value = model.model_validate(extract_json(raw))
+            out = Validated(value, "ok", provider, _ms(t0))
+            _store(cache_key, out)
+            return out
         except (ValidationError, ValueError, json.JSONDecodeError) as e:
             err = f"{type(e).__name__}: {str(e)[:200]}"
             log.warning("invalid model output, attempting one repair: %s", err)
@@ -110,10 +164,19 @@ class ValidatedLLM:
                 temperature=0.0,
                 max_tokens=max_tokens,
             )
-            return Validated(model.model_validate(extract_json(resp.text)), "repaired", resp.provider, _ms(t0), err)
+            out = Validated(model.model_validate(extract_json(resp.text)), "repaired", resp.provider, _ms(t0), err)
+            _store(cache_key, out)
+            return out
         except Exception as e:
             log.warning("repair failed; using deterministic fallback: %s", e)
             return Validated(fallback, "fallback", provider, _ms(t0), f"{err} | repair: {str(e)[:150]}")
+
+
+def _store(cache_key: str | None, out: "Validated") -> None:
+    """Only successful, validated results are cached — never a fallback."""
+    if cache_key and not out.is_fallback:
+        cache.put(cache_key, {"value": out.value.model_dump(mode="json"), "source": out.source,
+                              "provider": out.provider, "error": out.error})
 
 
 def _ms(t0: float) -> float:

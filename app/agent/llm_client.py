@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 
 import openai
 from openai import OpenAI
-from tenacity import retry, retry_if_exception_type, stop_after_attempt
+from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from app.config import load_env
 
@@ -99,6 +99,27 @@ def default_providers() -> list[Provider]:
     ]
 
 
+def providers_for_task(task: str | None) -> list[Provider]:
+    """Per-task routing from .env: TASK_CLASSIFY_PROVIDER, TASK_EXTRACT_PROVIDER,
+    TASK_AGENT_PROVIDER, TASK_DRAFT_PROVIDER.
+
+    The named provider goes first; the rest stay in their default order as fallbacks, so a
+    routing choice never removes the safety net. Setting every TASK_* to `swisscom-apertus`
+    gives an all-Swiss deployment.
+    """
+    providers = default_providers()
+    if not task:
+        return providers
+    preferred = os.getenv(f"TASK_{task.upper()}_PROVIDER", "").strip()
+    if not preferred:
+        return providers
+    chosen = [p for p in providers if p.name == preferred]
+    if not chosen:
+        log.warning("TASK_%s_PROVIDER=%r is not a known provider; using default order", task.upper(), preferred)
+        return providers
+    return chosen + [p for p in providers if p.name != preferred]
+
+
 def has_internet(host: str = "1.1.1.1", port: int = 53, timeout: float = 2.0) -> bool:
     try:
         with socket.create_connection((host, port), timeout=timeout):
@@ -108,9 +129,10 @@ def has_internet(host: str = "1.1.1.1", port: int = 53, timeout: float = 2.0) ->
 
 
 class LLMClient:
-    def __init__(self, providers: list[Provider] | None = None, timeout: float | None = None):
+    def __init__(self, providers: list[Provider] | None = None, timeout: float | None = None, task: str | None = None):
         load_env()
-        self.providers = providers if providers is not None else default_providers()
+        self.task = task
+        self.providers = providers if providers is not None else providers_for_task(task)
         self.timeout = timeout or float(os.getenv("LLM_TIMEOUT_SECONDS", "30"))
 
     def _make_client(self, p: Provider) -> OpenAI:
@@ -145,9 +167,21 @@ class LLMClient:
 
     def call_provider(self, p: Provider, messages: list[dict], **kwargs) -> str:
         p.api_key()  # raises ProviderUnavailable up front if the key is missing
-        if p.refresh_on_401:
-            return self._call_with_token_refresh(p, messages, **kwargs)
-        return self._call(p, messages, **kwargs)
+
+        # Apertus returns 429 EXPIRED_QUOTA on rapid consecutive calls (measured in the
+        # provider probe). Back off briefly before giving up on the primary provider.
+        @retry(
+            retry=retry_if_exception_type(openai.RateLimitError),
+            stop=stop_after_attempt(int(os.getenv("RATE_LIMIT_ATTEMPTS", "3"))),
+            wait=wait_exponential(multiplier=float(os.getenv("RATE_LIMIT_BASE_SECONDS", "2")), max=30),
+            reraise=True,
+        )
+        def _go() -> str:
+            if p.refresh_on_401:
+                return self._call_with_token_refresh(p, messages, **kwargs)
+            return self._call(p, messages, **kwargs)
+
+        return _go()
 
     def chat(self, messages: list[dict], **kwargs) -> LLMResponse:
         errors: dict[str, str] = {}
