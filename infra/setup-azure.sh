@@ -61,11 +61,17 @@ if ! az containerapp show -n "$APP" -g "$RG" -o none 2>/dev/null; then
     --system-assigned --target-port 8000 --ingress external \
     --cpu 1 --memory 2Gi --min-replicas 1 --max-replicas 1 -o none
 fi
+APP_PRINCIPAL=$(az containerapp show -n "$APP" -g "$RG" --query identity.principalId -o tsv)
+# Explicit, because `create --registry-identity` can leave the quickstart placeholder image behind when it fails midway.
+az role assignment create --assignee-object-id "$APP_PRINCIPAL" --assignee-principal-type ServicePrincipal \
+  --role AcrPull --scope "$ACR_ID" -o none
+az containerapp registry set -n "$APP" -g "$RG" --server "$ACR.azurecr.io" --identity system -o none
 [[ ${#SECRETS[@]} -gt 0 ]] && az containerapp secret set -n "$APP" -g "$RG" --secrets "${SECRETS[@]}" -o none
-az containerapp update -n "$APP" -g "$RG" --set-env-vars "${ENVS[@]}" -o none
+CURRENT_IMAGE=$(az containerapp show -n "$APP" -g "$RG" --query "properties.template.containers[0].image" -o tsv)
+[[ "$CURRENT_IMAGE" == "$ACR.azurecr.io/"* ]] || CURRENT_IMAGE=$IMAGE
+az containerapp update -n "$APP" -g "$RG" --image "$CURRENT_IMAGE" --set-env-vars "${ENVS[@]}" -o none
 
 echo "==> Foundry access for the app identity"
-APP_PRINCIPAL=$(az containerapp show -n "$APP" -g "$RG" --query identity.principalId -o tsv)
 FOUNDRY_ID=$(az cognitiveservices account show -n "$FOUNDRY" -g "$RG" --query id -o tsv)
 az role assignment create --assignee-object-id "$APP_PRINCIPAL" --assignee-principal-type ServicePrincipal \
   --role "Foundry User" --scope "$FOUNDRY_ID" -o none
