@@ -1,6 +1,6 @@
 # Intake
 
-React (JavaScript/JSX), Base UI, Tailwind CSS, and Vite on the frontend, with a Python standard-library backend. Incident creation works locally. Optional live description checks use Jev by TypeSafe AI.
+React (JavaScript/JSX), Base UI, Tailwind CSS, and Vite on the frontend, with a Python standard-library HTTP server. Incident creation works locally. Optional live description checks use Jev by TypeSafe AI; an offline demo can call the sibling TriageMate core.
 
 ## Run locally
 
@@ -13,6 +13,16 @@ python3 server.py
 ```
 
 Open http://127.0.0.1:8080. Python serves the compiled frontend from `dist/` and the `GET /api/health` endpoint. Run `npm run build` again after frontend changes.
+
+The **Run TriageMate Demo** button needs the sibling `main2` dependencies installed in the Python environment that runs this server. For example, from the repository root:
+
+```sh
+uv venv main2/.venv
+uv pip install --python main2/.venv/bin/python -r main2/requirements.txt
+cd intake && ../main2/.venv/bin/python server.py
+```
+
+The demo passes the description and visible chip values to `main2/triagemate` using its offline preview path (`use_llm=False`, `commit_assign=False`) and displays the returned JSON below the form. Service, entity, urgency, impact, summary, and reporter map to native TriageMate inputs; selected team, assignee, context, and evidence go in labeled comments. The first call can take longer while the local retrieval index is built.
 
 ## Frontend development
 
@@ -30,9 +40,9 @@ For another backend port, run `python3 server.py --port 8081` and `BACKEND_URL=h
 
 The page starts with one description input. Every edit to a nonempty description or optional detail triggers Jev after a 450 ms pause. Five markers assess whether the report identifies the responsible department, affected service and symptoms, business impact, timing/context, and diagnostic evidence. Readiness is the floored average of their probabilities as a percentage; it is an actionability signal, not a guarantee of resolution.
 
-Editable chips sit below the input. Jev additionally selects team, service, entity, urgency, and impact from configured options, populating chips only at confidence 0.8 or higher. Chips bounce when their values change and open anchored Base UI popovers for manual edits. Option popovers show a scrollable list with search at the bottom; selecting an option saves it immediately. Manual values take precedence. The interface uses a locally bundled Geist font and a persistent light/dark toggle. While typing, a glowing outline traces the input. Chips and the matching right panel (below on small screens) first appear after a 450 ms pause, then remain visible through further edits; the panel refreshes only when typing stops again. It animates while checking, automatically requests one OpenAI suggestion after a low-readiness evaluation and a further 500 ms pause, or shows No Issues Found with a submit button when ready. Editing invalidates the old submit gate while the previous advice stays visible until the next pause.
+Unfilled chips for service, team, entity, urgency, and impact sit below the input. Selecting a value moves it into a smaller chip in the input's bottom row; clicking that chip clears the value and returns the field below. The selected row scrolls horizontally, with edge fades that track its scroll position. Summary, reporter, assignee, context, and evidence stay hidden with empty draft values. Jev selects the chip fields from configured options, populating chips only at confidence 0.8 or higher. Option popovers show a scrollable list with search at the bottom; selecting an option saves it immediately. Manual values take precedence, including an explicit clear that suppresses a previous AI inference. The interface uses a locally bundled Geist font and a persistent light/dark toggle. While typing, a glowing outline traces the input. Chips and the matching right panel (below on small screens) first appear after a 450 ms pause, then remain visible through further edits; the panel refreshes only when typing stops again. It animates while checking, requests one OpenAI suggestion after a low-readiness evaluation or when Jev finds evidence insufficient, and otherwise shows a short ready message. Evidence is assessed from the description, and OpenAI prioritizes a concrete evidence request when needed. Editing invalidates the old submit gate while the previous advice stays visible until the next pause.
 
-The submit button appears in the right panel only when the current readiness score reaches 80%. `POST /api/incidents` independently verifies the server-held evaluation, threshold, exact description, and optional details. Evaluations expire after ten minutes. Editing invalidates the previous evaluation while a new check runs. Failed checks provide a visible retry action; browser requests time out after twelve seconds.
+The submit button appears at the right of the input row once the description contains non-whitespace text. An early click gives feedback; submission proceeds only when the current readiness score reaches 80%. `POST /api/incidents` independently verifies the server-held evaluation, threshold, exact description, and optional details. Evaluations expire after ten minutes. Editing invalidates the previous evaluation while a new check runs. Failed checks provide a visible retry action; browser requests time out after twelve seconds.
 
 Incidents are saved locally to SQLite (`data/incidents.db`, ignored by Git). The response is `{ id, incident }`. Records contain the description, incident work type, open status, creation date, and null resolution fields. Optional context is preserved in All Comments. Inferred and manually entered fields are persisted; priority is derived when urgency and impact are known. Unknown fields remain absent. There is no Jira integration.
 

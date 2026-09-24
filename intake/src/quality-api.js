@@ -43,3 +43,19 @@ export async function submitIncident(draft, evaluationId) {
   }
   return response.json();
 }
+
+export async function previewTriagemate(draft, signal) {
+  const response = await fetch('/api/triagemate-demo', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(draft), signal,
+  });
+  if (!response.ok) {
+    let message = 'TriageMate preview failed. Please try again.';
+    try {
+      const data = await response.json();
+      if (typeof data.error === 'string') message = data.error;
+    } catch { /* Keep the fallback for a non-JSON server error. */ }
+    throw new Error(message);
+  }
+  return response.json();
+}

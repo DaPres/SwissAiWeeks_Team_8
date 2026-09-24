@@ -6,7 +6,7 @@ function Loading() {
   return <div className="advice-loading" role="status" aria-label="Loading suggestions"><span className="thinking-dots" aria-hidden="true"><i /><i /><i /></span></div>;
 }
 
-function Suggestions({ evaluationId, paused }) {
+function Suggestions({ evaluationId, paused, evidenceNeeded }) {
   const [response, setResponse] = useState(null);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -20,17 +20,23 @@ function Suggestions({ evaluationId, paused }) {
     return () => { clearTimeout(timer); controller.abort(); };
   }, [evaluationId, attempt, paused]);
   if (!response) return <Loading />;
-  if (response.error) return <div className="advice-content" role="alert"><h2>Suggestions Unavailable</h2><p>{response.error}</p><Button type="button" className="text-button" onClick={() => { setResponse(null); setAttempt(value => value + 1); }}>Retry</Button></div>;
-  const suggestion = response.result.improvements[0];
-  return <div className="advice-content appear"><h2>{suggestion?.title || 'One More Detail'}</h2><p>{suggestion?.detail || response.result.summary}</p></div>;
+  if (response.error) return <div className="advice-content" role="alert"><p>{response.error}</p><Button type="button" className="text-button" onClick={() => { setResponse(null); setAttempt(value => value + 1); }}>Retry</Button></div>;
+  const suggestion = evidenceNeeded
+    ? response.result.improvements.find(item => item.field === 'evidence')
+    : response.result.improvements[0];
+  const message = suggestion?.detail || (evidenceNeeded
+    ? 'Please provide an error message, failed step, or troubleshooting result as evidence.'
+    : response.result.summary);
+  return <div className="advice-content appear"><p>{message}</p></div>;
 }
 
-export default function AdvicePanel({ readiness, ready, canSubmit, paused, saving, onRetry }) {
+export default function AdvicePanel({ readiness, ready, paused, onRetry }) {
   let content;
-  if (readiness.phase === 'idle') content = <div className="advice-content"><h2>How Can We Help?</h2><p>Describe your issue to get suggestions.</p></div>;
-  else if (readiness.phase === 'error') content = <div className="advice-content" role="alert"><h2>Check Unavailable</h2><p>{readiness.error}</p><Button type="button" className="text-button" onClick={onRetry}>Retry</Button></div>;
-  else if (ready) content = <div className="advice-content advice-ready appear"><div><h2>No Issues Found</h2><p>Your report has enough detail to submit.</p></div>{canSubmit && <Button type="submit" form="incident-form" className="submit-button" aria-busy={saving}>{saving ? 'Submitting…' : 'Submit Incident'}</Button>}</div>;
-  else if (readiness.result) content = <Suggestions key={readiness.result.evaluationId} evaluationId={readiness.result.evaluationId} paused={paused} />;
+  const evidenceNeeded = readiness.result?.criteria?.some(item => item.id === 'evidence' && item.status !== 'met');
+  if (readiness.phase === 'idle') content = <div className="advice-content"><p>Describe your issue to get suggestions.</p></div>;
+  else if (readiness.phase === 'error') content = <div className="advice-content" role="alert"><p>{readiness.error}</p><Button type="button" className="text-button" onClick={onRetry}>Retry</Button></div>;
+  else if (ready && !evidenceNeeded) content = <div className="advice-content appear"><p>Your report has enough detail to submit.</p></div>;
+  else if (readiness.result) content = <Suggestions key={readiness.result.evaluationId} evaluationId={readiness.result.evaluationId} paused={paused} evidenceNeeded={evidenceNeeded} />;
   else content = <Loading />;
   return <aside className="composer advice-panel enter" aria-label="AI Suggestions" aria-live="polite">{content}</aside>;
 }

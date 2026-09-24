@@ -10,6 +10,7 @@ from urllib.parse import urlsplit
 from incidents import create_ready_incident
 from quality import QualityError, evaluate_description
 from suggestions import suggest_description
+from triagemate_demo import preview_incident
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -23,7 +24,7 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         path = urlsplit(self.path).path
-        if path not in ("/api/incidents", "/api/description-quality", "/api/description-suggestion"):
+        if path not in ("/api/incidents", "/api/description-quality", "/api/description-suggestion", "/api/triagemate-demo"):
             self.send_json(404, {"error": "Unknown API endpoint."})
             return
         try:
@@ -36,6 +37,8 @@ class Handler(SimpleHTTPRequestHandler):
                 result = evaluate_description(data)
             elif path == "/api/description-suggestion":
                 result = suggest_description(data)
+            elif path == "/api/triagemate-demo":
+                result = preview_incident(data)
             else:
                 result = create_ready_incident(data)
         except QualityError as error:
@@ -43,6 +46,9 @@ class Handler(SimpleHTTPRequestHandler):
             return
         except (ValueError, UnicodeDecodeError) as error:
             self.send_json(400, {"error": str(error)})
+            return
+        except ImportError:
+            self.send_json(503, {"error": "TriageMate dependencies are unavailable. Install main2/requirements.txt and run Intake with that Python environment."})
             return
         except Exception:
             self.log_error("Request failed for %s", path)
