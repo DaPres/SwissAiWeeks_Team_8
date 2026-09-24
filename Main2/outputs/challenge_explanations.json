@@ -1,0 +1,2186 @@
+[
+  {
+    "ticket_id": "CH-00001",
+    "summary": "New license requested for quarterly withholding tax workflow",
+    "given": {
+      "work_type": "Service Request",
+      "service": "Tax Reporting",
+      "urgency": "lowest",
+      "impact": "high",
+      "priority": "low"
+    },
+    "predicted": {
+      "work_type": "Service Request",
+      "service": "Tax Reporting",
+      "team": "Tax & Reporting",
+      "assignee": "irina.sokolov@intcom.com",
+      "urgency": "low",
+      "impact": "low",
+      "priority": "low",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description specifies need for additional user license for quarterly withholding tax workflow, matching Tax Reporting service.",
+        "Summary and intake metadata both indicate a license request, consistent with Service Request.",
+        "Advisory ranking strongly supports Tax Reporting service for withholding tax related requests.",
+        "service Tax Reporting: “withholding tax”, “withholding tax”, “tax filing*”, “tax output”",
+        "intake request type “New License” leans Service Request",
+        "summary suggests Service Request, description suggests Service Request"
+      ],
+      "urgency": "The operations team needs one additional user license to support the quarterly withholding tax filing workflow for the Germany entity.",
+      "impact": "Request is for the colleague who prepares withholding tax extracts and validates the generated tax packs.",
+      "assignee": "least-loaded agent in the pool (open workload 86; 21 previously resolved Tax Reporting tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Tax Reporting",
+        "score": 22.93,
+        "evidence": [
+          "withholding tax",
+          "withholding tax",
+          "tax filing*",
+          "tax output",
+          "withholding tax"
+        ]
+      },
+      {
+        "service": "Regulatory Reporting",
+        "score": 0.8,
+        "evidence": []
+      },
+      {
+        "service": "Client Reporting",
+        "score": 0.8,
+        "evidence": []
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.911,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"add user license quarterly withholding tax workflow Germany entity\", \"service\": \"Tax Reporting\"}",
+        "result": "KB-14 requester reply points (0.43); KB-14 first checks (0.42); KB-14 when to use (0.41); KB-14 analyst next steps (0.35)",
+        "latency_ms": 0.8,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"New license requested for quarterly withholding tax workflow\"}",
+        "result": "New license requested for Tax Reporting (sim 0.459, 40 tickets); Access requested for Tax Reporting (sim 0.335, 21 tickets); New license requested for Regulatory Reporting (sim 0.418, 44 tickets)",
+        "latency_ms": 1.3,
+        "mode": "policy (fill-in)"
+      }
+    ],
+    "latency_ms": 8500.9,
+    "cost_usd": 0.002881,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00002",
+    "summary": "Access requested for Portfolio Accounting to support month-end reconciliation",
+    "given": {
+      "work_type": "Service Request",
+      "service": "Portfolio Accounting",
+      "urgency": "high",
+      "impact": "high",
+      "priority": "high"
+    },
+    "predicted": {
+      "work_type": "Service Request",
+      "service": "Portfolio Accounting",
+      "team": "Investment Operations",
+      "assignee": "carla.dubois@intcom.com",
+      "urgency": "medium",
+      "impact": "low",
+      "priority": "low",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Summary and description both indicate an access request for Portfolio Accounting.",
+        "Description specifies standard processing role and read access for reconciliation dashboards.",
+        "Selected service matches the described need for Portfolio Accounting access.",
+        "service Portfolio Accounting: “portfolio accounting”, “portfolio accounting”",
+        "intake request type “Access to a Service” leans Service Request",
+        "summary suggests Service Request, description suggests Service Request"
+      ],
+      "urgency": "A new operations joiner needs standard Portfolio Accounting access to support month-end reconciliation and exception review.",
+      "impact": "The employee only needs the normal processing role and read access to the reconciliation dashboards.",
+      "assignee": "least-loaded agent in the pool (open workload 88; 28 previously resolved Portfolio Accounting tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "urgency/impact: LLM medium/low vs rules low/low",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Portfolio Accounting",
+        "score": 13.68,
+        "evidence": [
+          "portfolio accounting",
+          "portfolio accounting",
+          "service selected in the ticket"
+        ]
+      },
+      {
+        "service": "Identity & Access Management",
+        "score": 3.6,
+        "evidence": []
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.0,
+        "evidence": []
+      },
+      {
+        "service": "Order Management",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.976,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"standard Portfolio Accounting access month-end reconciliation processing role read access reconciliation dashboards\", \"service\": \"Portfolio Accountin",
+        "result": "KB-08 when to use (0.49); KB-08 standard resolution paths (0.48); KB-08 requester reply points (0.48); KB-08 analyst next steps (0.45)",
+        "latency_ms": 0.9,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"Portfolio Accounting access month-end reconciliation processing role read access reconciliation dashboards\"}",
+        "result": "Access requested for Portfolio Accounting (sim 0.479, 37 tickets); Access removal requested for Portfolio Accounting (sim 0.428, 26 tickets); New license requested for Portfolio Accounting (sim 0.423, 41 tickets)",
+        "latency_ms": 1.2,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 6608.3,
+    "cost_usd": 0.002493,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00003",
+    "summary": "New license requested for sanctions screening dashboard",
+    "given": {
+      "work_type": "Service Request",
+      "service": "Risk & Compliance Monitoring",
+      "urgency": "high",
+      "impact": "high",
+      "priority": "high"
+    },
+    "predicted": {
+      "work_type": "Service Request",
+      "service": "Risk & Compliance Monitoring",
+      "team": "Risk & Controls",
+      "assignee": "daniel.taylor@intcom.com",
+      "urgency": "low",
+      "impact": "low",
+      "priority": "low",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description explicitly states a license request for sanctions screening dashboard, which is part of Risk & Compliance Monitoring.",
+        "service Risk & Compliance Monitoring: “sanctions screening”, “sanctions screening”, “sanctions screening”",
+        "intake request type “New License” leans Service Request",
+        "summary suggests Service Request, description suggests Service Request"
+      ],
+      "urgency": "A new compliance analyst needs a standard license for the sanctions screening dashboard used in daily control activities.",
+      "impact": "Standard compliance analyst license requested for sanctions screening dashboard.",
+      "assignee": "least-loaded agent in the pool (open workload 89; 18 previously resolved Risk & Compliance Monitoring tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Risk & Compliance Monitoring",
+        "score": 15.01,
+        "evidence": [
+          "sanctions screening",
+          "sanctions screening",
+          "sanctions screening",
+          "service selected in the ticket"
+        ]
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.0,
+        "evidence": []
+      },
+      {
+        "service": "Order Management",
+        "score": 0.0,
+        "evidence": []
+      },
+      {
+        "service": "Trade Matching",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.923,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"request new license sanctions screening dashboard\", \"service\": \"Risk & Compliance Monitoring\"}",
+        "result": "KB-10 when to use (0.40); KB-10 standard resolution paths (0.40); KB-10 first checks (0.36); KB-10 requester reply points (0.34)",
+        "latency_ms": 0.9,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"new license sanctions screening dashboard\"}",
+        "result": "New license requested for Risk & Compliance Monitoring (sim 0.445, 38 tickets); Access requested for Risk & Compliance Monitoring (sim 0.362, 51 tickets); New license requested for Regulatory Reporting (sim 0.404, 44 tickets)",
+        "latency_ms": 1.2,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.4,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 6574.1,
+    "cost_usd": 0.002459,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00004",
+    "summary": "Custodian notice says MT536 settlement status messages are delayed for France books",
+    "given": {
+      "work_type": "Incident",
+      "service": "Securities Settlement",
+      "urgency": "lowest",
+      "impact": "medium",
+      "priority": "low"
+    },
+    "predicted": {
+      "work_type": "Incident",
+      "service": "Securities Settlement",
+      "team": "Securities Operations",
+      "assignee": "benjamin.hale@intcom.com",
+      "urgency": "medium",
+      "impact": "high",
+      "priority": "high",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description states delayed MT536 settlement status messages for France books, which matches Securities Settlement service scope.",
+        "Summary and intake metadata both indicate an incident related to settlement status messages delay.",
+        "service Securities Settlement: “settlement”, “settle*”, “custodian*”, “mt536”",
+        "intake request type “Email / 3rd Party Warning” leans Incident",
+        "summary suggests Incident, description suggests Incident"
+      ],
+      "urgency": "MT536 settlement status messages are delayed for France books",
+      "impact": "delayed MT536 settlement status messages for several France books",
+      "assignee": "least-loaded agent in the pool (open workload 89; 21 previously resolved Securities Settlement tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "urgency/impact: LLM medium/high vs rules high/high",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Securities Settlement",
+        "score": 49.2,
+        "evidence": [
+          "settlement",
+          "settle*",
+          "custodian*",
+          "mt536",
+          "settlement status"
+        ]
+      },
+      {
+        "service": "Client Reporting",
+        "score": 0.8,
+        "evidence": []
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.0,
+        "evidence": []
+      },
+      {
+        "service": "Order Management",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.898,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"MT536 settlement status message delay France\"}",
+        "result": "KB-04 when to use (0.41); KB-04 requester reply points (0.39); KB-04 first checks (0.38); KB-04 analyst next steps (0.38)",
+        "latency_ms": 0.9,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"MT536 settlement status message delay France\"}",
+        "result": "Automated alert triggered for Securities Settlement (sim 0.275, 356 tickets); Unclear incident input for Securities Settlement (sim 0.274, 100 tickets); Operational issue reported for Securities Settlement (sim 0.262, 85 tickets)",
+        "latency_ms": 1.1,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 8751.5,
+    "cost_usd": 0.003113,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00005",
+    "summary": "Trade matching adapter TMA-402 rejected 16 allocations from broker JPM",
+    "given": {
+      "work_type": "Incident",
+      "service": "Trade Matching",
+      "urgency": "medium",
+      "impact": "low",
+      "priority": "low"
+    },
+    "predicted": {
+      "work_type": "Incident",
+      "service": "Trade Matching",
+      "team": "Investment Operations",
+      "assignee": "karen.brown@intcom.com",
+      "urgency": "high",
+      "impact": "high",
+      "priority": "high",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description details rejection of allocation messages by trade matching adapter TMA-402, blocking confirmation workflow, indicating a trade matching system fault.",
+        "service Trade Matching: “trade matching”, “matching adapter”, “allocation*”, “trade-matching”",
+        "intake request type “Machine Created Alert” leans Incident",
+        "summary suggests Incident, description suggests Incident"
+      ],
+      "urgency": "The confirmation workflow is blocked until the matching backlog is cleared.",
+      "impact": "The TMA-402 trade matching adapter rejected 16 allocation messages from broker JPM.",
+      "assignee": "least-loaded agent in the pool (open workload 91; 26 previously resolved Trade Matching tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Trade Matching",
+        "score": 49.65,
+        "evidence": [
+          "trade matching",
+          "matching adapter",
+          "allocation*",
+          "trade-matching",
+          "trade matching"
+        ]
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.8,
+        "evidence": []
+      },
+      {
+        "service": "Order Management",
+        "score": 0.0,
+        "evidence": []
+      },
+      {
+        "service": "Securities Settlement",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.986,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"TMA-402 trade matching adapter allocation rejection inbound execution references pairing backlog clearing\", \"service\": \"Trade Matching\"}",
+        "result": "KB-03 when to use (0.54); KB-03 first checks (0.50); KB-03 requester reply points (0.50); KB-03 analyst next steps (0.49)",
+        "latency_ms": 0.7,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"TMA-402 trade matching adapter rejected allocations JPM inbound execution references pairing backlog\"}",
+        "result": "Automated alert triggered for Trade Matching (sim 0.377, 407 tickets); Operational issue reported for Trade Matching (sim 0.348, 72 tickets); General request for Trade Matching with unclear details (sim 0.346, 24 tickets)",
+        "latency_ms": 0.7,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
+        "mode": "llm"
+      },
+      {
+        "step": 4,
+        "tool": "search_kb",
+        "args": "{\"query\": \"procedure to clear backlog and resolve allocation rejection in TMA-402 trade matching adapter\", \"service\": \"Trade Matching\"}",
+        "result": "KB-03 when to use (0.54); KB-03 first checks (0.50); KB-03 requester reply points (0.50); KB-03 analyst next steps (0.49)",
+        "latency_ms": 0.8,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 8257.9,
+    "cost_usd": 0.003315,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00006",
+    "summary": "Client report PDFs for the Nordics entity were generated with a blank fee section",
+    "given": {
+      "work_type": "Incident",
+      "service": "Client Reporting",
+      "urgency": "medium",
+      "impact": "low",
+      "priority": "low"
+    },
+    "predicted": {
+      "work_type": "Incident",
+      "service": "Client Reporting",
+      "team": "Client Services",
+      "assignee": "jack.martin@intcom.com",
+      "urgency": "medium",
+      "impact": "low",
+      "priority": "low",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description details a fault in generated client report PDFs with missing fee section, matching Client Reporting service scope.",
+        "Summary and intake metadata indicate an incident related to client report generation.",
+        "Advisory ranking strongly supports Client Reporting as the relevant service.",
+        "service Client Reporting: “client report*”, “generated pdf*”, “pdf pack*”",
+        "intake request type “Human Created Incident” leans Incident",
+        "summary suggests Incident, description suggests Incident"
+      ],
+      "urgency": "Users can still open the reports, but the distributed output is incomplete and unsuitable for release.",
+      "impact": "The client reporting team observed that the latest batch of Nordics quarterly client report PDFs was generated with a blank management fee section.",
+      "assignee": "least-loaded agent in the pool (open workload 92; 14 previously resolved Client Reporting tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "urgency/impact: LLM medium/low vs rules medium/high",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Client Reporting",
+        "score": 17.46,
+        "evidence": [
+          "client report*",
+          "generated pdf*",
+          "pdf pack*",
+          "service selected in the ticket"
+        ]
+      },
+      {
+        "service": "CRM & Client Portal",
+        "score": 1.6,
+        "evidence": []
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.0,
+        "evidence": []
+      },
+      {
+        "service": "Order Management",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.874,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"blank fee section in client report PDFs Nordics\", \"service\": \"Client Reporting\"}",
+        "result": "KB-13 when to use (0.36); KB-13 analyst next steps (0.33); KB-13 first checks (0.33); KB-13 requester reply points (0.32)",
+        "latency_ms": 0.8,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"blank fee section in client report PDFs Nordics\"}",
+        "result": "Unclear incident input for Client Reporting (sim 0.287, 86 tickets); General request for Client Reporting with unclear details (sim 0.283, 15 tickets); Operational issue reported for Client Reporting (sim 0.262, 87 tickets)",
+        "latency_ms": 0.9,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 8394.4,
+    "cost_usd": 0.003155,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00007",
+    "summary": "Cash not there pls fix asap for yesterday margin sweep",
+    "given": {
+      "work_type": "Incident",
+      "service": "Cash Management",
+      "urgency": "highest",
+      "impact": "high",
+      "priority": "highest"
+    },
+    "predicted": {
+      "work_type": "Incident",
+      "service": "Cash Management",
+      "team": "Treasury & Cash",
+      "assignee": "nora.leclerc@intcom.com",
+      "urgency": "high",
+      "impact": "high",
+      "priority": "high",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description indicates missing cash after margin sweep, a treasury and liquidity issue",
+        "Summary and comments emphasize urgency and cash discrepancy after margin sweep",
+        "Selected service Cash Management aligns with treasury and liquidity context",
+        "unclear: Description lacks exact account and booking date details needed for precise action",
+        "service Cash Management: “margin sweep*”, “margin sweep*”, “liquidity”, “treasury”",
+        "intake request type “Nonsense / Unclear Input” leans Incident"
+      ],
+      "urgency": "Cash not there pls fix asap for yesterday margin sweep",
+      "impact": "Margin cash looked wrong after yesterday close",
+      "assignee": "least-loaded agent in the pool (open workload 93; 32 previously resolved Cash Management tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Cash Management",
+        "score": 21.56,
+        "evidence": [
+          "margin sweep*",
+          "margin sweep*",
+          "liquidity",
+          "treasury",
+          "service selected in the ticket"
+        ]
+      },
+      {
+        "service": "Client Reporting",
+        "score": 0.8,
+        "evidence": []
+      },
+      {
+        "service": "Identity & Access Management",
+        "score": 0.8,
+        "evidence": []
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": true,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.867,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "request_clarification",
+        "args": "{\"questions\": [\"Which account is affected by the missing cash?\", \"What is the exact date of the margin sweep transaction?\", \"Can you provide any transaction ref",
+        "result": "recommended 3 clarification question(s)",
+        "latency_ms": 0.1,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "search_kb",
+        "args": "{\"query\": \"Cash Management Cash not there pls fix asap for yesterday margin sweep\", \"service\": \"Cash Management\"}",
+        "result": "KB-09 requester reply points (0.40); KB-09 when to use (0.39); KB-09 analyst next steps (0.38); KB-09 first checks (0.38)",
+        "latency_ms": 0.9,
+        "mode": "policy (fill-in)"
+      },
+      {
+        "step": 3,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
+        "mode": "policy (fill-in)"
+      },
+      {
+        "step": 4,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"Cash not there pls fix asap for yesterday margin sweep\"}",
+        "result": "Unclear incident input for Cash Management (sim 0.388, 81 tickets); General request for Cash Management with unclear details (sim 0.372, 19 tickets); Operational issue reported for Cash Management (sim 0.359, 75 tickets)",
+        "latency_ms": 0.8,
+        "mode": "policy (fill-in)"
+      }
+    ],
+    "latency_ms": 5035.0,
+    "cost_usd": 0.002102,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00008",
+    "summary": "Rimes overnight benchmark file DM_RIMES_FU_PR_BBG3_EODD_20260918_1.txt arrived after the downstream cutoff",
+    "given": {
+      "work_type": "Incident",
+      "service": "Rimes Data Feed",
+      "urgency": "high",
+      "impact": "high",
+      "priority": "high"
+    },
+    "predicted": {
+      "work_type": "Incident",
+      "service": "Rimes Data Feed",
+      "team": "Market Data Services",
+      "assignee": "frank.ross@intcom.com",
+      "urgency": "high",
+      "impact": "high",
+      "priority": "high",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description states the issue is with a late delivery of a Rimes benchmark file, impacting price mastering downstream, indicating a problem with the Rimes Data Feed service.",
+        "service Rimes Data Feed: “rimes”, “benchmark file*”, “rimes”, “benchmark file*”",
+        "intake request type “Email / 3rd Party Warning” leans Incident"
+      ],
+      "urgency": "The price mastering job for the Germany book therefore started with stale input and the downstream valuation chain is at risk.",
+      "impact": "Rimes Client Managed Services reported that the benchmark file DM_RIMES_FU_PR_BBG3_EODD_20260918_1.txt was delivered after the agreed processing window.",
+      "assignee": "least-loaded agent in the pool (open workload 94; 20 previously resolved Rimes Data Feed tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Rimes Data Feed",
+        "score": 28.44,
+        "evidence": [
+          "rimes",
+          "benchmark file*",
+          "rimes",
+          "benchmark file*",
+          "vendor feed*"
+        ]
+      },
+      {
+        "service": "Fund Pricing",
+        "score": 3.8,
+        "evidence": [
+          "price mastering"
+        ]
+      },
+      {
+        "service": "NAV Calculation",
+        "score": 0.8,
+        "evidence": []
+      },
+      {
+        "service": "Risk & Compliance Monitoring",
+        "score": 0.8,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.933,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"Rimes benchmark file late arrival downstream cutoff\"}",
+        "result": "KB-12 first checks (0.45); KB-12 when to use (0.44); KB-12 analyst next steps (0.41); KB-12 standard resolution paths (0.40)",
+        "latency_ms": 1.2,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"Rimes benchmark file late arrival downstream cutoff\"}",
+        "result": "Automated alert triggered for Rimes Data Feed (sim 0.341, 401 tickets); Operational issue reported for Rimes Data Feed (sim 0.333, 74 tickets); Unclear incident input for Rimes Data Feed (sim 0.328, 65 tickets)",
+        "latency_ms": 1.3,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.3,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 9932.0,
+    "cost_usd": 0.003625,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00009",
+    "summary": "Vendor notice: Americas benchmark publication delayed beyond the publishing window",
+    "given": {
+      "work_type": "Incident",
+      "service": "SharePoint & File Storage",
+      "urgency": "low",
+      "impact": "medium",
+      "priority": "low"
+    },
+    "predicted": {
+      "work_type": "Incident",
+      "service": "Rimes Data Feed",
+      "team": "Market Data Services",
+      "assignee": "samuel.hughes@intcom.com",
+      "urgency": "medium",
+      "impact": "high",
+      "priority": "high",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": true,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description states a vendor warning about delayed Americas benchmark publication, indicating Rimes Data Feed service impact.",
+        "Summary and comments mention benchmark publication delay and incomplete price snapshots, aligning with Rimes Data Feed.",
+        "Selected service SharePoint & File Storage is likely incorrect as it is a channel, not the impacted platform.",
+        "service Rimes Data Feed: “benchmark publication”, “benchmark publication”, “benchmark publication”",
+        "intake request type “Email / 3rd Party Warning” leans Incident",
+        "summary suggests Incident, description suggests Incident"
+      ],
+      "urgency": "An external vendor warning states that the Americas benchmark publication was delayed and that downstream consumers should expect incomplete price snapshots until the corrected files are posted.",
+      "impact": "Delayed benchmark publication for Americas universe.",
+      "assignee": "least-loaded agent in the pool (open workload 94; 18 previously resolved Rimes Data Feed tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "urgency/impact: LLM medium/high vs rules low/low",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Rimes Data Feed",
+        "score": 11.63,
+        "evidence": [
+          "benchmark publication",
+          "benchmark publication",
+          "benchmark publication"
+        ]
+      },
+      {
+        "service": "Fund Pricing",
+        "score": 3.8,
+        "evidence": [
+          "price snapshot*"
+        ]
+      },
+      {
+        "service": "SharePoint & File Storage",
+        "score": 1.5,
+        "evidence": [
+          "service selected in the ticket"
+        ]
+      },
+      {
+        "service": "Order Management",
+        "score": 0.24,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": true,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.874,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"Americas benchmark publication delay\", \"service\": \"Rimes Data Feed\"}",
+        "result": "KB-12 analyst next steps (0.39); KB-12 when to use (0.38); KB-12 first checks (0.34); KB-12 requester reply points (0.33)",
+        "latency_ms": 0.9,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"Vendor notice: Americas benchmark publication delayed beyond the publishing window\"}",
+        "result": "Operational issue reported for Rimes Data Feed (sim 0.276, 74 tickets); Automated alert triggered for Rimes Data Feed (sim 0.267, 401 tickets); General request for Rimes Data Feed with unclear details (sim 0.264, 26 tickets)",
+        "latency_ms": 1.1,
+        "mode": "policy (fill-in)"
+      }
+    ],
+    "latency_ms": 7960.3,
+    "cost_usd": 0.003081,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00010",
+    "summary": "Vendor onboarding mail says LEI submission file was rejected by the regulator gateway",
+    "given": {
+      "work_type": "Service Request",
+      "service": "CRM & Client Portal",
+      "urgency": "medium",
+      "impact": "high",
+      "priority": "high"
+    },
+    "predicted": {
+      "work_type": "Incident",
+      "service": "Regulatory Reporting",
+      "team": "Risk & Controls",
+      "assignee": "oliver.varga@intcom.com",
+      "urgency": "high",
+      "impact": "high",
+      "priority": "high",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": true,
+      "work_type": true
+    },
+    "why": {
+      "classification": [
+        "Description states LEI submission file rejected by regulator gateway indicating a regulatory reporting issue",
+        "Summary and intake selected service CRM & Client Portal does not match the described LEI submission process",
+        "Advisory ranking strongly supports Regulatory Reporting due to multiple mentions of regulator and LEI",
+        "service Regulatory Reporting: “regulator*”, “lei”, “regulator*”, “lei”",
+        "intake request type “Email / 3rd Party Warning” leans Incident",
+        "summary suggests Incident, description suggests Incident"
+      ],
+      "urgency": "the latest LEI submission file was rejected by the regulator gateway because a mandatory classification segment was empty",
+      "impact": "Submission file rejected by the regulator gateway",
+      "assignee": "least-loaded agent in the pool (open workload 94; 23 previously resolved Regulatory Reporting tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Regulatory Reporting",
+        "score": 23.02,
+        "evidence": [
+          "regulator*",
+          "lei",
+          "regulator*",
+          "lei",
+          "regulator*"
+        ]
+      },
+      {
+        "service": "CRM & Client Portal",
+        "score": 1.5,
+        "evidence": [
+          "service selected in the ticket"
+        ]
+      },
+      {
+        "service": "Outlook & Email",
+        "score": 0.9,
+        "evidence": [
+          "mailbox*"
+        ]
+      },
+      {
+        "service": "Trade Matching",
+        "score": 0.24,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": true,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.867,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"LEI submission file rejected mandatory classification segment empty\", \"service\": \"Regulatory Reporting\"}",
+        "result": "KB-11 when to use (0.38); KB-11 requester reply points (0.35); KB-11 first checks (0.34); KB-11 standard resolution paths (0.34)",
+        "latency_ms": 0.7,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"LEI submission file rejected mandatory classification segment empty\"}",
+        "result": "General request for Regulatory Reporting with unclear details (sim 0.295, 18 tickets); Unclear incident input for Regulatory Reporting (sim 0.285, 71 tickets); Incorrect incident title for service request in Regulatory Reporting (sim 0.283,",
+        "latency_ms": 0.7,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.3,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 7338.4,
+    "cost_usd": 0.002911,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00011",
+    "summary": "SimCorp replication job SCD_POS_SYNC failed on host EAPW8504",
+    "given": {
+      "work_type": "Incident",
+      "service": "SimCorp Dimension",
+      "urgency": "highest",
+      "impact": "low",
+      "priority": "medium"
+    },
+    "predicted": {
+      "work_type": "Incident",
+      "service": "SimCorp Dimension",
+      "team": "Enterprise Applications",
+      "assignee": "tania.gupta@intcom.com",
+      "urgency": "high",
+      "impact": "high",
+      "priority": "high",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description explicitly states failure of SimCorp replication job SCD_POS_SYNC on host EAPW8504 causing stale holdings.",
+        "Summary and intake metadata align with SimCorp Dimension and incident work type.",
+        "service SimCorp Dimension: “simcorp”, “replication job*”, “simcorp”, “replication job*”",
+        "intake request type “Machine Created Alert” leans Incident",
+        "summary suggests Incident, description suggests Incident"
+      ],
+      "urgency": "Position updates were not synchronized to the reporting layer and operations may see stale holdings until the failed replication run is corrected.",
+      "impact": "Position updates were not synchronized to the reporting layer and operations may see stale holdings until the failed replication run is corrected.",
+      "assignee": "least-loaded agent in the pool (open workload 95; 17 previously resolved SimCorp Dimension tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "SimCorp Dimension",
+        "score": 21.02,
+        "evidence": [
+          "simcorp",
+          "replication job*",
+          "simcorp",
+          "replication job*",
+          "service selected in the ticket"
+        ]
+      },
+      {
+        "service": "Client Reporting",
+        "score": 0.92,
+        "evidence": []
+      },
+      {
+        "service": "SharePoint & File Storage",
+        "score": 0.92,
+        "evidence": []
+      },
+      {
+        "service": "Portfolio Accounting",
+        "score": 0.8,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 1.0,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"SimCorp replication job failure SCD_POS_SYNC host EAPW8504\", \"service\": \"SimCorp Dimension\"}",
+        "result": "KB-19 when to use (0.52); KB-19 analyst next steps (0.49); KB-19 standard resolution paths (0.45); KB-19 first checks (0.44)",
+        "latency_ms": 0.9,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"SimCorp replication job failure SCD_POS_SYNC host EAPW8504\"}",
+        "result": "Automated alert triggered for SimCorp Dimension (sim 0.312, 434 tickets); Operational issue reported for SimCorp Dimension (sim 0.299, 72 tickets); Unclear incident input for SimCorp Dimension (sim 0.284, 67 tickets)",
+        "latency_ms": 0.9,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 6596.2,
+    "cost_usd": 0.002706,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00012",
+    "summary": "NAV_EOD_GE_375 stopped after valuation tolerance breach on 4 funds",
+    "given": {
+      "work_type": "Incident",
+      "service": "NAV Calculation",
+      "urgency": "medium",
+      "impact": "medium",
+      "priority": "medium"
+    },
+    "predicted": {
+      "work_type": "Incident",
+      "service": "NAV Calculation",
+      "team": "Valuation & Pricing",
+      "assignee": "yves.moreau@intcom.com",
+      "urgency": "high",
+      "impact": "high",
+      "priority": "high",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description details an alert for NAV_EOD_GE_375 after valuation tolerance breach during end-of-day valuation run, matching NAV Calculation service scope.",
+        "Summary and description both indicate an incident due to failure to publish NAV snapshot after tolerance breach.",
+        "service NAV Calculation: “valuation tolerance*”, “valuation tolerance breach”, “valuation run”, “end-of-day valuation”",
+        "intake request type “Machine Created Alert” leans Incident",
+        "summary suggests Incident, description suggests Incident"
+      ],
+      "urgency": "The batch did not publish the NAV snapshot to the downstream control queue and requires triage before the next accounting cycle begins.",
+      "impact": "NAV_EOD_GE_375 stopped after valuation tolerance breach on 4 funds",
+      "assignee": "least-loaded agent in the pool (open workload 96; 23 previously resolved NAV Calculation tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "NAV Calculation",
+        "score": 32.57,
+        "evidence": [
+          "valuation tolerance*",
+          "valuation tolerance breach",
+          "valuation run",
+          "end-of-day valuation",
+          "nav"
+        ]
+      },
+      {
+        "service": "Risk & Compliance Monitoring",
+        "score": 2.92,
+        "evidence": []
+      },
+      {
+        "service": "Fund Pricing",
+        "score": 2.12,
+        "evidence": []
+      },
+      {
+        "service": "Portfolio Accounting",
+        "score": 0.8,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.979,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"valuation tolerance breach NAV_EOD_GE_375 Germany funds\", \"service\": \"NAV Calculation\"}",
+        "result": "KB-07 when to use (0.48); KB-07 requester reply points (0.41); KB-07 first checks (0.40); KB-07 standard resolution paths (0.39)",
+        "latency_ms": 0.8,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"valuation tolerance breach NAV_EOD_GE_375 Germany funds\"}",
+        "result": "Automated alert triggered for NAV Calculation (sim 0.393, 362 tickets); Operational issue reported for NAV Calculation (sim 0.297, 98 tickets); Unclear incident input for NAV Calculation (sim 0.285, 70 tickets)",
+        "latency_ms": 0.6,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.1,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 6241.9,
+    "cost_usd": 0.002761,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00013",
+    "summary": "Compliance monitoring dashboard shows stale breach statuses after yesterday's rule update",
+    "given": {
+      "work_type": "Incident",
+      "service": "Risk & Compliance Monitoring",
+      "urgency": "highest",
+      "impact": "low",
+      "priority": "medium"
+    },
+    "predicted": {
+      "work_type": "Incident",
+      "service": "Risk & Compliance Monitoring",
+      "team": "Risk & Controls",
+      "assignee": "ruth.berg@intcom.com",
+      "urgency": "medium",
+      "impact": "high",
+      "priority": "high",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description details a fault with compliance monitoring dashboard breach statuses not updating after rule update, matching Risk & Compliance Monitoring service.",
+        "Summary and intake metadata indicate an incident related to compliance monitoring.",
+        "service Risk & Compliance Monitoring: “compliance monitoring”, “breach status*”",
+        "intake request type “Human Created Incident” leans Incident",
+        "summary suggests Incident, description suggests Incident"
+      ],
+      "urgency": "Analysts can work around the issue by opening each case manually, but the overview screen is no longer trustworthy and causes repeated escalations.",
+      "impact": "the compliance dashboard still shows several breaches as open even though the underlying portfolio checks have already been rerun successfully",
+      "assignee": "least-loaded agent in the pool (open workload 96; 20 previously resolved Risk & Compliance Monitoring tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "urgency/impact: LLM medium/high vs rules medium/medium",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Risk & Compliance Monitoring",
+        "score": 20.74,
+        "evidence": [
+          "compliance monitoring",
+          "breach status*",
+          "service selected in the ticket"
+        ]
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.0,
+        "evidence": []
+      },
+      {
+        "service": "Order Management",
+        "score": 0.0,
+        "evidence": []
+      },
+      {
+        "service": "Trade Matching",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.923,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"compliance monitoring dashboard stale breach statuses after rule update\", \"service\": \"Risk & Compliance Monitoring\"}",
+        "result": "KB-10 standard resolution paths (0.41); KB-10 first checks (0.41); KB-10 when to use (0.41); KB-10 analyst next steps (0.41)",
+        "latency_ms": 0.9,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"compliance dashboard breach statuses stale after rule update\"}",
+        "result": "Automated alert triggered for Risk & Compliance Monitoring (sim 0.331, 382 tickets); Operational issue reported for Risk & Compliance Monitoring (sim 0.315, 88 tickets); Unclear incident input for Risk & Compliance Monitoring (sim 0.294, 77",
+        "latency_ms": 0.7,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
+        "mode": "llm"
+      },
+      {
+        "step": 4,
+        "tool": "search_kb",
+        "args": "{\"query\": \"compliance monitoring dashboard breach status stale after rule update\", \"service\": \"Risk & Compliance Monitoring\"}",
+        "result": "KB-10 standard resolution paths (0.41); KB-10 first checks (0.41); KB-10 when to use (0.41); KB-10 analyst next steps (0.41)",
+        "latency_ms": 1.0,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 8202.0,
+    "cost_usd": 0.003231,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00014",
+    "summary": "Access requested for CRM & Client Portal for a new relationship manager in France",
+    "given": {
+      "work_type": "Service Request",
+      "service": "CRM & Client Portal",
+      "urgency": "lowest",
+      "impact": "low",
+      "priority": "lowest"
+    },
+    "predicted": {
+      "work_type": "Service Request",
+      "service": "CRM & Client Portal",
+      "team": "Client Services",
+      "assignee": "xena.schmidt@intcom.com",
+      "urgency": "low",
+      "impact": "low",
+      "priority": "low",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description clearly states access request for CRM & Client Portal for a new relationship manager.",
+        "Summary and intake metadata align with a service request for CRM & Client Portal access.",
+        "No conflicting information in description or comments.",
+        "service CRM & Client Portal: “crm”, “client portal”, “relationship manager*”, “crm”",
+        "intake request type “Access to a Service” leans Service Request",
+        "summary suggests Service Request, description suggests Service Request"
+      ],
+      "urgency": "Access requested for CRM & Client Portal for a new relationship manager in France",
+      "impact": "The affected service is CRM & Client Portal (Non-Critical) and individual users affected (a single new joiner)",
+      "assignee": "least-loaded agent in the pool (open workload 96; 30 previously resolved CRM & Client Portal tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "CRM & Client Portal",
+        "score": 33.16,
+        "evidence": [
+          "crm",
+          "client portal",
+          "relationship manager*",
+          "crm",
+          "client portal"
+        ]
+      },
+      {
+        "service": "Identity & Access Management",
+        "score": 1.08,
+        "evidence": []
+      },
+      {
+        "service": "SharePoint & File Storage",
+        "score": 0.8,
+        "evidence": []
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.928,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"standard access role for relationship manager France\", \"service\": \"CRM & Client Portal\"}",
+        "result": "KB-15 first checks (0.45); KB-15 requester reply points (0.43); KB-15 standard resolution paths (0.42); KB-15 when to use (0.41)",
+        "latency_ms": 1.7,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.4,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"Access requested for CRM & Client Portal for a new relationship manager in France\"}",
+        "result": "Access requested for CRM & Client Portal (sim 0.489, 47 tickets); New license requested for CRM & Client Portal (sim 0.395, 49 tickets); Access removal requested for CRM & Client Portal (sim 0.392, 20 tickets)",
+        "latency_ms": 1.2,
+        "mode": "policy (fill-in)"
+      }
+    ],
+    "latency_ms": 6117.2,
+    "cost_usd": 0.002511,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00015",
+    "summary": "Access removal requested for SharePoint & File Storage after contractor offboarding",
+    "given": {
+      "work_type": "Service Request",
+      "service": "SharePoint & File Storage",
+      "urgency": "low",
+      "impact": "high",
+      "priority": "medium"
+    },
+    "predicted": {
+      "work_type": "Service Request",
+      "service": "SharePoint & File Storage",
+      "team": "Enterprise Applications",
+      "assignee": "zoe.peters@intcom.com",
+      "urgency": "high",
+      "impact": "low",
+      "priority": "medium",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Summary and description both indicate access removal for SharePoint & File Storage after contractor offboarding",
+        "Request type is access removal which is a service request",
+        "Selected service matches the described system for access removal",
+        "service SharePoint & File Storage: “sharepoint”, “file storage”, “sharepoint”, “file storage”",
+        "intake request type “Access Removal” leans Service Request",
+        "summary suggests Service Request, description suggests Service Request"
+      ],
+      "urgency": "A contractor left the organization and all project document access for SharePoint & File Storage must be removed before the end of the day.",
+      "impact": "The affected service is SharePoint & File Storage (Non-Critical).",
+      "assignee": "least-loaded agent in the pool (open workload 100; 27 previously resolved SharePoint & File Storage tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "SharePoint & File Storage",
+        "score": 25.51,
+        "evidence": [
+          "sharepoint",
+          "file storage",
+          "sharepoint",
+          "file storage",
+          "site permission*"
+        ]
+      },
+      {
+        "service": "Identity & Access Management",
+        "score": 0.8,
+        "evidence": []
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.0,
+        "evidence": []
+      },
+      {
+        "service": "Order Management",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.969,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"remove contractor access SharePoint File Storage\", \"service\": \"SharePoint & File Storage\"}",
+        "result": "KB-17 when to use (0.48); KB-17 first checks (0.48); KB-17 requester reply points (0.47); KB-17 analyst next steps (0.47)",
+        "latency_ms": 0.7,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"Access removal requested for SharePoint & File Storage after contractor offboarding\"}",
+        "result": "Access removal requested for SharePoint & File Storage (sim 0.54, 22 tickets); Access requested for SharePoint & File Storage (sim 0.396, 43 tickets); Access removal requested for CRM & Client Portal (sim 0.42, 20 tickets)",
+        "latency_ms": 1.1,
+        "mode": "policy (fill-in)"
+      }
+    ],
+    "latency_ms": 6082.5,
+    "cost_usd": 0.002498,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00016",
+    "summary": "Production outage in Outlook & Email for shared mailbox creation",
+    "given": {
+      "work_type": "Service Request",
+      "service": "Outlook & Email",
+      "urgency": "lowest",
+      "impact": "lowest",
+      "priority": "lowest"
+    },
+    "predicted": {
+      "work_type": "Service Request",
+      "service": "Outlook & Email",
+      "team": "Enterprise Applications",
+      "assignee": "quinn.anderson@intcom.com",
+      "urgency": "low",
+      "impact": "lowest",
+      "priority": "lowest",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Summary implies an incident due to 'Production outage' phrase",
+        "Description clarifies it is a service request for shared mailbox and distribution list creation",
+        "No actual mail outage reported",
+        "Selected service Outlook & Email matches the described request for mailbox and DL",
+        "service Outlook & Email: “outlook”, “shared mailbox*”, “mailbox*”, “shared-mailbox”",
+        "intake request type “Misclassified Incident Title” leans Service Request"
+      ],
+      "urgency": "Need a shared mailbox and DL before next week.",
+      "impact": "There is no actual mail outage.",
+      "assignee": "least-loaded agent in the pool (open workload 100; 23 previously resolved Outlook & Email tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "urgency/impact: LLM low/lowest vs rules lowest/lowest",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Outlook & Email",
+        "score": 36.15,
+        "evidence": [
+          "outlook",
+          "shared mailbox*",
+          "mailbox*",
+          "shared-mailbox",
+          "shared mailbox*"
+        ]
+      },
+      {
+        "service": "Client Reporting",
+        "score": 0.8,
+        "evidence": []
+      },
+      {
+        "service": "Identity & Access Management",
+        "score": 0.8,
+        "evidence": []
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": true,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.968,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"create shared mailbox and distribution list in Outlook & Email\", \"service\": \"Outlook & Email\"}",
+        "result": "KB-18 standard resolution paths (0.50); KB-18 first checks (0.46); KB-18 when to use (0.42); KB-18 requester reply points (0.41)",
+        "latency_ms": 1.0,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"Production outage in Outlook & Email for shared mailbox creation\"}",
+        "result": "Operational issue reported for Outlook & Email (sim 0.375, 74 tickets); Access removal requested for Outlook & Email (sim 0.347, 21 tickets); Access requested for Outlook & Email (sim 0.341, 44 tickets)",
+        "latency_ms": 2.1,
+        "mode": "policy (fill-in)"
+      }
+    ],
+    "latency_ms": 7731.3,
+    "cost_usd": 0.002412,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00017",
+    "summary": "Corporate action ingestion CAEV-874 is missing a mandatory option code on 1 events",
+    "given": {
+      "work_type": "Incident",
+      "service": "Corporate Actions",
+      "urgency": "highest",
+      "impact": "medium",
+      "priority": "high"
+    },
+    "predicted": {
+      "work_type": "Incident",
+      "service": "Corporate Actions",
+      "team": "Securities Operations",
+      "assignee": "pierre.johnson@intcom.com",
+      "urgency": "high",
+      "impact": "high",
+      "priority": "high",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description states missing mandatory option code in corporate action ingestion feed CAEV-874, blocking publication to operations screen, indicating a fault in Corporate Actions service.",
+        "service Corporate Actions: “corporate action*”, “corporate-action*”, “caev”, “option code*”",
+        "intake request type “Machine Created Alert” leans Incident",
+        "summary suggests Incident, description suggests Incident"
+      ],
+      "urgency": "The elections could not be published to the downstream operations screen.",
+      "impact": "Publication to operations screen blocked.",
+      "assignee": "least-loaded agent in the pool (open workload 101; 30 previously resolved Corporate Actions tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Corporate Actions",
+        "score": 46.186,
+        "evidence": [
+          "corporate action*",
+          "corporate-action*",
+          "caev",
+          "option code*",
+          "corporate action*"
+        ]
+      },
+      {
+        "service": "Securities Settlement",
+        "score": 0.8,
+        "evidence": []
+      },
+      {
+        "service": "Rimes Data Feed",
+        "score": 0.8,
+        "evidence": []
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.999,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"missing mandatory option code corporate action ingestion CAEV-874\", \"service\": \"Corporate Actions\"}",
+        "result": "KB-05 when to use (0.55); KB-05 standard resolution paths (0.50); KB-05 first checks (0.48); KB-05 requester reply points (0.46)",
+        "latency_ms": 0.8,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"missing mandatory option code CAEV-874\"}",
+        "result": "Unclear incident input for Corporate Actions (sim 0.349, 75 tickets); Automated alert triggered for Corporate Actions (sim 0.314, 387 tickets); Operational issue reported for Corporate Actions (sim 0.307, 91 tickets)",
+        "latency_ms": 0.8,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 6282.0,
+    "cost_usd": 0.002707,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00018",
+    "summary": "Orders remain in pending approval after broker account switch in OMS",
+    "given": {
+      "work_type": "Incident",
+      "service": "Order Management",
+      "urgency": "medium",
+      "impact": "medium",
+      "priority": "medium"
+    },
+    "predicted": {
+      "work_type": "Incident",
+      "service": "Order Management",
+      "team": "Trading Support",
+      "assignee": "carlos.ortiz@intcom.com",
+      "urgency": "high",
+      "impact": "high",
+      "priority": "high",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description details a failure in order progression after broker account switch in OMS, matching Order Management service scope.",
+        "Summary and description both indicate an incident with orders stuck in pending approval, confirming work_type as Incident.",
+        "service Order Management: “oms”, “order management”, “execution routing”, “oms”",
+        "intake request type “Human Created Incident” leans Incident",
+        "summary suggests Incident, description suggests Incident"
+      ],
+      "urgency": "Orders remain in pending approval after broker account switch in OMS and manual workaround is required.",
+      "impact": "Orders stay pending approval and never leave OMS, affecting the order management workflow and multiple orders.",
+      "assignee": "least-loaded agent in the pool (open workload 101; 17 previously resolved Order Management tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "urgency/impact: LLM high/high vs rules medium/high",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Order Management",
+        "score": 20.59,
+        "evidence": [
+          "oms",
+          "order management",
+          "execution routing",
+          "oms",
+          "service selected in the ticket"
+        ]
+      },
+      {
+        "service": "Trade Matching",
+        "score": 2.68,
+        "evidence": []
+      },
+      {
+        "service": "Identity & Access Management",
+        "score": 2.28,
+        "evidence": []
+      },
+      {
+        "service": "Trading Platform",
+        "score": 1.6,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.982,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"orders pending approval after broker account switch\", \"service\": \"Order Management\"}",
+        "result": "KB-02 when to use (0.48); KB-02 first checks (0.46); KB-02 standard resolution paths (0.45); KB-02 requester reply points (0.43)",
+        "latency_ms": 0.9,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"orders pending approval after broker account switch\"}",
+        "result": "Operational issue reported for Order Management (sim 0.305, 66 tickets); Automated alert triggered for Order Management (sim 0.294, 369 tickets); Access removal requested for Order Management (sim 0.276, 22 tickets)",
+        "latency_ms": 1.3,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 7833.7,
+    "cost_usd": 0.003362,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00019",
+    "summary": "Settlement confirmation queue SECLINK-7549 backlog exceeded the operational threshold",
+    "given": {
+      "work_type": "Incident",
+      "service": "Securities Settlement",
+      "urgency": "medium",
+      "impact": "medium",
+      "priority": "medium"
+    },
+    "predicted": {
+      "work_type": "Incident",
+      "service": "Securities Settlement",
+      "team": "Securities Operations",
+      "assignee": "beatrice.monti@intcom.com",
+      "urgency": "high",
+      "impact": "high",
+      "priority": "high",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": false
+    },
+    "why": {
+      "classification": [
+        "Description details a settlement confirmation queue backlog and settlement processing issue, matching Securities Settlement service.",
+        "Summary and intake metadata indicate an incident with settlement confirmation queue exceeding threshold.",
+        "Advisory ranking strongly supports Securities Settlement service.",
+        "service Securities Settlement: “settlement”, “settle*”, “settlement”, “settle*”",
+        "intake request type “Machine Created Alert” leans Incident",
+        "summary suggests Incident, description suggests Incident"
+      ],
+      "urgency": "Settlement confirmation queue SECLINK-7549 backlog exceeded the operational threshold",
+      "impact": "final settlement acknowledgements were not posted back into the operations dashboard",
+      "assignee": "least-loaded agent in the pool (open workload 102; 23 previously resolved Securities Settlement tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Securities Settlement",
+        "score": 25.42,
+        "evidence": [
+          "settlement",
+          "settle*",
+          "settlement",
+          "settle*",
+          "settlement"
+        ]
+      },
+      {
+        "service": "Trade Matching",
+        "score": 2.12,
+        "evidence": []
+      },
+      {
+        "service": "Risk & Compliance Monitoring",
+        "score": 0.24,
+        "evidence": []
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": false,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.928,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"settlement confirmation queue backlog exceeded threshold\", \"service\": \"Securities Settlement\"}",
+        "result": "KB-04 first checks (0.41); KB-04 when to use (0.40); KB-04 requester reply points (0.39); KB-04 analyst next steps (0.38)",
+        "latency_ms": 0.8,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"settlement confirmation queue backlog exceeded threshold\"}",
+        "result": "Automated alert triggered for Securities Settlement (sim 0.362, 356 tickets); Operational issue reported for Securities Settlement (sim 0.333, 85 tickets); Unclear incident input for Securities Settlement (sim 0.327, 100 tickets)",
+        "latency_ms": 0.8,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 8005.0,
+    "cost_usd": 0.003216,
+    "mode": "hybrid"
+  },
+  {
+    "ticket_id": "CH-00020",
+    "summary": "Need access removed from all deactivated users in portal today",
+    "given": {
+      "work_type": "Incident",
+      "service": "Identity & Access Management",
+      "urgency": "high",
+      "impact": "low",
+      "priority": "medium"
+    },
+    "predicted": {
+      "work_type": "Service Request",
+      "service": "Identity & Access Management",
+      "team": "Enterprise Applications",
+      "assignee": "ulrich.fischer@intcom.com",
+      "urgency": "medium",
+      "impact": "low",
+      "priority": "low",
+      "resolution": "done"
+    },
+    "changed": {
+      "service": false,
+      "work_type": true
+    },
+    "why": {
+      "classification": [
+        "Description states this is a routine identity cleanup after user deactivations, not an urgent incident.",
+        "Selected service Identity & Access Management matches the focus on user access removal.",
+        "Summary implies incident due to urgency wording but description clarifies it is a service request.",
+        "service Identity & Access Management: “deactivated user*”, “user deactivation*”, “inactive account*”, “inactive user*”",
+        "description states the request is routine / the title is misleading (no real disruption)",
+        "summary suggests Service Request, description suggests Service Request"
+      ],
+      "urgency": "Need access removed from all deactivated users in portal today",
+      "impact": "inactive accounts must not retain access",
+      "assignee": "least-loaded agent in the pool (open workload 103; 21 previously resolved Identity & Access Management tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
+      "resolution_source": "llm",
+      "notes": [
+        "LLM and rules agree on the service",
+        "urgency/impact: LLM medium/low vs rules high/medium",
+        "status: actionable ticket with a concrete resolution path"
+      ]
+    },
+    "service_ranking": [
+      {
+        "service": "Identity & Access Management",
+        "score": 19.6,
+        "evidence": [
+          "deactivated user*",
+          "user deactivation*",
+          "inactive account*",
+          "inactive user*",
+          "service selected in the ticket"
+        ]
+      },
+      {
+        "service": "CRM & Client Portal",
+        "score": 1.88,
+        "evidence": []
+      },
+      {
+        "service": "Trade Matching",
+        "score": 0.56,
+        "evidence": []
+      },
+      {
+        "service": "Trading Platform",
+        "score": 0.0,
+        "evidence": []
+      }
+    ],
+    "flags": {
+      "unclear": false,
+      "mismatch": true,
+      "duplicate": false,
+      "injection": false,
+      "low_confidence": false,
+      "pii": false
+    },
+    "confidence": 0.921,
+    "trace": [
+      {
+        "step": 1,
+        "tool": "search_kb",
+        "args": "{\"query\": \"remove access for deactivated users\", \"service\": \"Identity & Access Management\"}",
+        "result": "KB-16 when to use (0.42); KB-16 requester reply points (0.41); KB-16 analyst next steps (0.40); KB-16 first checks (0.39)",
+        "latency_ms": 0.8,
+        "mode": "llm"
+      },
+      {
+        "step": 2,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"remove access for deactivated users\"}",
+        "result": "Access removal requested for Identity & Access Management (sim 0.386, 26 tickets); Operational issue reported for Identity & Access Management (sim 0.333, 83 tickets); Access requested for Identity & Access Management (sim 0.333, 43 tickets",
+        "latency_ms": 1.2,
+        "mode": "llm"
+      }
+    ],
+    "latency_ms": 6047.6,
+    "cost_usd": 0.00262,
+    "mode": "hybrid"
+  }
+]

@@ -1,0 +1,277 @@
+{
+  "created": "2026-09-24T20:13:03",
+  "llm_enabled": true,
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "draft_provider": "openai",
+  "embedder": "api:text-embedding-3-small",
+  "stress": {
+    "n": 106,
+    "mode": "hybrid",
+    "wall_seconds": 189.12,
+    "routing_accuracy_team": 1.0,
+    "service_accuracy": 1.0,
+    "work_type_accuracy": 1.0,
+    "work_type_accuracy_misleading_subset": 1.0,
+    "clarification": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "f2_recall_weighted": 1.0,
+      "tp": 6,
+      "fp": 0,
+      "fn": 0
+    },
+    "priority_consistency_runs": 2,
+    "priority_consistency": 0.991,
+    "priority_consistency_note": "raw model stability, decision cache bypassed; with the cache on, re-triage of identical text is idempotent",
+    "priority_matrix_consistent": 1.0,
+    "priority_sanity": 0.967,
+    "citation_coverage": 1.0,
+    "injection": {
+      "resistance": 1.0,
+      "n_injected": 8,
+      "false_positive_rate": 0.0,
+      "obeyed": 0
+    },
+    "pii_redaction_recall": 1.0,
+    "pii_leaks": [],
+    "duplicates": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "draft_language_matches_ticket": 1.0,
+    "latency_ms_p50": 7199.1,
+    "latency_ms_p95": 10912.3,
+    "mean_cost_usd": 0.002454,
+    "per_category": {
+      "paraphrase": {
+        "n": 20,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "german": {
+        "n": 20,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "french": {
+        "n": 12,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "service_omitted": {
+        "n": 8,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "misleading_title": {
+        "n": 10,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "pii": {
+        "n": 10,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "injection": {
+        "n": 8,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "benign": {
+        "n": 6,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "alert_storm": {
+        "n": 8,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "unclear": {
+        "n": 4,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      }
+    },
+    "failures": []
+  },
+  "validation": {
+    "n": 37,
+    "mode": "hybrid",
+    "wall_seconds": 71.6,
+    "routing_accuracy_team": 1.0,
+    "service_accuracy": 1.0,
+    "work_type_accuracy": 1.0,
+    "work_type_accuracy_misleading_subset": 1.0,
+    "clarification": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "f2_recall_weighted": 1.0,
+      "tp": 2,
+      "fp": 0,
+      "fn": 0
+    },
+    "priority_consistency_runs": 1,
+    "priority_consistency": 1.0,
+    "priority_consistency_note": "raw model stability, decision cache bypassed; with the cache on, re-triage of identical text is idempotent",
+    "priority_matrix_consistent": 1.0,
+    "priority_sanity": 0.909,
+    "citation_coverage": 1.0,
+    "injection": {
+      "resistance": 1.0,
+      "n_injected": 1,
+      "false_positive_rate": 0.0,
+      "obeyed": 0
+    },
+    "pii_redaction_recall": 0.0,
+    "pii_leaks": [],
+    "duplicates": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "draft_language_matches_ticket": 0.0,
+    "latency_ms_p50": 7459.0,
+    "latency_ms_p95": 9703.2,
+    "mean_cost_usd": 0.002728,
+    "per_category": {
+      "val_incident": {
+        "n": 17,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "val_request": {
+        "n": 8,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "val_misleading": {
+        "n": 4,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "val_multilingual": {
+        "n": 4,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "val_unclear": {
+        "n": 2,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "val_injection": {
+        "n": 1,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "val_benign": {
+        "n": 1,
+        "team_acc": 1.0,
+        "service_acc": 1.0,
+        "work_type_acc": 1.0
+      }
+    },
+    "failures": []
+  },
+  "holdout": {
+    "n_unique_texts": 173,
+    "routing_accuracy_team": 1.0,
+    "work_type_accuracy": 0.994,
+    "per_pattern": {
+      "Access removal requested for <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Access requested for <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Automated alert triggered for <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Email notification received for <SVC>": {
+        "n": 1,
+        "team_acc": 1.0,
+        "work_type_acc": 0.0
+      },
+      "External email warning received for <SVC>": {
+        "n": 1,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "General request for <SVC> with unclear details": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Incident mislabelled as service request in <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Incorrect incident title for service request in <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "New license requested for <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Operational issue reported for <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      },
+      "Unclear incident input for <SVC>": {
+        "n": 19,
+        "team_acc": 1.0,
+        "work_type_acc": 1.0
+      }
+    },
+    "caveat": "only 173 unique texts exist; every test text also appears in training (leakage). Service field hidden."
+  },
+  "baselines": {
+    "test_texts_seen_in_training_share": 1.0,
+    "service": {
+      "tfidf_logreg_accuracy": 1.0,
+      "majority_baseline": 0.2775
+    },
+    "work_type": {
+      "tfidf_logreg_accuracy": 1.0,
+      "majority_baseline": 0.8033
+    },
+    "priority": {
+      "tfidf_logreg_accuracy": 0.4935,
+      "majority_baseline": 0.497
+    },
+    "work_type_from_title_keywords": 0.9597
+  }
+}

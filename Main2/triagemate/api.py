@@ -1,0 +1,382 @@
+"""REST API (FastAPI) + the analyst UI. Run:  python -m triagemate.cli serve   ->  http://127.0.0.1:8000
+
+Endpoints
+  GET  /health                       provider / index status
+  POST /api/triage                   one ticket (Jira record, simple fields, or a pasted e-mail)  -> TriageResult
+  POST /api/triage/batch             a list of tickets or a full challenge envelope                 -> results
+  POST /api/challenge/predict        challenge envelope in, submission-format predictions out
+  POST /api/demo/load                load the 5 demo tickets (+ optionally the challenge file) into the queue
+  GET  /api/queue                    priority-sorted queue with badges
+  GET  /api/tickets/{id}             ticket + AI result + decisions
+  POST /api/tickets/{id}/decision    approve | edit | reject  (captures edit distance and dwell time)
+  GET  /api/metrics                  acceptance rate, latency percentiles, cost per ticket, flags
+  GET  /api/matrix                   the Urgency x Impact matrix
+  GET  /api/kb/search?q=&service=    knowledge-base search with citation ids
+  GET  /api/eval                     latest eval/results.json
+Safety: every model-bound string is redacted first; the API never sends, deletes or changes anything outside this app (Sec. 4.10).
+"""
+from __future__ import annotations
+
+import json
+import re
+import threading
+from contextlib import asynccontextmanager
+from pathlib import Path
+from typing import Any, Optional
+
+from fastapi import Body, FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.concurrency import run_in_threadpool
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
+
+from . import __version__
+from .assign import Assigner
+from .challenge import apply_result
+from .config import ROOT, get_settings
+from .data import find_challenge_file, read_records, ticket_from_record
+from .llm import get_client
+from .models import Ticket
+from .pipeline import Triage
+from .priority import matrix_table
+from .retrieve import get_retriever
+from .store import Store
+
+MAX_CHARS = 20000
+_state: dict[str, Any] = {}
+_lock = threading.RLock()
+
+
+def _init() -> None:
+    s = get_settings()
+    ret = get_retriever()
+    store = Store(s.db_file)
+    store.index_kb(ret.kb_docs)
+    assigner = Assigner.from_training(ret.training)
+    for agent, n in store.open_load().items():
+        assigner.session_load[agent] += n
+    _state.update(ret=ret, store=store, tri=Triage(retriever=ret, assigner=assigner, store=store))
+    from .intake import set_default_triage
+    set_default_triage(_state["tri"])                       # enriched incidents also show up in the analyst queue
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    _init()
+    yield
+    if "store" in _state:
+        _state["store"].close()
+    _state.clear()
+    from .intake import set_default_triage
+    set_default_triage(None)                                # do not leave a pipeline that points at a closed store behind
+
+
+app = FastAPI(title="TriageMate", version=__version__, lifespan=lifespan,
+              description="AI triage co-pilot for Swiss Life service desks: classify, prioritise, route, retrieve, draft, human approves.")
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+
+def tri() -> Triage:
+    if "tri" not in _state:
+        _init()
+    return _state["tri"]
+
+
+def store() -> Store:
+    if "store" not in _state:
+        _init()
+    return _state["store"]
+
+
+# ------------------------------------------------------------------ input parsing
+class SimpleTicket(BaseModel):
+    summary: str = Field(default="", max_length=2000)
+    description: str = Field(default="", max_length=MAX_CHARS)
+    service: Optional[str] = None
+    work_type: Optional[str] = None
+    request_type: Optional[str] = None
+    reporter: Optional[str] = None
+    entity: Optional[str] = None
+    created: Optional[str] = None
+    comments: list[str] = Field(default_factory=list)
+    email: Optional[str] = Field(default=None, max_length=MAX_CHARS, description="raw pasted e-mail (Subject:/From: headers optional)")
+    record: Optional[dict] = Field(default=None, description="a Jira-export record with the challenge field names")
+
+
+_paste_counter = {"n": 0}
+
+
+def _from_email(raw: str) -> dict:
+    subject, sender, body = "", None, raw
+    m = re.match(r"(?is)^((?:[A-Za-z\-]+:.*\n)+)\n?(.*)$", raw.strip())
+    if m and re.search(r"(?im)^(subject|from):", m.group(1)):
+        headers, body = m.group(1), m.group(2)
+        sm = re.search(r"(?im)^subject:\s*(.*)$", headers)
+        fm = re.search(r"(?im)^from:\s*.*?<?([\w.\-+]+@[\w.\-]+)>?\s*$", headers)
+        subject = sm.group(1).strip() if sm else ""
+        sender = fm.group(1) if fm else None
+    else:
+        first, _, rest = raw.strip().partition("\n")
+        subject, body = first[:120], rest or first
+    return {"Summary": subject or body[:80], "Description": body.strip(), "Reporter": sender or "info@extcom_00.com",
+            "Affected Business or IT Services": ["Emailed Support Tickets"], "Work type": "Incident"}
+
+
+def to_ticket(payload: SimpleTicket) -> Ticket:
+    with _lock:
+        _paste_counter["n"] += 1
+        n = _paste_counter["n"]
+    if payload.record:
+        rec = dict(payload.record)
+    elif payload.email:
+        rec = _from_email(payload.email)
+        rec["source"] = "email"
+    else:
+        rec = {"Summary": payload.summary, "Description": payload.description or payload.summary,
+               "Affected Business or IT Services": [payload.service] if payload.service else [],
+               "Work type": payload.work_type, "Request type": payload.request_type, "Reporter": payload.reporter,
+               "Business Entity": [payload.entity] if payload.entity else [], "Created date": payload.created,
+               "All Comments": payload.comments}
+    if not (rec.get("Summary") or rec.get("Description")):
+        raise HTTPException(422, "provide summary/description, an e-mail, or a Jira record")
+    rec.setdefault("Status", "open")
+    t = ticket_from_record(rec, n - 1, "PASTE", "paste" if not payload.record else "jira")
+    return t.model_copy(update={"id": (rec.get("Key") or f"PASTE-{n:04d}")})
+
+
+# ------------------------------------------------------------------ endpoints
+@app.get("/health")
+def health() -> dict:
+    ret = _state.get("ret") or get_retriever()
+    cc, dc = get_client("classify"), get_client("draft")
+    on = cc.enabled or dc.enabled
+    return {"status": "ok", "version": __version__, "mode": "llm" if on else "offline", "llm_enabled": on,
+            "provider": cc.provider, "model": cc.default_model if cc.enabled else None,
+            "draft_provider": dc.provider, "draft_model": dc.default_model if dc.enabled else None, "embedder": ret.embedder.name,
+            "kb_chunks": len(ret.kb_docs), "kb_articles": len({d.meta["article"] for d in ret.kb_docs}), "playbook_entries": len(ret.playbook),
+            "training_tickets": len(ret.training), "index_build_seconds": round(ret.build_seconds, 2)}
+
+
+@app.post("/api/triage")
+def triage_one(payload: SimpleTicket):
+    t = to_ticket(payload)
+    with _lock:
+        res = tri().run_ticket(t)
+    return {"ticket": t.model_dump(exclude={"raw"}), "result": res.model_dump()}
+
+
+@app.post("/api/triage/batch")
+def triage_batch(body: Any = Body(...)):
+    if isinstance(body, dict) and "records" in body:
+        recs = body["records"]
+    elif isinstance(body, list):
+        recs = body
+    else:
+        raise HTTPException(422, "expected a list of records or an envelope with 'records'")
+    tickets = [ticket_from_record(r, i, "API", "jira") for i, r in enumerate(recs)]
+    with _lock:
+        results = tri().run_batch(tickets)
+    return {"count": len(results), "results": [r.model_dump() for r in results]}
+
+
+@app.post("/api/challenge/predict")
+def challenge_predict(body: Any = Body(...)):
+    """Submission-format output for a challenge envelope (same schema in, same schema out)."""
+    recs = body["records"] if isinstance(body, dict) and "records" in body else body
+    if not isinstance(recs, list):
+        raise HTTPException(422, "expected a list of records or an envelope with 'records'")
+    tickets = [ticket_from_record(r, i, "CH", "jira") for i, r in enumerate(recs)]
+    with _lock:
+        results = tri().run_batch(tickets)
+    preds = [apply_result(r, res) for r, res in zip(recs, results)]
+    return {**{k: v for k, v in body.items() if k != "records"}, "records": preds} if isinstance(body, dict) else preds
+
+
+@app.post("/api/demo/load")
+def demo_load(include_challenge: bool = Query(False)):
+    tickets: list[Ticket] = []
+    demo = json.loads((get_settings().data_dir / "demo_tickets.json").read_text(encoding="utf-8"))
+    tickets += [ticket_from_record(r, i, "DEMO", "jira").model_copy(update={"id": f"DEMO-{i + 1}"}) for i, r in enumerate(demo)]
+    if include_challenge:
+        f = find_challenge_file()
+        if f:
+            recs, _ = read_records(f)
+            tickets += [ticket_from_record(r, i, "CH", "jira") for i, r in enumerate(recs)]
+    with _lock:
+        results = tri().run_batch(tickets)
+    return {"loaded": len(results), "ids": [r.ticket_id for r in results]}
+
+
+@app.get("/api/queue")
+def queue(limit: int = Query(200, le=1000)):
+    return {"items": store().queue(limit)}
+
+
+@app.get("/api/tickets/{ticket_id}")
+def ticket_detail(ticket_id: str):
+    t, r = store().get_ticket(ticket_id), store().get_result(ticket_id)
+    if not t or not r:
+        raise HTTPException(404, "unknown ticket")
+    return {"ticket": t.model_dump(exclude={"raw"}), "result": r.model_dump(), "redacted_text": store().get_redacted(ticket_id)}
+
+
+@app.post("/api/challenge/run-bundled")
+def challenge_run_bundled():
+    """Run the challenge file shipped in data/ and return the submission-format records plus a compact review table."""
+    f = find_challenge_file()
+    if not f:
+        raise HTTPException(404, "no jira_hackathon*challenge*.json in data/")
+    recs, meta = read_records(f)
+    tickets = [ticket_from_record(r, i, "CH", "jira") for i, r in enumerate(recs)]
+    with _lock:
+        results = tri().run_batch(tickets)
+    table = [{"id": t.id, "summary": t.summary, "given_service": t.service, "given_work_type": t.work_type, "given_priority": t.priority,
+              "work_type": r.work_type, "service": r.service, "team": r.team, "assignee": r.assignee, "urgency": r.urgency, "impact": r.impact,
+              "priority": r.priority, "resolution": r.resolution, "comment": f"{r.assignee}: {r.resolution_note}", "confidence": r.confidence,
+              "flags": [k for k, v in r.flags.model_dump().items() if v], "source": r.resolution_source}
+             for t, r in zip(tickets, results)]
+    preds = [apply_result(r, res) for r, res in zip(recs, results)]
+    return {"file": f.name, "mode": results[0].mode if results else "offline", "table": table, "records": preds, "meta": meta}
+
+
+class Decision(BaseModel):
+    action: str
+    edited_text: Optional[str] = Field(default=None, max_length=MAX_CHARS)
+    reason: Optional[str] = Field(default=None, max_length=1000)
+    dwell_ms: Optional[int] = None
+
+
+@app.post("/api/tickets/{ticket_id}/decision")
+def decide(ticket_id: str, d: Decision):
+    r = store().get_result(ticket_id)
+    if not r:
+        raise HTTPException(404, "unknown ticket")
+    if d.action == "reject" and not (d.reason or "").strip():
+        raise HTTPException(422, "a reason is required when rejecting")
+    original = (r.draft.text if r.draft else "") or ""
+    try:
+        return store().save_decision(ticket_id, d.action, d.edited_text, d.reason, original_text=original, dwell_ms=d.dwell_ms)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+
+@app.get("/api/metrics")
+def metrics():
+    return store().metrics()
+
+
+@app.get("/api/matrix")
+def matrix():
+    return {"rows": matrix_table()}
+
+
+@app.get("/api/kb/search")
+def kb_search(q: str = Query(..., min_length=2, max_length=500), service: Optional[str] = None, k: int = Query(5, le=10)):
+    hits = (_state.get("ret") or get_retriever()).search_kb(q, service=service, k=k)
+    return {"hits": [{"id": h.meta.get("cite"), "section": h.meta.get("section"), "title": h.title, "score": round(h.score, 3),
+                      "text": h.text[:400]} for h in hits]}
+
+
+@app.get("/api/playbook")
+def playbook():
+    ret = _state.get("ret") or get_retriever()
+    return {"entries": [{"id": e.id, "service": e.service, "count": e.count, "top_share": e.top_share, "text": e.text} for e in ret.playbook]}
+
+
+@app.get("/api/eval")
+def eval_results():
+    p = next((q for q in (ROOT / "eval" / "results_hybrid.json", ROOT / "eval" / "results_offline.json", ROOT / "eval" / "results.json") if q.exists()), None)
+    if p is None:
+        raise HTTPException(404, "run `python -m triagemate.cli eval` first")
+    return JSONResponse(json.loads(p.read_text(encoding="utf-8")))
+
+
+@app.get("/api/dataset-analysis")
+def dataset_analysis():
+    p = ROOT / "eval" / "dataset_analysis.json"
+    if not p.exists():
+        raise HTTPException(404, "run `python -m triagemate.cli analyze` first")
+    return JSONResponse(json.loads(p.read_text(encoding="utf-8")))
+
+
+# ------------------------------------------------------------------ intake handoff + typing assist (for the UI team)
+@app.post("/api/intake/enrich", tags=["intake"])
+def intake_enrich(body: Any = Body(...), use_llm: Optional[bool] = Query(None, alias="useLlm"), preview: bool = Query(False)):
+    """Only ``description`` is required. Returns the fully enriched incident (camelCase) with optional clientResolution / expertResolution.
+    ``preview=true`` does not count the suggested assignee towards agent load."""
+    from .intake import enrich_incident, normalise_incident
+    try:
+        inc = normalise_incident(body)
+    except Exception as e:  # noqa: BLE001 - validation errors become a clean 422
+        raise HTTPException(422, f"invalid incident: {str(e)[:300]}")
+    with _lock:
+        out = enrich_incident(inc, use_llm=use_llm, commit_assign=not preview, triage=tri())
+    return JSONResponse(out.to_json())
+
+
+@app.post("/api/intake/enrich/batch", tags=["intake"])
+def intake_enrich_batch(body: Any = Body(...), use_llm: Optional[bool] = Query(None, alias="useLlm")):
+    from .intake import enrich_many, normalise_incident
+    items = body.get("incidents") if isinstance(body, dict) else body
+    if not isinstance(items, list) or not items:
+        raise HTTPException(422, "expected a non-empty list of incidents or {\"incidents\": [...]}")
+    try:
+        incs = [normalise_incident(i) for i in items]
+    except Exception as e:  # noqa: BLE001
+        raise HTTPException(422, f"invalid incident: {str(e)[:300]}")
+    with _lock:
+        outs = enrich_many(incs, use_llm=use_llm, triage=tri())
+    return JSONResponse({"count": len(outs), "incidents": [o.to_json() for o in outs]})
+
+
+class AssistRequest(BaseModel):
+    text: str = Field(default="", max_length=4000)
+    mode: str = Field(default="fast", pattern="^(fast|smart)$")
+    context: Optional[dict] = None
+
+
+@app.post("/api/intake/assist", tags=["intake"])
+def intake_assist(req: AssistRequest):
+    """Call on every debounced keystroke. ``mode=fast`` is offline (a few ms); ``mode=smart`` adds LLM suggestions with a 1.6 s budget."""
+    from .assist import assist
+    return JSONResponse(assist(req.text, mode=req.mode, context=req.context).to_json())
+
+
+@app.get("/api/intake/starters", tags=["intake"])
+def intake_starters():
+    """Common ways to begin, for an empty input box."""
+    from .assist import starters
+    return JSONResponse({"suggestions": [s.to_json() for s in starters()]})
+
+
+@app.get("/api/intake/schema", tags=["intake"])
+def intake_schema():
+    from .intake import json_schemas
+    return JSONResponse(json_schemas())
+
+
+@app.websocket("/ws/intake/assist")
+async def ws_intake_assist(ws: WebSocket):
+    """Send {"text": "...", "mode": "fast"} on every keystroke; every message gets one assist response back (same JSON as the REST call).
+    Messages that arrive while a response is being computed are answered in order; the client should simply ignore stale answers by echoing ``text``."""
+    from .assist import assist
+    await ws.accept()
+    try:
+        while True:
+            msg = await ws.receive_json()
+            text = str(msg.get("text", ""))[:4000]
+            mode = msg.get("mode", "fast") if msg.get("mode") in ("fast", "smart") else "fast"
+            await ws.send_json((await run_in_threadpool(assist, text, mode=mode)).to_json())     # smart mode may wait on a model
+    except WebSocketDisconnect:
+        return
+
+
+# ------------------------------------------------------------------ UI
+UI_DIR = ROOT / "ui"
+if UI_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(UI_DIR)), name="static")
+
+    @app.get("/", include_in_schema=False)
+    def index():
+        return FileResponse(UI_DIR / "index.html")

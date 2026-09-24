@@ -165,3 +165,19 @@ rewards:
   the training data.
 - Good luck, and have fun digging through Rimes feed delays, NAV tolerance
   breaches, and mysteriously vague "problem fixed" comments!
+
+---
+
+## Main2/ - TriageMate rules + LLM engine, intake API and typing assist
+
+`Main2/` is a self-contained triage engine (Python package `triagemate/`, with its own `kb/`, `eval/`, `prompts/`, `ui/`, `tests/`, `docs/`). It runs offline with no key and adds
+an **intake API** for the front end: `POST /api/intake/enrich` (description in, enriched incident out), `POST /api/intake/assist` and `WS /ws/intake/assist` (suggestions while the user types).
+Start with [Main2/README.md](Main2/README.md); the front-end contract is [Main2/docs/INTAKE_HANDOFF.md](Main2/docs/INTAKE_HANDOFF.md).
+
+```bash
+cd Main2
+pip install -r requirements.txt
+cp .env.example .env                              # optional: add an LLM key (OpenAI, Apertus, Azure, ...)
+python -m triagemate.cli serve --port 8765        # engine + analyst UI + intake API
+python -m pytest tests -q                         # 129 tests
+```
