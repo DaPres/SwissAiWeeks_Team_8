@@ -1,0 +1,1 @@
+{"value": {"urgency": {"value": "high", "quote": "Risk & Compliance Monitoring generated an automated monitoring alert indicating an operational problem."}, "impact": {"value": "highest", "quote": "Service: Risk & Compliance Monitoring (CRITICAL per the organisers' list)"}}, "source": "ok", "provider": "swisscom-apertus", "error": null, "cached_at": 1790248754.563745}

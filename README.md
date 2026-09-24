@@ -160,6 +160,40 @@ Scoring is hybrid — **0.6 dense cosine (Chroma + sentence-transformers) + 0.4 
 the top 20, filtering by service, deduping, down to the top 5. Below a **0.35 score floor**
 retrieval reports low confidence instead of returning a bad match.
 
+## The agent loop, resolution and drafting
+
+**Bounded loop (`app/agent/loop.py`).** At most **5 tool calls** over five read-only tools —
+`search_kb`, `find_similar_tickets`, `find_open_related`, `request_clarification`,
+`escalate_to_human`. Tool arguments are validated and clamped before any database access;
+the last two are terminal signals that end the loop. Every step is traced with its own
+latency, and the trace is shown in the UI.
+
+**Resolution status (`app/resolution.py`) is derived from our own flags, never learned.**
+Resolution in the training data is random — measured at 25.5 / 25.0 / 24.9 / 24.6% across
+*every* template, with `Status: done` carrying all four values — so imitating it is
+impossible by construction. Our rules, in priority order:
+
+| Condition | Status |
+|---|---|
+| injection detected | `cancelled` |
+| duplicate of an open ticket on the same service | `cancelled` |
+| spam / not a service request | `cancelled` |
+| unclear or missing information | `clarification` |
+| alert with no corroborating evidence, nothing reproducible | `cannot reproduce` |
+| confidence below 0.6 | `clarification` (ask rather than guess) |
+| actionable, with a matching resolution pattern | `done` |
+| actionable but no matching procedure found | `clarification` |
+
+**Drafting (`app/draft.py`)** runs at temperature 0.3 — everything else is 0. Every factual
+sentence carries a **citation id**, and citations are kept in a structured field as well as
+inline, so the UI can show provenance and the submission can strip them. A `clarification`
+is never a thin note: it must state exactly what is missing and why it blocks resolution.
+If retrieval supports nothing, the comment says so rather than inventing a fix.
+
+**Confidence** = `0.4 × classifier + 0.4 × retrieval + 0.2 × self-report`. If any stage fell
+back to deterministic output, confidence is **capped at 0.5** — below the floor — because a
+result we did not get a model judgement for must never look confident.
+
 ## Storage and the related-ticket window
 
 `app/store.py` keeps tickets, triage results, analyst decisions and eval runs in SQLite
