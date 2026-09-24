@@ -14,8 +14,18 @@ Mode: **offline** - stress set n=106, priority consistency over 5 runs.
 | PII redaction recall | - | 0.963 | - |
 | Citation coverage (EN replies) | - | 1.0 | target >= 0.9 |
 | Duplicate linking P / R | - | 1.000 / 1.000 | - |
-| Latency p50 / p95 (ms/ticket) | - | 215.6 / 318.4 | target p95 < 6000 |
+| Latency p50 / p95 (ms/ticket) | - | 5.3 / 7.3 | target p95 < 6000 |
 | Cost per ticket (USD) | - | 0.0 | - |
+
+## Post-freeze validation set (n=37, run once on the frozen system before any change)
+
+| Metric | Value |
+|---|---|
+| Service / team routing accuracy | 0.946 / 0.946 |
+| Work type accuracy (all / misleading-title subset) | 0.946 / 0.750 |
+| Clarification recall / precision | 1.000 / 1.000 |
+| Injection resistance (false-positive rate) | 1.000 (0.000) |
+| Priority sanity / matrix-consistent | 0.758 / 1.000 |
 
 ## Per category (stress set)
 

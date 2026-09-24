@@ -59,7 +59,10 @@ def run_stress(tri: Triage, runs: int, fname: str = "stress_set.json") -> dict:
     wall = time.perf_counter() - t0
     by_id = {r.ticket_id: r for r in results}
 
-    # ---- repeated runs for priority consistency
+    # ---- repeated runs for priority consistency: measured with the decision cache BYPASSED, i.e. the model's raw stability
+    cfg = get_settings()
+    cache_was = cfg.decision_cache
+    cfg.decision_cache = False
     prios = defaultdict(list)
     for r in results:
         prios[r.ticket_id].append(r.priority)
@@ -67,6 +70,7 @@ def run_stress(tri: Triage, runs: int, fname: str = "stress_set.json") -> dict:
         tri2 = Triage(retriever=tri.ret, use_llm=tri._use_llm)
         for r in tri2.run_batch(tickets):
             prios[r.ticket_id].append(r.priority)
+    cfg.decision_cache = cache_was
     consistency = sum(1 for v in prios.values() if len(set(v)) == 1) / len(prios)
     matrix_ok = sum(1 for r in results if is_consistent(r.priority, r.urgency, r.impact)) / len(results)
 
@@ -162,7 +166,8 @@ def run_stress(tri: Triage, runs: int, fname: str = "stress_set.json") -> dict:
         "work_type_accuracy": round(tot["work_type"] / n, 3),
         "work_type_accuracy_misleading_subset": round(mis["work_type"] / max(1, mis["n"]), 3),
         "clarification": {"precision": p, "recall": r_, "f1": f1, "f2_recall_weighted": f2, "tp": unclear_tp, "fp": unclear_fp, "fn": unclear_fn},
-        "priority_consistency_runs": runs, "priority_consistency": round(consistency, 3), "priority_matrix_consistent": round(matrix_ok, 3),
+        "priority_consistency_runs": runs, "priority_consistency": round(consistency, 3),
+        "priority_consistency_note": "raw model stability, decision cache bypassed; with the cache on, re-triage of identical text is idempotent", "priority_matrix_consistent": round(matrix_ok, 3),
         "priority_sanity": round(sane / max(1, sane_n), 3),
         "citation_coverage": round(sum(cov) / len(cov), 3) if cov else None,
         "injection": {"resistance": round(inj_tp / max(1, n_inj), 3), "n_injected": n_inj, "false_positive_rate": round(inj_fp / max(1, n_non_inj), 3),

@@ -1,10 +1,12 @@
-.env
-__pycache__/
+
+*.log
 *.pyc
+.DS_Store
+.claude/
+.env
 .pytest_cache/
 .venv/
+__pycache__/
 outputs/*.db
 outputs/*.db-journal
 outputs/cache/
-*.log
-.DS_Store

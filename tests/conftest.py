@@ -10,6 +10,7 @@ from pathlib import Path
 os.environ.setdefault("TRIAGE_OFFLINE", "1")
 os.environ.setdefault("LLM_PROVIDER", "none")
 os.environ.setdefault("LLM_API_KEY", "")
+os.environ.setdefault("DECISION_CACHE", "0")
 
 _TEST_DB = Path(__file__).resolve().parent.parent / "outputs" / "test_triagemate.db"
 os.environ["DB_PATH"] = str(_TEST_DB)

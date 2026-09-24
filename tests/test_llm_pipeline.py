@@ -278,3 +278,35 @@ def test_agent_tool_budget_is_hard(retriever, mk, mock_llm):
     mock_llm.tool_script = ["search_kb", "find_similar_tickets", "find_open_related", "search_kb", "find_similar_tickets", "search_kb", "search_kb", "search_kb"]
     r = Triage(retriever=retriever).run_ticket(mk("Quotes stale", "The trading platform quotes are stale since 08:10.", "Trading Platform"))
     assert len(r.trace) <= 5
+
+
+def test_decision_cache_makes_retriage_idempotent(mock_llm, tmp_path, monkeypatch):
+    from triagemate.config import get_settings
+    from triagemate import llm_tasks
+    cfg = get_settings()
+    monkeypatch.setattr(cfg, "decision_cache", True)
+    monkeypatch.setattr(cfg, "outputs_dir", tmp_path)
+    monkeypatch.setattr(llm_tasks, "_UI_CACHE", {})
+    monkeypatch.setitem(llm_tasks._UI_LOADED, "done", False)
+    first, _ = llm_tasks.llm_urgency_impact("The trading platform quotes are stale", "Trading Platform", "Incident")
+    n_calls = len(mock_llm.requests)
+    second, _ = llm_tasks.llm_urgency_impact("The trading platform quotes are stale", "Trading Platform", "Incident")
+    assert (first.urgency, first.impact) == (second.urgency, second.impact)
+    assert len(mock_llm.requests) == n_calls and second.source == "llm (cached)"       # no second model call
+
+
+def test_median_of_samples_is_robust_to_one_outlier(mock_llm):
+    from triagemate import llm_tasks
+    answers = iter(["high", "highest", "high"])
+    orig = mock_llm.handler
+
+    def h(req):
+        import json as _j
+        body = _j.loads(req.content)
+        if "Rate the ticket on two independent" in body["messages"][0]["content"]:
+            u = next(answers)
+            return httpx.Response(200, json={"choices": [{"message": {"content": _j.dumps({"urgency": {"highest": "critical"}.get(u, u), "impact": "significant"})}}], "usage": {}})
+        return orig(req)
+    llm_mod.set_client(LLMClient(Settings(llm_provider="openai", llm_api_key="k", triage_offline=False), transport=httpx.MockTransport(h)))
+    res, _ = llm_tasks.llm_urgency_impact("text", "Trading Platform", "Incident", samples=3)
+    assert res.urgency == "high"                                                          # the single "critical" outlier is voted out

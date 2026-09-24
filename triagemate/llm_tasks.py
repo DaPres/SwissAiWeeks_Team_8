@@ -125,12 +125,95 @@ _U = {"critical": "highest", "high": "high", "medium": "medium", "low": "low", "
 _I = {"major": "highest", "significant": "high", "moderate": "medium", "minor": "low", "none": "lowest"}
 
 
-def llm_urgency_impact(masked_text: str, service: str, work_type: str) -> tuple[PriorityResult, str]:
+_UI_CACHE: dict[str, dict] = {}
+_UI_LOADED = {"done": False, "dirty": 0}
+
+
+def _ui_cache_file():
+    from .config import get_settings
+    return get_settings().outputs_dir / "cache" / "urgency_impact.json"
+
+
+def _ui_cache_load() -> None:
+    import json
+    if _UI_LOADED["done"]:
+        return
+    _UI_LOADED["done"] = True
+    try:
+        _UI_CACHE.update(json.loads(_ui_cache_file().read_text(encoding="utf-8")))
+    except Exception:
+        pass
+
+
+def _ui_cache_flush() -> None:
+    import json
+    if not _UI_LOADED["dirty"]:
+        return
+    try:
+        f = _ui_cache_file()
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(_UI_CACHE), encoding="utf-8")
+        _UI_LOADED["dirty"] = 0
+    except OSError:
+        pass
+
+
+import atexit as _atexit  # noqa: E402
+_atexit.register(_ui_cache_flush)
+
+_U_ORDER = ["lowest", "low", "medium", "high", "critical"]
+_I_ORDER = ["none", "minor", "moderate", "significant", "major"]
+
+
+def llm_urgency_impact(masked_text: str, service: str, work_type: str, samples: int | None = None) -> tuple[PriorityResult, str]:
+    """Urgency/impact evidence from the model. Ratings on borderline cases flip between runs (high vs highest), which would break
+    the 'priority consistency = 1.00' promise - so several samples are taken in parallel and the per-dimension **median** is used
+    (self-consistency). The priority itself is still computed by the matrix, in code."""
+    import concurrent.futures as cf
+    import contextvars
+    from .config import get_settings
+    import hashlib
+    cfg = get_settings()
+    n = max(1, samples if samples is not None else cfg.urgency_samples)
     p = load_prompt("urgency_impact.v1")
     system = p.render(service=service, criticality=CRITICALITY.get(service, "Non-Critical"), work_type=work_type)
-    out = get_client().chat_json(system, wrap_data(masked_text, "ticket"), LLMUrgencyImpact, max_tokens=250, name="urgency_impact")
-    return finalize(_U[out.urgency], _I[out.impact], urgency_reason=out.urgency_evidence, impact_reason=out.impact_evidence,
-                    source="llm"), p.version
+    client = get_client()
+    user = wrap_data(masked_text, "ticket")
+    key = hashlib.sha1(f"{client.provider}|{client.default_model}|{p.version}|{n}|{service}|{work_type}|{masked_text}".encode()).hexdigest()
+    if cfg.decision_cache:
+        _ui_cache_load()
+        hit = _UI_CACHE.get(key)
+        if hit:
+            return finalize(hit["u"], hit["i"], urgency_reason=hit["ue"], impact_reason=hit["ie"], source="llm (cached)"), p.version
+
+    def one() -> LLMUrgencyImpact:
+        return client.chat_json(system, user, LLMUrgencyImpact, max_tokens=250, temperature=0.4 if n > 1 else 0.0, name="urgency_impact")
+
+    outs: list[LLMUrgencyImpact] = []
+    last: Exception | None = None
+    if n == 1:
+        outs = [one()]
+    else:
+        with cf.ThreadPoolExecutor(max_workers=n) as ex:
+            futs = [ex.submit(contextvars.copy_context().run, one) for _ in range(n)]
+            for f in futs:
+                try:
+                    outs.append(f.result())
+                except LLMError as e:
+                    last = e
+    if not outs:
+        raise last or LLMError("urgency_impact: no valid sample")
+    ui = sorted(_U_ORDER.index(o.urgency) for o in outs)[(len(outs) - 1) // 2 + (len(outs) % 2 == 0)]
+    ii = sorted(_I_ORDER.index(o.impact) for o in outs)[(len(outs) - 1) // 2 + (len(outs) % 2 == 0)]
+    u, i = _U_ORDER[ui], _I_ORDER[ii]
+    pick = next((o for o in outs if o.urgency == u), outs[0]), next((o for o in outs if o.impact == i), outs[0])
+    res = finalize(_U[u], _I[i], urgency_reason=pick[0].urgency_evidence, impact_reason=pick[1].impact_evidence, source="llm")
+    if cfg.decision_cache:
+        _UI_CACHE[key] = {"u": res.urgency, "i": res.impact, "ue": res.urgency_reason, "ie": res.impact_reason}
+        _UI_LOADED["dirty"] += 1
+        if _UI_LOADED["dirty"] >= 25:
+            _ui_cache_flush()
+    return res, p.version
 
 
 # ------------------------------------------------------------------ resolution note

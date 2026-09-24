@@ -276,6 +276,8 @@ class LLMClient:
         payload: dict[str, Any] = {"model": model, "messages": messages, "temperature": temperature, "max_tokens": max_tokens}
         if self.provider == "azure":
             payload.pop("model", None)
+        if self.provider in ("openai", "azure") and temperature == 0:
+            payload["seed"] = 7                       # best-effort determinism for the repeated-run consistency metric
         if json_mode and self._json_mode_ok:
             payload["response_format"] = {"type": "json_object"}
         if tools:

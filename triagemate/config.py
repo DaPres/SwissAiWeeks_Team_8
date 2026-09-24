@@ -101,6 +101,8 @@ class Settings(BaseSettings):
     arbitration: str = "llm_first"           # llm_first | rules_first
     agent_mode: str = "llm"                  # llm = model picks the tools; policy = deterministic plan (fastest)
     batch_workers: int = 4                   # tickets processed concurrently in a batch when an LLM is on
+    urgency_samples: int = 1                 # optional self-consistency: N parallel urgency/impact ratings, per-dimension median
+    decision_cache: bool = True              # content-addressed cache: same text+model+prompt => same urgency/impact (idempotent re-triage)
 
     # --- paths ---
     data_dir: Path = ROOT / "data"
