@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Intake</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body class="m-0 grid min-h-svh place-items-center bg-[#f4f6f1] p-6 font-sans text-[#18332c] [font-synthesis:none]">
+    <main class="w-full max-w-[640px]">
+      <p class="my-[1em] text-[0.8rem] leading-[1.6] tracking-[0.16em] text-[#597265] uppercase">A fresh start</p>
+      <h1 class="my-3 text-[clamp(3.5rem,12vw,6rem)] leading-[normal] font-bold tracking-[-0.06em]">Intake</h1>
+      <p class="my-[1em] leading-[1.6]">Vanilla JavaScript in the browser. Python on the server.</p>
+      <div class="mt-10 border-t border-[#ccd6cb] pt-5">
+        <p id="status" class="my-[1em] leading-[1.6]" role="status">Connecting to the backend…</p>
+        <button id="check" class="cursor-pointer rounded-lg border-0 bg-[#18332c] px-[18px] py-3 leading-[normal] text-white hover:bg-[#2b5043] focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-[#4e9878] disabled:cursor-wait disabled:opacity-60" type="button">Check connection</button>
+      </div>
+    </main>
+  </body>
+</html>
