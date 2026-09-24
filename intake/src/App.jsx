@@ -78,6 +78,7 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(null);
   const [error, setError] = useState('');
+  const [lastPanelReadiness, setLastPanelReadiness] = useState(null);
 
   useLayoutEffect(() => {
     const input = descriptionInput.current;
@@ -99,8 +100,16 @@ export default function App() {
   const snapshot = JSON.stringify({ description, details });
   const readiness = useReadiness(saved ? JSON.stringify({ description: '', details: {} }) : snapshot, attempt, Boolean(description.trim()) && !saved);
   const hasText = Boolean(description.trim());
+  const typing = hasText && readiness.phase === 'waiting';
+  const showEnrichment = hasText && (!typing || lastPanelReadiness !== null);
+  const panelReadiness = typing && lastPanelReadiness ? lastPanelReadiness : readiness;
+  const panelReady = panelReadiness.phase === 'done' && panelReadiness.result?.readiness >= 80;
   const ready = readiness.phase === 'done' && readiness.result.readiness >= 80;
-  function edit(value) { setDescription(value); setError(''); if (!value.trim()) setDetails({}); }
+  useEffect(() => {
+    if (!hasText || typing) return;
+    setLastPanelReadiness({ phase: readiness.phase, result: readiness.result, error: readiness.error });
+  }, [hasText, typing, readiness.phase, readiness.result, readiness.error]);
+  function edit(value) { setDescription(value); setError(''); if (!value.trim()) { setDetails({}); setLastPanelReadiness(null); } }
   async function submit(event) {
     event.preventDefault();
     if (saving) return;
@@ -110,7 +119,7 @@ export default function App() {
     catch (failure) { setError(failure.message); setAttempt(value => value + 1); }
     finally { setSaving(false); }
   }
-  function reset() { setDescription(''); setDetails({}); setSaved(null); setError(''); }
+  function reset() { setDescription(''); setDetails({}); setLastPanelReadiness(null); setSaved(null); setError(''); }
 
   return <div className="min-h-svh bg-[var(--page)] text-[var(--text)] transition-colors duration-200">
     <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-7 sm:px-10">
@@ -119,14 +128,14 @@ export default function App() {
     </header>
     <main className="mx-auto w-[calc(100%-32px)] max-w-6xl pt-[12vh] pb-16 sm:pt-[16vh]">
       {saved ? <Receipt saved={saved} onNew={reset} /> : <>
-        <div className="intake-layout"><div className="input-column"><form id="incident-form" onSubmit={submit} className="composer enter">
+        <div className="intake-layout"><div className="input-column"><form id="incident-form" onSubmit={submit} className={`composer enter ${typing ? 'typing-glow' : ''}`}>
           <label className="sr-only" htmlFor="incident-description">What do you need help with?</label>
           <textarea ref={descriptionInput} id="incident-description" placeholder="What do you need help with?" value={description} onChange={event => edit(event.target.value)} maxLength={10000} disabled={saving} spellCheck rows={3} />
           {error && <p className="check-error" role="alert">{error}</p>}
         </form>
-          {hasText && <EnrichmentChips details={details} inferred={(readiness.result || readiness.previousResult)?.inferred || {}} onSave={(field, value) => { setDetails(previous => ({ ...previous, [field]: value })); setError(''); }} />}
+          {showEnrichment && <EnrichmentChips details={details} inferred={(readiness.result || readiness.previousResult)?.inferred || {}} onSave={(field, value) => { setDetails(previous => ({ ...previous, [field]: value })); setError(''); }} />}
         </div>
-        {hasText && <AdvicePanel readiness={readiness} ready={ready} saving={saving} onRetry={() => setAttempt(value => value + 1)} />}
+        {showEnrichment && <AdvicePanel readiness={panelReadiness} ready={panelReady} canSubmit={ready} paused={typing} saving={saving} onRetry={() => setAttempt(value => value + 1)} />}
         </div>
       </>}
     </main>
