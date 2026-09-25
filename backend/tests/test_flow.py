@@ -144,11 +144,16 @@ def test_eval_runs_from_the_api():
         assert run["status"] == "done" and run["completed"] == 3
         t = run["tickets"][0]
         assert t["record"]["Priority"] and t["record"]["Service Team(s)"] and t["trace"]["resolutionText"]
+        # default assignee policy: load-balanced, so a 3-ticket batch goes to 3 different agents who sign the note
+        assert len({tk["record"]["Assignee"] for tk in run["tickets"]}) == 3
+        assert "least-loaded" in t["trace"]["assigneeReason"]
+        assert t["record"]["All Comments"][-1].startswith(f"{t['record']['Assignee']}: Resolution: ")
         # a 0.9 similarity floor filters out every mock-embedding match
         strict = c.get(f"/api/eval/runs/{started[1]['id']}").json()
         assert all(not tk["trace"]["matches"] for tk in strict["tickets"])
 
         results = c.get(f"/api/eval/runs/{run['id']}/results.json").json()
         assert len(results["records"]) == 3 and results["triage"]["minScore"] == 0.0
+        assert results["triage"]["assignee"] == "load"
         assert c.delete(f"/api/eval/runs/{run['id']}").json()["ok"]
         assert c.get(f"/api/eval/runs/{run['id']}").status_code == 404
