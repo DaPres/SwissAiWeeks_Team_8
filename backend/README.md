@@ -85,13 +85,22 @@ uv run python -m app.evaluate                          # picks up jira_hackathon
 uv run python -m app.evaluate --input ../x.json --limit 3 --workers 1
 uv run python -m app.evaluate --llm apertus            # compare chat providers
 uv run python -m app.evaluate --top-k 8 --min-score 0.4   # retrieval settings (min-score 0 = keep every match)
+uv run python -m app.evaluate --assignee precedent        # previous assignee policy (resolver of similar fixes)
 LLM_MODE=mock uv run python -m app.evaluate --db /tmp/eval.db   # offline smoke run
 ```
 
 Writes to `out/eval/`: `<runId>.results.json` (challenge format — the submission), `<runId>.trace.json`
 (rationale, knowledge matches, fields changed vs input) and `<runId>.report.md` (summary table + consistency checks:
-priority matches the matrix, team matches the catalog, assignee present). Only 10 services have a documented expert
-in the history; tickets routed elsewhere are left unassigned in the owning team's queue and listed in the report.
+priority matches the matrix, team matches the catalog, assignee present).
+
+**Assignee** (`app/assign.py`, the policy of `Main2/triagemate/assign.py`): the training `Assignee` is independent of the
+ticket (all 30 agents appear under every service, ~1/30 each), so it is not predicted. The batch is load-balanced over
+the agent pool instead — fewest assignments in this run, then smallest open/in-progress backlog in the history, then most
+resolved tickets on the service, then a stable hash of the ticket text — so every ticket gets an agent, repeated runs
+give the same answer, and the resolution comment is written in that agent's voice. `--assignee precedent` (or
+`"assignee": "precedent"` in an Evaluation-tab config) restores the previous policy: the author of the most similar
+documented fixes, which exists for only 10 services and leaves the rest in the team queue. The assistant flow
+(`/api/assist`) keeps the precedent resolver, so a newly resolved problem is still routed to the agent who solved it.
 
 ### From the UI (Evaluation tab)
 
@@ -117,7 +126,7 @@ Runs are stored in `data/evals/` next to the knowledge base.
 | POST | `/api/curation/run` | `{threshold?}` re-analyse the history (re-publishes at the current level) |
 | POST | `/api/curation/publish` | `{min_level: gold\|silver\|bronze}` replace history knowledge with clusters ≥ level |
 | GET | `/api/eval/options` | challenge files, defaults, challenge tickets as reported |
-| POST | `/api/eval/runs` | `{configs: [{llm, top_k, min_score, label}], limit?, workers?, challenge?}` → one run per config |
+| POST | `/api/eval/runs` | `{configs: [{llm, top_k, min_score, assignee, label}], limit?, workers?, challenge?}` → one run per config |
 | GET | `/api/eval/runs`, `/api/eval/runs/{id}` | run summaries / one run with per-ticket results |
 | GET | `/api/eval/stream` | SSE: `snapshot`, then `run` (progress), `ticket` (`{runId, index, ticket}`), `deleted` |
 | POST / DELETE | `/api/eval/runs/{id}/cancel`, `/api/eval/runs/{id}` | stop / delete a run |

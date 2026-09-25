@@ -359,6 +359,7 @@ class EvalConfigIn(BaseModel):
     llm: str | None = None
     top_k: int | None = Field(None, ge=1, le=30)
     min_score: float = Field(0.0, ge=0.0, le=0.95)
+    assignee: Literal["load", "precedent"] = "load"
     label: str | None = Field(None, max_length=80)
 
 
@@ -392,7 +393,7 @@ def eval_runs():
 def start_eval_runs(body: EvalStartIn):
     path = _challenge(body.challenge)
     batch = uuid.uuid4().hex[:8]
-    return [evals.start(EvalConfig(llm=_provider(c.llm), top_k=c.top_k, min_score=c.min_score,
+    return [evals.start(EvalConfig(llm=_provider(c.llm), top_k=c.top_k, min_score=c.min_score, assignee=c.assignee,
                                    workers=body.workers, limit=body.limit), path, c.label, batch)
             for c in body.configs]
 
