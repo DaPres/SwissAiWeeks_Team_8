@@ -15,8 +15,8 @@
 
 ## ⚡ Executive Quick Links
 
-| 🎥 **[60s Split-Screen Movie Script](pitch/FinalPitchPlaybook.md#1-the-60-second-split-screen-movie-timeline)** | 📖 **[3-Min Jury Q&A Defense](pitch/FinalPitchPlaybook.md#4-master-3-minute-jury-qa-defense-playbook)** | 🌐 **[Intake UI (`intake/`)](intake/)** | ⚙️ **[Next-Gen Engine (`Main2/`)](Main2/)** | 📊 **[Fast Baseline (`backend/`)](backend/)** | 📋 **[Challenge Brief](CHALLENGE.md)** |
-|---|---|---|---|---|---|
+| 🎥 **[60s Split-Screen Movie Script](pitch/FinalPitchPlaybook.md#1-the-60-second-split-screen-movie-timeline)** | 🌐 **[Intake UI (`intake/`)](intake/)** | ⚙️ **[Next-Gen Engine (`Main2/`)](Main2/)** | 📊 **[Fast Baseline (`backend/`)](backend/)** | 📋 **[Challenge Brief](CHALLENGE.md)** |
+|---|---|---|---|---|
 
 ---
 
