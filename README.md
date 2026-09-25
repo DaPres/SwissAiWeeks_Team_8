@@ -15,7 +15,7 @@
 
 ## ⚡ Executive Quick Links
 
-| 🎥 **[team8 pitch video](team8pitch.mp4)** | 🏆 **[Challenge Result JSON](team8-challenge-result.json)** | 🌐 **[Intake UI (`intake/`)](intake/)** | ⚙️ **[Next-Gen Engine (`Main2/`)](Main2/)** | 📊 **[Fast Baseline (`backend/`)](backend/)** | 📋 **[Challenge Brief](CHALLENGE.md)** |
+| 🎥 **[team8 pitch video](slide-architecture/Pitch-Final-Team8.mp4)** | 🏆 **[Challenge Result JSON](team8-challenge-result.json)** | 🌐 **[Intake UI (`intake/`)](intake/)** | ⚙️ **[Next-Gen Engine (`Main2/`)](Main2/)** | 📊 **[Fast Baseline (`backend/`)](backend/)** | 📋 **[Challenge Brief](CHALLENGE.md)** |
 |---|---|---|---|---|---|
 
 ---
@@ -266,12 +266,14 @@ SwissAiWeeks_Team_8/
 │   ├── pyproject.toml               # Python package configuration (managed via uv)
 │   └── uv.lock
 │
+├── 📂 slide-architecture/           # ─── PITCH VIDEO & ARCHITECTURE VISUALS ───
+│   ├── 🎥 Pitch-Final-Team8.mp4     # Official team8 pitch video presentation
+│   └── 🎥 product-demo.mp4          # Live end-to-end product demo walkthrough
 ├── 📂 triage-explorer/              # Day 1 triage analytics dashboard (Vite/React)
 ├── 📂 analysis/                     # Jupyter / exploratory data forensics & clustering notebooks
 ├── 📂 infra/                        # Cloud infrastructure & Aspire AppHost orchestration
 ├── 📂 .github/                      # CI/CD workflows (release packaging, automated tests)
 ├── 📊 team8-challenge-result.json   # Official hackathon blind evaluation challenge output (20 tickets)
-├── 🎥 team8pitch.mp4                # Team 8 video pitch presentation
 └── 🐳 Dockerfile                    # Container build for full service stack
 ```
 
