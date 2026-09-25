@@ -30,7 +30,7 @@ Enterprise IT service desks face a compounding double-sided challenge:
 
 * **Front-of-House (The Guided Intake Partner — `intake/`):** Progressive disclosure and real-time guidance detect missing diagnostic dimensions as the requester types. An **80% readiness gate** prevents incomplete tickets from entering the queue in the first place.
 * **The Unified Production App (`main`):** Both backends offered unique, powerful advantages. Our Day 1 backend gave us immediate operational readiness, rapid dispatch, and an Aspire telemetry dashboard, while the next-gen architecture introduced deep mathematical determinism and safety. We synthesized the best of both worlds and merged them into `main` to deliver a cohesive, end-user ready application.
-* **The Next-Gen Powerhouse (`Main2/`):** Treated as our super-sophisticated, future-proof, and horizontally scalable next-gen option. Featuring pre-LLM PII scrubbing, deterministic mathematical **5×5 ITIL priority scoring**, hybrid retrieval across **26 mined Knowledge Base playbooks (`[KB-01]` to `[KB-26]`)**, and real-time typing-assist APIs, `Main2` serves as the high-capability engine that constantly feeds into and upgrades the end-user ready main app.
+* **The Next-Gen Powerhouse (`Main2/`):** Treated as our super-sophisticated, future-proof, and horizontally scalable next-gen option. Featuring pre-LLM PII scrubbing, deterministic mathematical **5×5 ITIL priority scoring**, hybrid retrieval across **26 Knowledge Base articles (`[KB-01]` to `[KB-26]`)** and **21 mined resolution playbooks**, and real-time typing-assist APIs, `Main2` serves as the high-capability engine that constantly feeds into and upgrades the end-user ready main app.
 * **Universal Work Management Extensibility:** While built and validated specifically for **IT Service Management (ITSM)** to solve the hackathon challenge, the underlying Compound AI architecture is **domain-agnostic**. The intake readiness gates, deterministic policy engines, PII shields, and hybrid playbook retrieval are easily trainable and extendable to **Agile sprint planning, project & portfolio management (PPM), HR operations, and all enterprise work item tracking**.
 
 ---
@@ -63,7 +63,7 @@ flowchart TD
         H --> J[Evidence Extractor: Quoted Severity & Impact Evidence]
         J --> K[Pure Code: 5x5 Deterministic ITIL Matrix]
         I --> L[Hybrid Retriever: Dense LSA + Sparse Keyword Search]
-        L --> M[(26 Mined Resolution Playbooks: KB-01 to KB-26)]
+        L --> M[(26 KB Articles & 21 Mined Resolution Playbooks)]
         M --> N[Evidence-Backed Draft Resolution & Citations]
     end
 
@@ -108,8 +108,8 @@ By uniting the operational robustness of our baseline with the advanced cognitiv
 * **Multi-Provider Fallback:** Seamlessly swaps between Swisscom Apertus, Azure OpenAI, Anthropic Claude, and an **offline rule-based LSA engine** with zero external network dependencies.
 
 ### 4. Grounded Resolution Notes with Cited Evidence
-* **Mined Knowledge Base:** We analyzed the historical training dataset and distilled 26 canonical playbooks ([`Main2/kb/KB-01.md`](Main2/kb/KB-01.md) through [`KB-26.md`](Main2/kb/KB-26.md)).
-* **Mandatory Citation Tags:** Drafted resolutions must cite the exact `[KB-xx]` playbook and reference quoted incident facts. No generic filler like *"issue fixed"*.
+* **Knowledge Base & Mined Playbooks:** We synthesized 26 canonical procedural articles ([`Main2/kb/KB-01.md`](Main2/kb/KB-01.md) through [`KB-26.md`](Main2/kb/KB-26.md)) and mined 21 verified resolution patterns from historical comments.
+* **Mandatory Citation Tags:** Drafted resolutions cite the exact `[KB-xx]` article or `playbook:HIST-xx` reference and quote verified incident facts. No generic filler like *"issue fixed"*.
 
 ---
 
@@ -122,7 +122,7 @@ Because the system cleanly decouples **intake guidance**, **PII safety intercept
 
 | Work Management Paradigm | Intake Guidance Dimensions | Deterministic Policy Engine (Pure Code) | Retrieval Knowledge Base | Target Assignee Teams |
 | :--- | :--- | :--- | :--- | :--- |
-| **IT Service Management (Current)** | Error logs, affected users, business impact, environment | **5×5 ITIL Priority Matrix**<br>*(Urgency × Impact)* | 26 Mined Incident Playbooks (`KB-01` to `KB-26`) | L2 Core ERP, Database Ops, Cloud Infra, Network |
+| **IT Service Management (Current)** | Error logs, affected users, business impact, environment | **5×5 ITIL Priority Matrix**<br>*(Urgency × Impact)* | 26 KB Articles (`KB-01`–`26`) & 21 Mined Playbooks | L2 Core ERP, Database Ops, Cloud Infra, Network |
 | **Agile & Scrum Delivery** | User stories, acceptance criteria, reproduction steps, sprint goals | **WSJF, RICE, or MoSCoW Scoring**<br>*(Reach × Impact × Confidence / Effort)* | Definition of Done (DoD), Architecture Decision Records (ADRs) | Feature Squads, Platform Eng, QA / Automation |
 | **Project & Portfolio Management (PPM)** | Milestone dates, resource dependencies, deliverables, budget impact | **Critical Path Risk & Governance Matrix**<br>*(Schedule Risk × Financial Exposure)* | PMBOK / PRINCE2 execution templates, corporate governance rules | PMO, Steering Committees, Workstream Leads |
 | **HR & Employee Operations** | Request category, jurisdiction, employee tier, urgency | **SLA Escalation & Confidentiality Tiering**<br>*(Role Tier × Sensitivity)* | HR Policies, Benefits Handbook, Collective Labor Agreements | People Ops, Payroll, Talent Acquisition, Legal |
@@ -153,13 +153,13 @@ Before writing code, our team performed deep data forensics on the **20,000 synt
 [ 20k Dataset Forensics ] ───┼──► 2. Specialized Intake Partner (intake/)       ├──► [ Best-of-Both-Worlds on `main` ]
 (Only 173 unique texts;      │    (Progressive disclosure & live enrichment)    │    (End-user ready main app,
  83% noise / misleading      └──► 3. Next-Gen TriageMate Engine (Main2/) ───────┘     continuously fed by Main2)
- titles)                          (Deterministic 5x5, PII gate, 26 KBs, scalable)
+ titles)                          (Deterministic 5x5, PII gate, 26 KBs + 21 playbooks)
 ```
 
 1. **Phase 1: Rapid Baseline & Operational Telemetry (`backend/`):** Built on Day 1 to map the full lifecycle from ticket intake to resolution dispatch. This gave us an immediate working baseline, end-to-end Aspire telemetry, and an operational safety net that de-risked delivery from hour zero.
 2. **Phase 2: Parallel Deep Specialization (`intake/` & `Main2/`):**
    * **Stream A (Front-of-House):** Engineered the progressive Intake Partner ([`intake/`](intake/)) with live typing guidance, dynamic diagnostic prompts, and an 80% readiness gate.
-   * **Stream B (Next-Gen Engine):** Engineered the super-sophisticated TriageMate engine ([`Main2/`](Main2/)) with zero-leak PII masking, 100% deterministic 5×5 ITIL matrix computation, dense/sparse hybrid retrieval across 26 mined KB playbooks, and multi-provider model portability.
+   * **Stream B (Next-Gen Engine):** Engineered the super-sophisticated TriageMate engine ([`Main2/`](Main2/)) with zero-leak PII masking, 100% deterministic 5×5 ITIL matrix computation, dense/sparse hybrid retrieval across 26 KB articles and 21 mined resolution playbooks, and multi-provider model portability.
 3. **Phase 3: Flagship Convergence — Best of Both Worlds into `main`:**
    * **The Architectural Realization:** Rigorous testing revealed that both backends had distinct, irreplaceable advantages. The Day 1 backend provided lightweight simplicity, immediate production readiness, and comprehensive telemetry; `Main2` delivered supreme algorithmic sophistication, mathematical determinism, and future-proof scalability.
    * **The Synthesis:** Rather than choosing one and abandoning the other, we took the **best of both worlds and merged them directly into `main`**. The end-user ready application gains battle-tested operational stability, while **`Main2` remains our super-sophisticated, future-proof, and horizontally scalable next-gen option** that continuously feeds advanced triage intelligence and model upgrades into the main app.
@@ -169,31 +169,37 @@ Before writing code, our team performed deep data forensics on the **20,000 synt
 <a id="quickstart"></a>
 ## 🚀 Quickstart & Reproducibility
 
+> [!TIP]
+> **Offline Evaluation:** The core triage engine ([`Main2/`](Main2/)), deterministic 5×5 ITIL rules, dense/sparse LSA hybrid retrieval, and full test suites are **100% offline ready** with zero external API dependencies or costs.
+
 ### Option 1: Run the End-User Ready Intake Partner UI (`intake/`)
+*Live typing evaluation & progressive disclosure interface:*
 ```bash
 cd intake
+cp .env.example .env                       # Optional: Add JEV_API_KEY for live LLM typing quality check
 npm install && npm run build
-python3 server.py
-# Open http://127.0.0.1:8080
+python3 server.py                          # Starts server on http://127.0.0.1:8080
+# Note: Without a JEV_API_KEY, clicking "Run TriageMate Demo" runs the complete triage flow offline.
 ```
 
 ### Option 2: Run the Next-Gen TriageMate Engine & Analyst Cockpit (`Main2/`)
-*The super-sophisticated, future-proof, and scalable next-gen option that continuously feeds the production main app:*
+*The super-sophisticated, future-proof next-gen engine (100% offline out-of-the-box):*
 ```bash
 cd Main2
-pip install -r requirements.txt
+python3 -m pip install -r requirements.txt
 cp .env.example .env                       # Optional: Add Swisscom Apertus, Azure, or OpenAI key
 python3 -m triagemate.cli serve --port 8765 # Starts API + Analyst Cockpit
-# Open http://127.0.0.1:8765
+# Open http://127.0.0.1:8765 (runs with offline rule engine + LSA retriever if no key provided)
 ```
 
 ### Option 3: Run the Operational Baseline Backend & Telemetry (`backend/`)
-*The lightweight, battle-tested operational safety net with Aspire telemetry:*
+*The lightweight, battle-tested operational backend with Aspire telemetry:*
 ```bash
 cd backend
-pip install -r requirements.txt
-python3 -m uvicorn app.main:app --port 8000
-# Open http://127.0.0.1:8000
+uv sync                                    # Installs dependencies via pyproject.toml
+uv run uvicorn app.main:app --port 8000
+# Backend API & OpenAPI documentation active at http://127.0.0.1:8000/docs
+# (To run the Explorer frontend: 'cd ../triage-explorer && npm install && npm run dev', or launch both with 'aspire run')
 ```
 
 ### Option 4: Run the Test Suites (100% Offline)
@@ -247,19 +253,24 @@ SwissAiWeeks_Team_8/
 │   │   ├── safety.py                # Pre-LLM PII masking (IBAN, emails) & prompt defense
 │   │   ├── priority.py              # Pure deterministic 5×5 ITIL Priority Matrix
 │   │   ├── classify.py              # Semantic ontology & service classifier
-│   │   ├── retrieve.py              # Dense LSA + Sparse hybrid retrieval
+│   │   ├── retrieve.py              # Dense LSA + Sparse hybrid retrieval (21 mined playbooks)
 │   │   ├── resolutions.py           # Playbook resolution generator with cited evidence
 │   │   ├── pipeline.py              # End-to-end orchestration pipeline
-│   │   └── api.py                   # FastAPI endpoints (/triage, /assist)
-│   ├── kb/                          # 26 mined historical Knowledge Base playbooks (KB-01 to KB-26)
+│   │   └── api.py                   # FastAPI endpoints (/api/triage, /api/intake/assist, /health)
+│   ├── kb/                          # 26 synthetic Knowledge Base articles (KB-01 to KB-26)
 │   └── ui/                          # Audit-ready L2 Support Analyst cockpit
 │
 ├── 📂 backend/                      # ─── BATTLE-TESTED BASELINE & TELEMETRY ───
 │   │                                # Lightweight Day 1 PoC, operational safety net & telemetry
 │   ├── app/                         # FastAPI baseline triage service & Aspire telemetry
-│   └── Dockerfile                   # Unified container deployment
+│   ├── pyproject.toml               # Python package configuration (managed via uv)
+│   └── uv.lock
 │
-└── 📂 triage-explorer/              # Day 1 triage analytics dashboard (Vite/React)
+├── 📂 triage-explorer/              # Day 1 triage analytics dashboard (Vite/React)
+├── 📂 analysis/                     # Jupyter / exploratory data forensics & clustering notebooks
+├── 📂 infra/                        # Cloud infrastructure & Aspire AppHost orchestration
+├── 📂 .github/                      # CI/CD workflows (release packaging, automated tests)
+└── 🐳 Dockerfile                    # Container build for full service stack
 ```
 
 ---
