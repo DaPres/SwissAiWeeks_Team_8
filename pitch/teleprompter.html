@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>team8 Pitch Teleprompter (00:00 - 00:44)</title>
+  <title>team8 Pitch Teleprompter (00:00 - 01:00)</title>
   <style>
     :root {
       --bg: #090d16;
@@ -289,7 +289,7 @@
       <div class="timer" id="timerDisplay">00:00<span>.0</span></div>
       <div style="display: flex; gap: 8px; align-items: center;">
         <span style="font-size: 0.65rem; color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.12); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.25);">⚡ Auto-Scroll ON</span>
-        <div class="phase-badge" id="phaseBadge">Ready (0:44 Total)</div>
+        <div class="phase-badge" id="phaseBadge">Ready (1:00 Total)</div>
       </div>
     </div>
     <div class="progress-bar-container">
@@ -348,6 +348,25 @@
         📺 <strong>Screen Cue:</strong> Left: Issue submitted (cannot be solved at intake) → Right: TriageMate shows: P2 Priority, ERP Core Team, PII redacted, pre-filled resolution playbook!
       </div>
       <div class="script-text" id="script3">
+        <!-- Words injected dynamically with timing -->
+      </div>
+    </section>
+
+    <!-- Transition (00:44 - 00:45) -->
+    <div class="pause-card" id="pauseCard3">
+      📊 <strong>00:44 – 00:45 (1s)</strong>: Cut to Multi-Model Comparison & Final Thank You Slide
+    </div>
+
+    <!-- Section 4 (00:45 - 01:00) -->
+    <section class="section-card" id="card4">
+      <div class="section-header">
+        <div class="section-title">🏆 TIMEFRAME 4: MULTI-MODEL & THE FULL PICTURE</div>
+        <div class="section-duration">00:45 – 01:00 (15s)</div>
+      </div>
+      <div class="stage-direction">
+        📺 <strong>Screen Cue:</strong> Left: Multi-model benchmark radar (Swisscom Apertus vs frontier) → Final Thank You slide with full architecture badge • Right: End-to-end compound AI data pipeline
+      </div>
+      <div class="script-text" id="script4">
         <!-- Words injected dynamically with timing -->
       </div>
     </section>
@@ -486,7 +505,46 @@
       { text: "ready.”", start: 43.80, end: 44.00 }
     ];
 
-    const TOTAL_DURATION = 44.0;
+    const TIMEFRAME_4 = [
+      { text: "“Thanks", start: 45.00, end: 45.40 },
+      { text: "team8,", start: 45.40, end: 45.85 },
+      { text: "you", start: 45.85, end: 46.10 },
+      { text: "did", start: 46.10, end: 46.40 },
+      { text: "gr8!", start: 46.40, end: 47.00 },
+      { text: "Our", start: 47.00, end: 47.30 },
+      { text: "multi-model", start: 47.30, end: 47.95 },
+      { text: "approach", start: 47.95, end: 48.40 },
+      { text: "benchmarks", start: 48.40, end: 49.00 },
+      { text: "Swiss", start: 49.00, end: 49.40 },
+      { text: "models", start: 49.40, end: 49.85 },
+      { text: "to", start: 49.85, end: 50.05 },
+      { text: "deliver", start: 50.05, end: 50.45 },
+      { text: "proven", start: 50.45, end: 50.85 },
+      { text: "results:", start: 50.85, end: 51.40 },
+      { text: "zero", start: 51.40, end: 51.75 },
+      { text: "triage", start: 51.75, end: 52.15 },
+      { text: "delay,", start: 52.15, end: 52.60 },
+      { text: "forty", start: 52.60, end: 52.95 },
+      { text: "percent", start: 52.95, end: 53.40 },
+      { text: "deflection,", start: 53.40, end: 54.00 },
+      { text: "and", start: 54.00, end: 54.20 },
+      { text: "deterministic", start: 54.20, end: 54.85 },
+      { text: "consistency.", start: 54.85, end: 55.45 },
+      { text: "From", start: 55.45, end: 55.75 },
+      { text: "intake", start: 55.75, end: 56.15 },
+      { text: "prevention", start: 56.15, end: 56.70 },
+      { text: "to", start: 56.70, end: 56.90 },
+      { text: "human", start: 56.90, end: 57.30 },
+      { text: "approval—", start: 57.30, end: 57.95 },
+      { text: "that’s", start: 57.95, end: 58.30 },
+      { text: "the", start: 58.30, end: 58.50 },
+      { text: "full", start: 58.50, end: 58.80 },
+      { text: "picture.", start: 58.80, end: 59.30 },
+      { text: "Thank", start: 59.30, end: 59.65 },
+      { text: "you!”", start: 59.65, end: 60.00 }
+    ];
+
+    const TOTAL_DURATION = 60.0;
 
     // Render words to DOM
     function renderScript(words, containerId, prefix) {
@@ -499,6 +557,7 @@
     renderScript(TIMEFRAME_1, "script1", "w1");
     renderScript(TIMEFRAME_2, "script2", "w2");
     renderScript(TIMEFRAME_3, "script3", "w3");
+    renderScript(TIMEFRAME_4, "script4", "w4");
 
     // Teleprompter state
     let isRunning = false;
@@ -519,8 +578,10 @@
     const card1 = document.getElementById("card1");
     const card2 = document.getElementById("card2");
     const card3 = document.getElementById("card3");
+    const card4 = document.getElementById("card4");
     const pauseCard = document.getElementById("pauseCard");
     const pauseCard2 = document.getElementById("pauseCard2");
+    const pauseCard3 = document.getElementById("pauseCard3");
 
     // Hands-Free Auto-Scroll to Active Eyeline (~36% from top)
     function autoScrollTo(el) {
@@ -584,8 +645,10 @@
         card1.classList.add("active-card");
         card2.classList.remove("active-card");
         card3.classList.remove("active-card");
+        card4.classList.remove("active-card");
         pauseCard.classList.remove("active-card");
         pauseCard2.classList.remove("active-card");
+        pauseCard3.classList.remove("active-card");
       } else if (current >= 12.0 && current < 14.0) {
         phaseBadge.innerText = "Breather / Cut (0:12 - 0:14)";
         phaseBadge.style.color = "#10b981";
@@ -593,7 +656,9 @@
         pauseCard.classList.add("active-card");
         card2.classList.remove("active-card");
         card3.classList.remove("active-card");
+        card4.classList.remove("active-card");
         pauseCard2.classList.remove("active-card");
+        pauseCard3.classList.remove("active-card");
       } else if (current >= 14.0 && current < 27.0) {
         phaseBadge.innerText = "Timeframe 2: Deflection (0:14 - 0:27)";
         phaseBadge.style.color = "#38bdf8";
@@ -601,7 +666,9 @@
         pauseCard.classList.remove("active-card");
         card2.classList.add("active-card");
         card3.classList.remove("active-card");
+        card4.classList.remove("active-card");
         pauseCard2.classList.remove("active-card");
+        pauseCard3.classList.remove("active-card");
       } else if (current >= 27.0 && current < 28.0) {
         phaseBadge.innerText = "Transition (0:27 - 0:28)";
         phaseBadge.style.color = "#10b981";
@@ -610,7 +677,9 @@
         card2.classList.remove("active-card");
         pauseCard2.classList.add("active-card");
         card3.classList.remove("active-card");
-      } else if (current >= 28.0 && current <= TOTAL_DURATION) {
+        card4.classList.remove("active-card");
+        pauseCard3.classList.remove("active-card");
+      } else if (current >= 28.0 && current < 44.0) {
         phaseBadge.innerText = "Timeframe 3: Perfect Triage (0:28 - 0:44)";
         phaseBadge.style.color = "#a855f7";
         card1.classList.remove("active-card");
@@ -618,8 +687,30 @@
         card2.classList.remove("active-card");
         pauseCard2.classList.remove("active-card");
         card3.classList.add("active-card");
+        card4.classList.remove("active-card");
+        pauseCard3.classList.remove("active-card");
+      } else if (current >= 44.0 && current < 45.0) {
+        phaseBadge.innerText = "Transition (0:44 - 0:45)";
+        phaseBadge.style.color = "#10b981";
+        card1.classList.remove("active-card");
+        pauseCard.classList.remove("active-card");
+        card2.classList.remove("active-card");
+        pauseCard2.classList.remove("active-card");
+        card3.classList.remove("active-card");
+        pauseCard3.classList.add("active-card");
+        card4.classList.remove("active-card");
+      } else if (current >= 45.0 && current <= TOTAL_DURATION) {
+        phaseBadge.innerText = "Timeframe 4: Full Picture (0:45 - 1:00)";
+        phaseBadge.style.color = "#fbbf24";
+        card1.classList.remove("active-card");
+        pauseCard.classList.remove("active-card");
+        card2.classList.remove("active-card");
+        pauseCard2.classList.remove("active-card");
+        card3.classList.remove("active-card");
+        pauseCard3.classList.remove("active-card");
+        card4.classList.add("active-card");
       } else {
-        phaseBadge.innerText = "Finished (0:44)";
+        phaseBadge.innerText = "Finished (1:00)";
         phaseBadge.style.color = "#a855f7";
       }
 
@@ -667,6 +758,20 @@
         }
       });
 
+      // Word highlighting for Section 4
+      TIMEFRAME_4.forEach((w, idx) => {
+        const el = document.getElementById(`w4_${idx}`);
+        if (!el) return;
+        if (current >= w.start && current < w.end) {
+          el.className = "word active";
+          activeWordEl = el;
+        } else if (current >= w.end) {
+          el.className = "word past";
+        } else {
+          el.className = "word";
+        }
+      });
+
       // Hands-free auto-scrolling
       if (activeWordEl) {
         autoScrollTo(activeWordEl);
@@ -674,6 +779,8 @@
         autoScrollTo(pauseCard);
       } else if (current >= 27.0 && current < 28.0) {
         autoScrollTo(pauseCard2);
+      } else if (current >= 44.0 && current < 45.0) {
+        autoScrollTo(pauseCard3);
       }
 
       if (current < TOTAL_DURATION) {
@@ -707,7 +814,7 @@
       lastScrolledElement = null;
       timerDisplay.innerHTML = "00:00<span>.0</span>";
       progressBar.style.width = "0%";
-      phaseBadge.innerText = "Ready (0:44 Total)";
+      phaseBadge.innerText = "Ready (1:00 Total)";
       phaseBadge.style.color = "var(--accent)";
       playBtn.innerText = "▶ Start Pitch";
 
@@ -715,8 +822,10 @@
       card1.classList.remove("active-card");
       card2.classList.remove("active-card");
       card3.classList.remove("active-card");
+      card4.classList.remove("active-card");
       pauseCard.classList.remove("active-card");
       pauseCard2.classList.remove("active-card");
+      pauseCard3.classList.remove("active-card");
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -750,6 +859,10 @@
     pauseCard2.addEventListener("click", () => jumpToTime(27.0));
     card3.addEventListener("click", (e) => {
       if (e.target.tagName !== "BUTTON") jumpToTime(28.0);
+    });
+    pauseCard3.addEventListener("click", () => jumpToTime(44.0));
+    card4.addEventListener("click", (e) => {
+      if (e.target.tagName !== "BUTTON") jumpToTime(45.0);
     });
 
     playBtn.addEventListener("click", () => {
