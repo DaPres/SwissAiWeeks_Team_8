@@ -94,6 +94,9 @@ class MockLLM:
                 args = {"query": "ticket"} if name in ("search_kb", "find_similar_tickets") else {}
                 return reply(None, [{"id": f"call{done}", "type": "function", "function": {"name": name, "arguments": json.dumps(args)}}])
             return reply("done")
+        if "security filter" in system:
+            bad = "MOCK-ATTACK" in msgs[-1]["content"]
+            return reply(json.dumps({"injection": bad, "confidence": 0.95, "reason": "mock verdict"}))
         if "describe an incident or request" in system:
             return reply(json.dumps({"suggestions": ["My order is stuck in pending approval since this morning.", "The broker rejects my order."], "tip": ""}))
         if "triage classifier" in system:

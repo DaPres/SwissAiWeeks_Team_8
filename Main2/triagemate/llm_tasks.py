@@ -233,6 +233,49 @@ def llm_resolution_note(masked_text: str, service: str, work_type: str, playbook
     return text, p.version
 
 
+# ------------------------------------------------------------------ injection guard (second line behind the regex gate)
+class LLMGuard(BaseModel):
+    injection: bool = False
+    confidence: float = 0.5
+    reason: str = ""
+
+    @field_validator("injection", mode="before")
+    @classmethod
+    def _b(cls, v):
+        return str(v).strip().lower() in ("true", "yes", "1") if not isinstance(v, bool) else v
+
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def _c(cls, v):
+        try:
+            return max(0.0, min(1.0, float(v)))
+        except (TypeError, ValueError):
+            return 0.5
+
+
+def llm_guard(masked_text: str) -> tuple[bool, float, str, str]:
+    """Isolated yes/no verdict on the MASKED text: no tools, no ticket context, JSON only, output validated. Called only when the regex
+    gate found nothing, because regexes cannot follow creative paraphrases (measured: 4/30 on a fresh attack set)."""
+    p = load_prompt("guard.v1")
+    client = get_client("classify")
+    # the whole model-facing text is scanned, in overlapping windows, so a payload cannot hide behind padding
+    size, step = 3_500, 3_000
+    windows = [masked_text[i:i + size] for i in range(0, max(len(masked_text), 1), step)][:8]
+
+    def one(w: str) -> LLMGuard:
+        return client.chat_json(p.text, wrap_data(w, "ticket"), LLMGuard, max_tokens=80, temperature=0.0, name="guard")
+
+    if len(windows) == 1:
+        outs = [one(windows[0])]
+    else:
+        from concurrent.futures import ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=4) as ex:
+            outs = list(ex.map(one, windows))
+    hit = max((o for o in outs if o.injection), key=lambda o: o.confidence, default=None)
+    top = hit or outs[0]
+    return bool(hit), top.confidence, top.reason.strip()[:140], p.version
+
+
 # ------------------------------------------------------------------ 7.3 draft / 7.4 clarification
 class LLMDraft(BaseModel):
     reply: str

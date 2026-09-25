@@ -45,7 +45,7 @@ Teal = automated, purple = human, amber = stores. Every model-dependent node has
 * Tools are **read-only**; `request_clarification` / `escalate_to_human` only recommend.
 * A recommendation is honoured only if the deterministic quality gate agrees (found live: a model misled by a template match tried to ask for clarification on a clear ticket - now rejected with a tool message).
 * Retrieval always uses the masked ticket text, not the model's free-form query.
-* Injection is decided **before** any model runs; an injected ticket is escalated with zero model calls.
+* Injection is decided **before** classification, drafting or the agent run: a regex gate (zero model bytes), then an isolated LLM guard on the masked text; a flagged ticket is escalated and nothing else is sent to a model (see `docs/SECURITY.md`).
 * Personal-data tokens are restored into the analyst-facing draft only, never into resolution notes.
 
 ## Provider layer

@@ -184,15 +184,40 @@ _HIDDEN_CSS = re.compile(r"<[^>]+style\s*=\s*[\"'][^\"']*(?:display\s*:\s*none|f
 _TAGS = re.compile(r"</?(?:ticket|context|system|assistant|user|instructions?)\b[^>]*>", re.I)
 
 
+MODEL_SUMMARY_CHARS, MODEL_DESC_CHARS, MODEL_COMMENT_CHARS = 1_000, 12_000, 8_000   # what any model may see; the LLM guard scans exactly this much
+MAX_FIELD_CHARS = 20_000      # a summary / description / comment longer than this is anomalous; the rest is not analysed (denial-of-service guard)
+
+
+def _strip_html_comments(t: str) -> tuple[str, list[str]]:
+    """Remove <!-- ... --> in one pass with str.find. An UNCLOSED comment hides the rest of the text from any renderer, so it counts as hidden too."""
+    out: list[str] = []
+    hidden: list[str] = []
+    i = 0
+    while True:
+        j = t.find("<!--", i)
+        if j < 0:
+            out.append(t[i:])
+            break
+        out.append(t[i:j] + " ")
+        k = t.find("-->", j + 4)
+        if k < 0:
+            hidden.append(t[j:])
+            break
+        hidden.append(t[j:k + 3])
+        i = k + 3
+    return "".join(out), hidden
+
+
 def sanitise(text: str) -> tuple[str, str, bool]:
     """Return (visible_text, hidden_text, hidden_removed). Hidden HTML/unicode payloads are separated out so they
     can be *scanned* for injection but never reach a model."""
-    t = unicodedata.normalize("NFKC", text or "")
+    t = unicodedata.normalize("NFKC", (text or "")[:MAX_FIELD_CHARS])          # hard cap: bounded work for every later stage
     hidden = []
-    for rx in (_HTML_COMMENT, _HIDDEN_CSS):
-        for m in rx.finditer(t):
-            hidden.append(m.group(0))
-        t = rx.sub(" ", t)
+    t, comments = _strip_html_comments(t)                                       # linear time (the old regex was quadratic on unclosed comments)
+    hidden += comments
+    for m in _HIDDEN_CSS.finditer(t):
+        hidden.append(m.group(0))
+    t = _HIDDEN_CSS.sub(" ", t)
     stripped = t.translate(_ZW)
     hidden_removed = bool(hidden) or stripped != t
     t = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f]", " ", stripped)
@@ -209,52 +234,206 @@ def wrap_data(text: str, tag: str = "ticket") -> str:
 
 
 # ------------------------------------------------------------------ injection detection
-# (pattern, weight, description). Strong = 2 (fires alone), medium = 1 (needs a second cue or an external sender).
+# (pattern, weight, description). Strong = 2 (fires alone), medium = 1 (needs a second cue).
+# Design rules learned from a 52-attack / 40-look-alike red-team battery (eval/redteam.py):
+#   * a strong pattern must need CONTEXT that an ordinary service-desk sentence does not have ("you are now on the list",
+#     "show me how to rotate my API key" and "forward all tickets to the Securities team" are legitimate);
+#   * every pattern is bounded (no unbounded gaps), so a hostile 100 KB ticket cannot cause catastrophic backtracking;
+#   * obfuscated payloads (leetspeak, homoglyphs, spaced letters, reversed text, rot13, base64) are re-scanned after decoding.
+_S, _M = 2, 1
+_OVERRIDE_NOUNS = r"(?:instructions?|prompts?|rules|guidelines?|guidance|polic(?:y|ies)|safeguards?|constraints?|programming|directives?|restrictions?)"
 _INJECTION_PATTERNS: list[tuple[re.Pattern, int, str]] = [
-    (re.compile(r"\b(?:ignore|disregard|forget|override|bypass)\b[^.\n]{0,40}\b(?:all\s+|any\s+|the\s+|your\s+|previous\s+|prior\s+|above\s+|earlier\s+|these\s+)*"
-                r"(?:instructions?|prompts?|rules?|guidelines?|polic(?:y|ies)|safeguards?|constraints?)\b", re.I), 2,
-     "instruction-override phrase"),
-    (re.compile(r"\byou\s+are\s+(?:now|no\s+longer)\b|\bfrom\s+now\s+on\s+you\b|\bact\s+as\s+(?:an?\s+)?(?:ai|assistant|system|admin|root|different)\b", re.I), 2,
-     "role reassignment"),
-    (re.compile(r"\bnew\s+instructions?\s*:|\byour\s+(?:system\s+)?(?:instructions|programming)\b|"
-                r"\b(?:reveal|print|show|leak|repeat|display)\b[^.\n]{0,30}\b(?:system\s+prompt|your\s+prompt|instructions|secrets?|api[\s_-]?key|credentials?)\b", re.I), 2,
-     "prompt/secret exfiltration attempt"),
-    (re.compile(r"\b(?:as\s+an?\s+ai|language\s+model|large\s+language|chatgpt|openai|assistant\s*:)\b", re.I), 1,
-     "addresses the AI directly"),
-    (re.compile(r"\b(?:set|change|mark|classify|rate|escalate|treat|make)\b[^.\n]{0,25}\b(?:priority|urgency|impact|severity)\b[^.\n]{0,20}"
-                r"\b(?:to\s+|as\s+)?(?:highest|critical|p1|urgent|max(?:imum)?|top)\b", re.I), 1,
-     "tries to set priority/urgency"),
-    (re.compile(r"\b(?:mark|close|set|flag)\b[^.\n]{0,20}\b(?:as\s+)?(?:resolved|closed|done|approved|cancel(?:l)?ed)\b|"
-                r"\bauto[- ]?(?:approve|resolve|close)\b", re.I), 1, "tries to force a resolution/approval"),
-    (re.compile(r"\b(?:do\s+not|don'?t|never)\b[^.\n]{0,25}\b(?:tell|inform|notify|escalate|flag|log|mention)\b", re.I), 1,
-     "asks to suppress escalation/logging"),
-    (re.compile(r"\b(?:forward|send|email|export)\b[^.\n]{0,40}\b(?:all|every|the\s+full|complete|entire)\b[^.\n]{0,30}"
-                r"\b(?:tickets?|data|records?|list|passwords?|credentials?)\b[^.\n]{0,30}\b(?:to|at)\b", re.I), 2,
-     "data exfiltration request"),
-    (re.compile(r"\bignoriere\b[^.\n]{0,40}\b(?:anweisungen|instruktionen|regeln|vorgaben)\b|\b(?:setze|stufe)\b[^.\n]{0,25}"
-                r"\b(?:priorit[äa]t|dringlichkeit)\b[^.\n]{0,20}\b(?:h[öo]chste|kritisch|sofort)\b|\bdu\s+bist\s+jetzt\b", re.I), 2,
-     "German instruction-override phrase"),
-    (re.compile(r"\bignore[zr]\b[^.\n]{0,40}\b(?:consignes|règles|instructions\s+pr[ée]c[ée]dentes)\b|\b(?:oublie[zr]?|ne\s+tiens\s+pas\s+compte)\b[^.\n]{0,40}"
-                r"\b(?:consignes|instructions|règles|précédent\w*)\b|\bt(?:u\s+es|es)\s+maintenant\b|\bmets?\b[^.\n]{0,25}\bpriorité\b"
-                r"[^.\n]{0,20}\b(?:maximale|critique|haute)\b", re.I), 2,
-     "French instruction-override phrase"),
-    (re.compile(r"[`~]{3}\s*(?:system|assistant)|###\s*(?:system|instruction)|\[/?(?:INST|SYS)\]|<\|(?:im_start|system)\|>", re.I), 2,
-     "chat-template control tokens"),
+    # --- override / persona -----------------------------------------------------------------------------------------------
+    (re.compile(r"\b(?:ignore|disregard|forget|override|bypass|neglect|abandon|discard)\b[^.\n]{0,40}\b(?:(?:all|any|the|your|previous|prior|above|earlier|former|"
+                r"these|those|preceding|initial|original|system)\s+)*" + _OVERRIDE_NOUNS + r"\b", re.I), _S, "instruction-override phrase"),
+    (re.compile(r"\bforget\s+(?:everything|all)\b[^.\n]{0,30}\b(?:above|before|you|prior|previous|so\s+far|learned|were\s+told)\b", re.I), _S, "instruction-override phrase"),
+    (re.compile(r"\b(?:stop|cease)\s+following\b[^.\n]{0,30}\b(?:rules|instructions|guidelines|guidance|polic\w+)\b|"
+                r"\b(?:rules|instructions|guidelines|guidance)\b[^.\n]{0,25}\bno\s+longer\s+(?:apply|applies|valid|matter)\b", re.I), _S, "instruction-override phrase"),
+    (re.compile(r"\byou\s+are\s+now\s+(?:an?\s+|the\s+|my\s+)?(?:dan|ai\b|assistant|admin\w*|root|system|jailbroken|unrestricted|unfiltered|uncensored|free\b|evil|"
+                r"different|new\b|god|developer|hacker)|\byou\s+are\s+no\s+longer\b[^.\n]{0,30}\b(?:bound|restricted|limited|an?\s+ai|assistant|triage)\b|"
+                r"\bfrom\s+(?:now|here)\s+on\W+(?:you\s+(?:are|must|will|shall|should|only|always|have\s+to)\b|(?:always\s+|only\s+|just\s+)?(?:answer|reply|respond|output|write|say)\b)|"
+                r"\bpretend\s+(?:to\s+be|that\s+you|you\s+are|you're)\b|"
+                r"\bact\s+as\s+(?:an?\s+|the\s+)?(?:unfiltered|unrestricted|uncensored|jailbroken|evil|different|new|ai|assistant|system|root|dan)\b|\byou\s+are\s+(?:now\s+)?dan\b", re.I),
+     _S, "role reassignment"),
+    (re.compile(r"\bdo\s+anything\s+now\b|\b(?:disable|bypass|remove|turn\s+off|switch\s+off|unlock|circumvent)\b[^.\n]{0,25}\b(?:your|its|the\s+assistant'?s?)\s+(?:safety|content|security|"
+                r"ethical|moderation)\s+(?:filters?|checks?|guardrails?|polic(?:y|ies)|restrictions?)\b|\bwith\s+no\s+(?:rules|restrictions|filters)\b|"
+                r"\b(?:ai|assistant|model|dan)\b[^.\n]{0,25}\bwithout\s+(?:any\s+)?(?:restrictions|filters|rules|limitations)\b", re.I), _S, "jailbreak / persona terms"),
+    (re.compile(r"\bjail\s?break\w*\b|\bdeveloper\s+mode\b", re.I), _M, "jailbreak / persona terms"),
+    (re.compile(r"\bsystem\s+(?:override|notice|update|message|directive|instruction|policy)\s*[:\-]|"
+                r"\b(?:triage|routing|priority|classification)\s+(?:rules|policy|logic)\b[^.\n]{0,20}\b(?:were|have\s+been|has\s+been|is|are)\s+(?:updated|changed|replaced|overridden)\b", re.I),
+     _S, "fake system notice"),
+    # --- prompt / secret extraction ---------------------------------------------------------------------------------------
+    (re.compile(r"\b(?:reveal|print|show|leak|repeat|display|output|dump|tell\s+me|give\s+me|reproduce|recite|list|disclose|expose)\b[^.\n]{0,25}\b(?:your|the\s+(?:hidden|secret|internal|full|complete|initial))\s+"
+                r"(?:full\s+|complete\s+|hidden\s+|secret\s+|internal\s+|initial\s+|original\s+)*(?:system\s+prompt|prompt|instructions|rules|guidelines|configuration|config|tool\s+list|tools|"
+                r"credentials|api[\s_-]?keys?|secrets?|passwords?|memory|context)\b|"
+                r"\b(?:summari[sz]e|paraphrase|translate|explain|describe|recite)\b[^.\n]{0,15}\byour\s+(?:system\s+|hidden\s+|initial\s+)?(?:instructions|prompt|rules|guidelines|configuration)\b|"
+                r"\binstructions\s+you\s+(?:were|have\s+been|are)\s+given\b|\b(?:repeat|copy|print)\b[^.\n]{0,20}\b(?:the\s+)?(?:text|words|everything|message)\s+(?:above|before)\b|"
+                r"\bstart(?:ing)?\s+with\s+(?:the\s+words?\s+)?[\"'“‘]?you\s+are\b|\bwhat\s+(?:is|are|were)\s+your\s+(?:system\s+)?(?:instructions|prompt|rules)\b", re.I),
+     _S, "prompt/secret exfiltration attempt"),
+    # --- control tokens, role tags, tool names ---------------------------------------------------------------------------
+    (re.compile(r"[`~]{3}\s*(?:system|assistant|developer)\b|###\s*(?:system|instruction|prompt)|\[/?(?:INST|SYS|SYSTEM)\]|<\|(?:im_start|im_end|system|endoftext)\|>|"
+                r"</?(?:ticket|system|assistant|instructions?)>|[\"']role[\"']\s*:\s*[\"'](?:system|assistant|developer)[\"']|"
+                r"^\s*(?:system|developer)\s*:\s*(?:you|ignore|classify|set|output|always|mark|treat)\b|^\s*(?:assistant|ai|bot)\s*:\s*(?:call|use|ignore|set|mark|classify|output|reply)\b", re.I | re.M),
+     _S, "chat-template control tokens"),
+    (re.compile(r"\b(?:search_kb|find_similar_tickets|find_open_related|request_clarification|escalate_to_human|system_prompt)\b", re.I), _S, "names an internal agent tool"),
+    # --- addressing the model directly -------------------------------------------------------------------------------------
+    (re.compile(r"\bdear\s+(?:ai|a\.i\.|assistant|model|llm|chatbot|bot|gpt)\b|\bnote\s+to\s+(?:the\s+)?(?:ai|assistant|model|llm|bot)\b|"
+                r"\b(?:ai|assistant|llm|chatbot)\s*[,:]\s*(?:please|when|you|ignore|set|do|mark|classify|make|treat)\b|\bwhen\s+you\s+(?:read|see|process)\s+this\b|"
+                r"\bif\s+you\s+are\s+(?:an?\s+)?(?:ai|llm|language\s+model|assistant|chatbot)\b|"
+                r"\b(?:the\s+)?(?:assistant|ai|model|llm)\s+(?:reading|processing|analy[sz]ing)\s+this\b", re.I), _S, "addresses the AI directly"),
+    (re.compile(r"\bnew\s+instructions?\s*:", re.I), _M, "announces new instructions"),
+    (re.compile(r"\b(?:reply|respond|answer|output|say|write|print|return|confirm)\b[^.\n]{0,25}\b(?:only|exactly|verbatim|always)\b[^.\n]{0,20}\b(?:with|:)|"
+                r"\b(?:answer|reply|respond)\s+(?:to\s+)?(?:every|all|each)\s+ticket\b|\b(?:reply|respond|answer|antworte|r[eé]ponds?)\s+(?:only|nur|uniquement)\s+(?:with|mit|avec)\b", re.I),
+     _M, "dictates the output"),
+    # --- manipulating priority / resolution / oversight --------------------------------------------------------------------
+    (re.compile(r"\b(?:set|change|mark|classify|rate|escalate|treat|make|handle|declare|label)\b[^.\n]{0,30}\b(?:priority|urgency|impact|severity|ticket|it|this|every\s+ticket)\b"
+                r"[^.\n]{0,20}\b(?:as\s+|to\s+)?(?:highest|critical|p1|top\s+priority|max(?:imum)?)\b", re.I), _M, "tries to set priority/urgency"),
+    (re.compile(r"\b(?:mark|close|set|flag)\b[^.\n]{0,20}\b(?:as\s+)?(?:resolved|closed|done|approved|cancel(?:l)?ed)\b|\bauto[- ]?(?:approve|resolve|close)\b|"
+                r"\b(?:approve[sd]?|resolve[sd]?|closed?)\s+(?:it\s+|them\s+|this\s+|these\s+)?(?:automatically|without\s+review)\b|\band\s+close\s+(?:it|this|the\s+ticket)\b", re.I), _M,
+     "tries to force a resolution/approval"),
+    (re.compile(r"\b(?:do\s+not|don'?t|never)\b[^.\n]{0,25}\b(?:tell|inform|notify|escalate|flag|log|mention|classify|triage)\b|\b(?:skip|jump|bypass)\s+the\s+(?:queue|approval|review|process|controls?)\b", re.I),
+     _M, "asks to suppress escalation/logging"),
+    # --- exfiltration / phishing -------------------------------------------------------------------------------------------
+    (re.compile(r"\b(?:forward|send|email|e-?mail|export|upload|post|leak|share)\b[^.\n]{0,50}\b(?:all|every|each|any|the\s+full|complete|entire)\b[^.\n]{0,40}\b(?:tickets?|data|records?|list|"
+                r"passwords?|credentials?|users?|customers?|reporters?)\b[^.\n]{0,60}\b(?:to|at)\s+(?:\S+@\S+|https?://|attacker|external)|"
+                r"\b(?:tell|give|list|show|send)\s+me\s+(?:the\s+)?(?:names?|e-?mails?(?:\s+addresses?)?|phone\s+numbers?|passwords?|personal\s+data|details|data)\b[^.\n]{0,45}"
+                r"\b(?:of|about)\s+(?:the\s+)?(?:other|all|every)\b", re.I), _S, "data exfiltration request"),
+    (re.compile(r"\b(?:reply|respond|answer|include|add|insert|embed|append|send)\b[^.\n]{0,40}\b(?:link|url|website|page)\b[^.\n]{0,20}https?://\S+", re.I), _M,
+     "asks the reply to carry a link"),
+    (re.compile(r"\bso\s+(?:the\s+)?(?:requester|user|customer)\s+can\s+(?:confirm|verify|log\s?in)\b", re.I), _M, "phishing cue"),
+    (re.compile(r"\bthe\s+(?:administrator|admin|ceo|cfo|director)\s+has\s+(?:authori[sz]ed|approved)\b[^.\n]{0,40}\b(?:priority|access|override)\b", re.I), _M, "claims authority"),
+    # --- generalised directive cues (paraphrases that a fixed phrase list would miss) ---------------------------------------
+    (re.compile(r"\b(?:ignore|disregard|forget|overwrite|override|drop|abandon)\b[^.\n]{0,15}\byour\s+(?:training|ruleset|programming|behaviou?r|settings|setup|configuration|guidelines|rules|instructions|prompt|memory)\b|"
+                r"\b(?:ignore|disregard|forget)\b[^.\n]{0,20}\bwhat\s+(?:the\s+)?(?:system|you|assistant|admin|developer)\b[^.\n]{0,15}\b(?:told|said|instructed|programmed|trained)\b|"
+                r"\b(?:whatever|regardless\s+of|despite|notwithstanding)\s+your\s+(?:instructions|rules|guidelines|programming|training|policy)\b", re.I), _S, "instruction-override phrase"),
+    (re.compile(r"\b(?:reset|overwrite|replace|rewrite|update|change|modify)\b[^.\n]{0,20}\byour\s+(?:behaviou?r|ruleset|rules|instructions|settings|configuration|programming|guidelines|memory|policy)\b|"
+                r"\bfollow\s+only\s+my\s+(?:commands|instructions|orders)\b|\bonly\s+(?:obey|follow|listen\s+to)\s+me\b", re.I), _S, "attempts to reprogram the assistant"),
+    (re.compile(r"\b(?:reveal|print|show|output|disclose|list|dump|repeat|recite|display|tell\s+me|give\s+me)\b[^.\n]{0,30}\byour\s+(?:full\s+|complete\s+|entire\s+|initial\s+|hidden\s+|original\s+)*"
+                r"(?:system\s+)?(?:prompt|ruleset|instructions|configuration|setup(?:\s+message)?|context(?:\s+window)?|credentials|memory)\b(?!\s+(?:reply|response|answer|action|attention|support))", re.I),
+     _S, "prompt/secret exfiltration attempt"),
+    (re.compile(r"\byou\s+(?:have\s+been|are)\s+(?:granted|given|assigned)\b[^.\n]{0,30}\b(?:admin|root|elevated|full)\b|\byou\s+are\s+now\s+in\s+\w+\s+mode\b|"
+                r"\b(?:version\s+of\s+yourself|alter\s+ego|another\s+ai|different\s+ai)\b|\btalk\s+like\s+a\b[^.\n]{0,30}\band\s+(?:ignore|skip|forget)\b", re.I), _S, "role reassignment"),
+    (re.compile(r"\b(?:new|real|actual|true)\s+task\s*:|\bthe\s+(?:above|previous|preceding)\s+(?:was|is)\s+(?:just\s+)?a\s+test\b|"
+                r"\b(?:admin|system|root|developer)\s+override\b|^\s*override\s*:", re.I | re.M), _S, "fake system notice"),
+    (re.compile(r"\b(?:priority|status|resolution|urgency|impact|service|team|assignee)\s*=\s*\S+[\s,;]+(?:[a-z]+\s*=\s*\S+[\s,;]+)*\b(?:priority|status|resolution|urgency|impact|service|team|assignee|comment)\s*=", re.I),
+     _S, "control fields (key=value)"),
+    (re.compile(r"!\[[^\]]*\]\(https?://[^)\s]*[?&][^)\s]*\)", re.I), _S, "image/link that would exfiltrate data"),
+    (re.compile(r"\b(?:list|show|print|output|tell\s+me)\b[^.\n]{0,25}\b(?:every|all)\s+(?:the\s+)?(?:other\s+)?(?:ticket|user|customer|reporter|email|name)s?\b[^.\n]{0,30}\byou\s+(?:have\s+)?seen\b", re.I),
+     _S, "data exfiltration request"),
+    (re.compile(r"\b(?:just|simply|only)\s+(?:say|reply|answer|respond|write|output)\b|\binstead\s*(?:,\s*)?(?:approve|write|say|output|reply)\b|\b(?:write|say|output|reply\s+with)\b[^.\n]{0,40}\binstead\b|"
+                r"\blet'?s\s+play\s+a\s+game\b|\bforget\s+the\s+ticket\b|\bapprove\s+(?:every|all)\s+(?:pending\s+)?(?:request|ticket)s?\b|\bskip\s+(?:the\s+)?(?:validation|verification|checks?)\b|"
+                r"\bverified\s+admin\w*\b|\bpolicy\s+update\b|\bdo\s+not\s+(?:question|check|verify)\s+it\b", re.I), _M, "manipulative directive"),
+    (re.compile(r"\bsetz\w*\s+dich\s+(?:über|ueber)\b[^.\n]{0,30}\b(?:regeln|anweisungen|vorgaben)\b|\bweise\s+alle\s+anweisungen\s+zur[üu]ck\b", re.I), _S, "German instruction-override phrase"),
+    (re.compile(r"\bignora\w*\b[^.\n]{0,25}\b(?:le\s+regole|le\s+istruzioni)\b|\bti\s+ordino\s+di\b", re.I), _S, "Italian instruction-override phrase"),
+    # --- encoded payload announcements --------------------------------------------------------------------------------------
+    (re.compile(r"\b(?:decode|decrypt|deobfuscate)\b[^.\n]{0,30}\b(?:and|then)\s+(?:follow|obey|execute|run|apply)\b", re.I), _S, "asks to decode and obey"),
+    # --- other languages (override verb + rule noun, or priority-manipulation phrase) ---------------------------------------
+    (re.compile(r"\b(?:ignoriere?|ignorier|missachte|vergiss|übergehe)\b[^.\n]{0,40}\b(?:anweisungen|instruktionen|regeln|vorgaben|befehle|richtlinien)\b|"
+                r"\bvergiss\s+alles\b[^.\n]{0,40}\b(?:du|was)\b|\b(?:setze|stufe|mach)\b[^.\n]{0,25}\b(?:priorit[äa]t|dringlichkeit)\b[^.\n]{0,20}\b(?:h[öo]chste\w*|kritisch|sofort|maximal\w*)\b|"
+                r"\bdu\s+bist\s+jetzt\s+(?:ein|eine|der|die|mein|dan|admin\w*|system\w*|ki\b|assistent\w*|root)\b", re.I), _S, "German instruction-override phrase"),
+    (re.compile(r"\bignore[zr]?\b[^.\n]{0,40}\b(?:consignes|r[èe]gles|instructions|directives)\b|\b(?:oublie[zr]?|ne\s+tiens?\s+pas\s+compte)\b[^.\n]{0,40}\b(?:consignes|instructions|r[èe]gles)\b|"
+                r"\boublie[zr]?\s+tout\s+ce\s+qui\s+pr[ée]c[èe]de\b|\bt(?:u\s+es|es)\s+maintenant\s+(?:un|une|le|la|mon|dan|admin\w*|syst[èe]me|ia\b|assistant\w*|root)\b|\bmets?\b[^.\n]{0,25}\bpriorit[ée]\b[^.\n]{0,20}\b(?:maximale|critique|haute)\b", re.I),
+     _S, "French instruction-override phrase"),
+    (re.compile(r"\bignora\w*\b[^.\n]{0,40}\b(?:istruzioni|regole|direttive|indicazioni)\b|\b(?:dimentica|scorda)\w*\b[^.\n]{0,20}\b(?:tutto|istruzioni)\b|"
+                r"\bimposta\b[^.\n]{0,25}\bpriorit[àa]\b[^.\n]{0,20}\b(?:massima|critica|altissima)\b", re.I), _S, "Italian instruction-override phrase"),
+    (re.compile(r"\bignora\w*\b[^.\n]{0,40}\b(?:instrucciones|reglas|directrices)\b|\bolvida\w*\b[^.\n]{0,20}\b(?:todo|instrucciones)\b|"
+                r"\b(?:marca|establece|pon)\b[^.\n]{0,25}\bprioridad\b[^.\n]{0,20}\b(?:m[áa]xima|cr[íi]tica)\b", re.I), _S, "Spanish instruction-override phrase"),
+    (re.compile(r"\bignor[ea]\w*\b[^.\n]{0,40}\b(?:instru[çc][õo]es|instrucoes|regras|diretrizes)\b|\bdefina\b[^.\n]{0,25}\bprioridade\b[^.\n]{0,20}\b(?:m[áa]xima|cr[íi]tica)\b", re.I),
+     _S, "Portuguese instruction-override phrase"),
+    (re.compile(r"\bnegeer\b[^.\n]{0,40}\b(?:instructies|regels|richtlijnen)\b|\bzet\b[^.\n]{0,25}\bprioriteit\b[^.\n]{0,20}\b(?:hoogste|kritiek)\b", re.I), _S, "Dutch instruction-override phrase"),
+    (re.compile(r"игнорир\w*[^.\n]{0,40}(?:инструкци|правил|указани)|"
+                r"забудь[^.\n]{0,30}(?:все|инструкци)", re.I), _S, "Russian instruction-override phrase"),
+    (re.compile(r"忽略[^。\n]{0,20}(?:指令|指示|规则|说明|提示)|无视[^。\n]{0,20}(?:指令|规则)|优先级设为最高"), _S,
+     "Chinese instruction-override phrase"),
 ]
+
+# ---- de-obfuscation: the same patterns are re-run on decoded variants of the text -------------------------------------------
+_HOMOGLYPHS = str.maketrans({
+    "а": "a", "е": "e", "о": "o", "р": "p", "с": "c", "у": "y", "х": "x", "і": "i", "ј": "j", "ѕ": "s", "һ": "h",
+    "А": "A", "В": "B", "Е": "E", "К": "K", "М": "M", "Н": "H", "О": "O", "Р": "P", "С": "C", "Т": "T", "Х": "X",
+    "ο": "o", "α": "a", "ν": "v", "ρ": "p", "ι": "i", "κ": "k", "τ": "t", "Α": "A", "Β": "B", "Ε": "E", "Ο": "O",
+})
+_LEET = str.maketrans({"0": "o", "1": "i", "3": "e", "4": "a", "5": "s", "7": "t", "@": "a", "$": "s"})
+_MIXED_TOKEN = re.compile(r"\b(?=\w*[A-Za-z])(?=\w*\d)\w{4,}\b")
+_SPACED_RUN = re.compile(r"(?:(?<=\s)|^)(?:[A-Za-z0-9] ){3,}[A-Za-z0-9](?=\s|$|[.,!?;:])")
+_B64_CHUNK = re.compile(r"(?<![A-Za-z0-9+/=])[A-Za-z0-9+/]{24,}={0,2}(?![A-Za-z0-9+/=])")
+
+
+def _decoded_variants(text: str) -> list[tuple[str, str]]:
+    """(label, text) variants that a model might understand but a literal regex would miss."""
+    import base64
+    import binascii
+    import codecs
+
+    out: list[tuple[str, str]] = []
+    homo = text.translate(_HOMOGLYPHS)
+    if homo != text:
+        out.append(("homoglyphs", homo))
+    leet = _MIXED_TOKEN.sub(lambda m: m.group(0).translate(_LEET), text)
+    if leet != text:
+        out.append(("leetspeak", leet))
+    spaced = _SPACED_RUN.sub(lambda m: m.group(0).replace(" ", ""), text)
+    if spaced != text:
+        out.append(("spaced letters", spaced))
+    out.append(("reversed text", text[::-1]))
+    out.append(("rot13", codecs.decode(text, "rot13")))
+    for m in _B64_CHUNK.finditer(text):
+        try:
+            raw = base64.b64decode(m.group(0), validate=False)
+            s = raw.decode("utf-8")
+        except (binascii.Error, UnicodeDecodeError, ValueError):
+            continue
+        if s and sum(ch.isprintable() for ch in s) / len(s) > 0.95 and re.search(r"[A-Za-z]{3}", s):
+            out.append(("base64", s))
+    return out
+
+
+def _score(text: str) -> tuple[int, list[str]]:
+    score, reasons = 0, []
+    for rx, w, why in _INJECTION_PATTERNS:
+        seen: dict[str, str] = {}
+        for m in rx.finditer(text):
+            seen.setdefault(re.sub(r"\s+", " ", m.group(0)).lower(), m.group(0))
+            if len(seen) >= 2:
+                break
+        if seen:
+            score += w * len(seen)
+            snippet = re.sub(r"\s+", " ", next(iter(seen.values())))[:80]
+            reasons.append(f"{why}: \u201c{snippet}\u201d")
+    return score, reasons
 
 
 def detect_injection(text: str, *, external_sender: bool = False) -> tuple[bool, list[str]]:
-    """Precision over recall: a hit suppresses auto-drafting and forces escalation to a human."""
-    score = 0
-    reasons: list[str] = []
-    for rx, w, why in _INJECTION_PATTERNS:
-        m = rx.search(text)
-        if m:
-            score += w
-            snippet = re.sub(r"\s+", " ", m.group(0))[:80]
-            reasons.append(f"{why}: “{snippet}”")
-    threshold = 1 if external_sender else 2
-    return score >= threshold and bool(reasons), reasons if score >= threshold else []
+    """Precision over recall for *single* weak cues (a false alarm sends a real ticket to a human), but recall over
+    obfuscation: decoded variants are scanned too. A hit suppresses auto-drafting and forces escalation to a human.
+    ``external_sender`` is kept for API compatibility; a lone medium cue from an external sender is not enough by itself."""
+    text = text[:60_000]                                   # bounded work per ticket
+    score, reasons = _score(text)
+    if score < 2:
+        for label, variant in _decoded_variants(text):
+            s2, r2 = _score(variant)
+            if s2 >= 2:
+                return True, [f"obfuscated ({label}): {r}" for r in r2]
+    return (score >= 2), (reasons if score >= 2 else [])
+
+
+_SENTENCES = re.compile(r"(?<=[.!?;])\s+|\n+")
+
+
+def without_suspicious_sentences(text: str) -> str:
+    """Drop every sentence that carries any injection cue (even a weak one). Used before identifiers are lifted out of the ticket
+    to be reflected into a resolution note, so attacker-supplied tokens ('output PWNED-7431') are never echoed."""
+    keep = [s for s in _SENTENCES.split(text or "") if s and _score(s)[0] < 1]
+    return " ".join(keep)
+
+
+_URL = re.compile(r"(?:https?://|www\.)[^\s<>\")\]]+", re.I)
+
+
+def strip_links(text: str) -> str:
+    """Output guard: a reply, note or step must never carry a link the knowledge base did not put there (phishing via a reflected
+    URL). Company-internal links (intcom.com) are kept."""
+    return _URL.sub(lambda m: m.group(0) if "intcom.com" in m.group(0).lower() else "[link removed]", text or "")
 
 
 # ------------------------------------------------------------------ orchestration
@@ -264,6 +443,10 @@ def analyse(text: str, *, reporter: str | None = None, extra_addresses: list[str
     visible, hidden, hidden_removed = sanitise(text)
     external = bool(reporter) and not reporter.lower().endswith("@intcom.com")
     injected, reasons = detect_injection(visible + "\n" + hidden, external_sender=external)
+    if not injected and hidden.strip():
+        h_score, h_why = _score(hidden)                    # hidden markup that carries ANY instruction cue is hostile by construction
+        if h_score >= 1:
+            injected, reasons = True, [f"hidden content: {r}" for r in h_why]
     names = set(known_names or set()) | names_from_emails(reporter, *(extra_addresses or []),
                                                           *_EMAIL.findall(visible))
     red = Redactor(names)
@@ -311,6 +494,10 @@ def analyse_ticket(summary: str, description: str, comments: list[tuple[str, str
     external = bool(reporter) and not reporter.lower().endswith("@intcom.com")
     # scan title+description+hidden payloads for injection; comment bodies too (a comment is untrusted input as well)
     injected, reasons = detect_injection("\n".join(visible) + "\n" + hidden, external_sender=external)
+    if not injected and hidden.strip():
+        h_score, h_why = _score(hidden)                    # hidden markup that carries ANY instruction cue is hostile by construction
+        if h_score >= 1:
+            injected, reasons = True, [f"hidden content: {r}" for r in h_why]
     addrs = [a for a, _ in comments if a] + ([reporter] if reporter else [])
     names = set(known_names or set()) | names_from_emails(*addrs, *_EMAIL.findall("\n".join(visible)))
     red = Redactor(names)
@@ -319,10 +506,22 @@ def analyse_ticket(summary: str, description: str, comments: list[tuple[str, str
     masked_comments = []
     for (author, _), vis in zip(comments, visible[2:]):
         masked_comments.append((_kind_of_email(author) if "@" in (author or "") else (author or ""), red.redact(vis)))
+    masked_summary = masked_summary[:MODEL_SUMMARY_CHARS]                       # model-facing size is fixed so that nothing can hide beyond the guard's view
+    masked_description = masked_description[:MODEL_DESC_CHARS]
+    kept, used = [], 0
+    for author, body in masked_comments:
+        body = body[:4_000]
+        if used + len(body) > MODEL_COMMENT_CHARS:
+            break
+        kept.append((author, body))
+        used += len(body)
+    masked_comments = kept
     return TicketSafety(
         summary=masked_summary, description=masked_description, comments=masked_comments, mapping=dict(red.map),
         injection=injected, injection_reasons=reasons, redaction_count=len(red.map), hidden_removed=hidden_removed,
-        warnings=["hidden markup/zero-width content removed before analysis"] if hidden_removed else [],
+        warnings=(["hidden markup/zero-width content removed before analysis"] if hidden_removed else [])
+        + ([f"text longer than {MAX_FIELD_CHARS} characters was truncated for analysis"]
+           if any(len(x or "") > MAX_FIELD_CHARS for x in (summary, description, *[b for _, b in comments])) else []),
     )
 
 

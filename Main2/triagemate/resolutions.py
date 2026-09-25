@@ -157,4 +157,6 @@ def decide_status(cls: Classification, flags: Flags, text: str, has_playbook: bo
         return "clarification", "input is unclear and no comparable historical resolution exists: ask, never guess"
     if cls.service == UNKNOWN:
         return "clarification", "affected system cannot be identified from the ticket"
+    if flags.low_confidence and not has_playbook:
+        return "clarification", "confidence is below the floor and no comparable resolution exists: ask rather than guess"
     return "done", "actionable ticket with a concrete resolution path"
