@@ -89,3 +89,83 @@ Content-Type: application/json
         }
     }
 }
+
+
+Response:
+{
+  "model": "jev-1.13.0",
+  "answers": {
+    "worktype": {
+      "type": "choice",
+      "choice": "service_request",
+      "confidence": 1.0,
+      "probabilities": {
+        "incident": 0.0,
+        "unclear": 0.0,
+        "service_request": 1.0
+      }
+    },
+    "urgency": {
+      "type": "choice",
+      "choice": "Low",
+      "confidence": 0.91,
+      "probabilities": {
+        "unclear": 0.0,
+        "Lowest": 0.04,
+        "Medium": 0.02,
+        "Highest": 0.0,
+        "High": 0.0,
+        "Low": 0.93
+      }
+    },
+    "impact": {
+      "type": "choice",
+      "choice": "No direct impact / Information",
+      "confidence": 0.52,
+      "probabilities": {
+        "Minor / Localized": 0.38,
+        "No direct impact / Information": 0.61,
+        "Significant / Large": 0.0,
+        "Major / Widespread": 0.0,
+        "Unclear": 0.01,
+        "Moderate / Limited": 0.0
+      }
+    },
+    "priority": {
+      "type": "choice",
+      "choice": "Unclear",
+      "confidence": 0.27,
+      "probabilities": {
+        "Unclear": 0.4,
+        "Lowest": 0.12,
+        "Medium": 0.08,
+        "Highest": 0.0,
+        "High": 0.03,
+        "Low": 0.37
+      }
+    },
+    "service_teams": {
+      "type": "choice",
+      "choice": "Valuation & Pricing",
+      "confidence": 0.37,
+      "probabilities": {
+        "Enterprise Applications": 0.18,
+        "unclear": 0.02,
+        "Service Desk": 0.15,
+        "Investment Operations": 0.21000000000000002,
+        "Market Data Services": 0.0,
+        "Client Services": 0.0,
+        "Trading Support": 0.0,
+        "Securities Operations": 0.0,
+        "Valuation & Pricing": 0.43,
+        "Treasury & Cash": 0.0,
+        "Tax & Reporting": 0.0,
+        "Risk & Controls": 0.01
+      }
+    }
+  },
+  "usage": {
+    "input_tokens": 1515,
+    "output_tokens": 373
+  }
+}
