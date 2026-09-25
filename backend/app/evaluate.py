@@ -71,6 +71,7 @@ class EvalConfig:
     min_score: float = 0.0           # drop knowledge matches at or below this cosine similarity (0 = keep all)
     workers: int = 4                 # parallel LLM calls
     limit: int | None = None         # only the first N tickets
+    assignee: str = "load"           # "load": load-balanced over the agent pool; "precedent": resolver of similar fixes
 
 
 def challenge_files() -> list[Path]:
@@ -92,6 +93,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--workers", type=int, default=4, help="parallel LLM calls (default 4)")
     p.add_argument("--llm", help="chat provider: foundry, openai or apertus (default: LLM_MODE / first configured)")
     p.add_argument("--top-k", type=int, help="knowledge items per prompt (default: TOP_K)")
+    p.add_argument("--assignee", choices=["load", "precedent"], default="load",
+                   help="load: load-balanced over the agent pool (default); precedent: resolver of the most similar fixes")
     p.add_argument("--min-score", type=float, default=0.0,
                    help="minimum knowledge similarity to use a match (default 0 = keep all)")
     return p.parse_args()
@@ -151,7 +154,7 @@ def ticket_problems(a: dict) -> list[str]:
     if svc not in catalog.SERVICES or a["Service Team(s)"] != [catalog.team_for(svc)]:
         problems.append(f"service/team mismatch {svc} / {a['Service Team(s)']}")
     if not a["Assignee"]:
-        problems.append(f"no precedent resolver for {svc}, left in the {a['Service Team(s)'][0]} queue")
+        problems.append(f"no assignee for {svc}, left in the {a['Service Team(s)'][0]} queue")
     return problems
 
 
@@ -160,14 +163,19 @@ def evaluate(store, records: list[dict], config: EvalConfig,
              should_stop: Callable[[], bool] = lambda: False) -> list[dict | None]:
     """Triage every record. Returns one result per record (None if stopped before it ran):
     {"record": answered challenge record, "trace": rationale/matches/changes, "problems": [...], "seconds": ...}.
-    `on_ticket(index, result)` is called from worker threads as each ticket finishes."""
+    `on_ticket(index, result)` is called from worker threads as each ticket finishes.
+
+    Three phases: triage fans out, assignees are then picked sequentially in ticket order (so a load-balanced batch is
+    spread the same way on every run), and the resolution comments - written in the assigned agent's voice - fan out."""
+    from .assign import history_assigner
     from .config import settings
     from .llm import get_llm
     from .triage import RESOLUTION_SYSTEM, _format_hits, pick_assignee, triage
 
     llm = get_llm(config.llm)
     top_k = config.top_k or settings.top_k
-    experts = service_resolvers()
+    experts = service_resolvers() if config.assignee == "precedent" else {}
+    assigner = history_assigner().session()
 
     # Retrieval is done up front on this thread (the store shares one SQLite connection); only LLM calls fan out.
     texts = [ticket_text(r) for r in records]
@@ -178,18 +186,27 @@ def evaluate(store, records: list[dict], config: EvalConfig,
         resolution_hits = [[h for h in store.search_knowledge(v, top_k * 4) if h.row.get("resolution")
                             and h.score > config.min_score] for v in vectors]
 
-    def run(i: int) -> dict | None:
+    def decide(i: int) -> tuple[dict, dict, float] | None:
         if should_stop():
             return None
         started = time.time()
-        r, text, hits = records[i], texts[i], all_hits[i]
-        decision, routing = triage(text, [], hits[:top_k], provider=llm.mode)
-        if not routing["assignee"]:  # same voting over the wider net, then the service's main resolver
-            routing["assignee"], routing["assigneeReason"] = pick_assignee(routing["service"], hits)
+        decision, routing = triage(texts[i], [], all_hits[i][:top_k], provider=llm.mode)
+        return decision, routing, started
+
+    def assign(i: int, routing: dict) -> None:
+        if config.assignee == "load":
+            routing["assignee"], routing["assigneeReason"] = assigner.pick(routing["service"], texts[i])
+        elif not routing["assignee"]:  # same voting over the wider net, then the service's main resolver
+            routing["assignee"], routing["assigneeReason"] = pick_assignee(routing["service"], all_hits[i])
             if not routing["assignee"] and experts.get(routing["service"]):
                 routing["assignee"] = experts[routing["service"]]
                 routing["assigneeReason"] = f"most frequent author of documented {routing['service']} fixes in the history"
 
+    def resolve(i: int, decided: tuple[dict, dict, float] | None) -> dict | None:
+        if decided is None or should_stop():
+            return None
+        decision, routing, started = decided
+        r, text, hits = records[i], texts[i], all_hits[i]
         precedents = [h for h in resolution_hits[i] if h.row["service"] == routing["service"]][:top_k] \
             or resolution_hits[i][:top_k]
         user = (
@@ -241,7 +258,11 @@ def evaluate(store, records: list[dict], config: EvalConfig,
         return result
 
     with ThreadPoolExecutor(max_workers=max(1, config.workers)) as pool:
-        return list(pool.map(run, range(len(records))))
+        decided = list(pool.map(decide, range(len(records))))
+        for i, d in enumerate(decided):
+            if d is not None:
+                assign(i, d[1])
+        return list(pool.map(resolve, range(len(records)), decided))
 
 
 def run_meta(store, config: EvalConfig, source: str) -> dict:
@@ -252,7 +273,7 @@ def run_meta(store, config: EvalConfig, source: str) -> dict:
     return {"evaluatedAtUtc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "llmMode": llm.mode,
             "chatDeployment": llm.chat_model if llm.mode != "mock" else None,
             "embeddingModel": llm.embedding_model, "knowledge": store.knowledge_stats(), "source": source,
-            "topK": config.top_k or settings.top_k, "minScore": config.min_score}
+            "topK": config.top_k or settings.top_k, "minScore": config.min_score, "assignee": config.assignee}
 
 
 def main() -> None:
@@ -273,7 +294,8 @@ def main() -> None:
     challenge = json.load(open(args.input))
     records = challenge["records"][: args.limit] if args.limit else challenge["records"]
     run_id = challenge.get("runId") or args.input.stem
-    config = EvalConfig(llm=args.llm, top_k=args.top_k, min_score=args.min_score, workers=args.workers)
+    config = EvalConfig(llm=args.llm, top_k=args.top_k, min_score=args.min_score, workers=args.workers,
+                        assignee=args.assignee)
 
     llm = get_llm(args.llm)
     store = Store(settings.db_path)
