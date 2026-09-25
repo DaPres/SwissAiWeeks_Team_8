@@ -81,9 +81,13 @@ Rules:
   Urgency = how fast it must be fixed:
 {_definitions(catalog.URGENCY_DEFINITIONS)}
 - How to assess:
-  * Impact: which service (critical or not), full vs partial unavailability, and the scope — one person (low),
-    one team or business entity (medium), several entities, funds, clients or financial counterparts (high),
-    key operations fully down or all funds/clients affected (highest).
+  * Impact: decide critical vs non-critical service and full vs partial unavailability first, then the scope:
+    highest = a critical service fully down for key operations (or all funds/clients affected);
+    high = a critical service partially unavailable or degraded (a failed job, feed, queue or workflow; blocked,
+    stale or wrong output), or financial counterparts (brokers, custodians, clients) affected - even when only one
+    business entity is affected ("1+ business entities" includes one);
+    medium = a non-critical service fully unavailable, or a problem limited to one business entity or team that does
+    not degrade a critical service; low = a non-critical service partially unavailable, or individuals affected.
   * Urgency: deadlines (cut-offs, NAV/publication times, regulatory filings), whether a workaround exists and how
     painful it is, and any regulatory breach or security compromise (a suspected compromise is highest urgency and
     at least high impact on a critical service).
