@@ -1,7 +1,7 @@
 export type Level = 'lowest' | 'low' | 'medium' | 'high' | 'highest';
 export type Resolution = 'done' | 'cancelled' | 'clarification' | 'cannot reproduce';
 export interface Incident {
-  'Work type': 'Incident';
+  'Work type': 'Incident' | 'Service Request';
   Summary: string;
   Description: string;
   'Affected Business or IT Services': string[];
@@ -13,10 +13,11 @@ export interface Incident {
   Urgency: Level;
   Impact: Level;
   'Created date': string;
-  Status: 'open' | 'in progress' | 'done';
+  Status: 'awaiting client' | 'open' | 'in progress' | 'done';
   Resolution: Resolution | null;
   'Resolution date': string | null;
   'All Comments': string[];
+  'Submitted account'?: string;
 }
 
 /** Progressive intake leaves unknown fields absent for later enrichment. */

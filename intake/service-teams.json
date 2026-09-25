@@ -1,0 +1,22 @@
+{
+  "Trading Platform": "Investment Operations",
+  "Order Management": "Trading Support",
+  "Trade Matching": "Investment Operations",
+  "Securities Settlement": "Securities Operations",
+  "Corporate Actions": "Securities Operations",
+  "Fund Pricing": "Valuation & Pricing",
+  "NAV Calculation": "Valuation & Pricing",
+  "Portfolio Accounting": "Investment Operations",
+  "Cash Management": "Treasury & Cash",
+  "Risk & Compliance Monitoring": "Risk & Controls",
+  "Regulatory Reporting": "Risk & Controls",
+  "Rimes Data Feed": "Market Data Services",
+  "Client Reporting": "Client Services",
+  "Tax Reporting": "Tax & Reporting",
+  "CRM & Client Portal": "Client Services",
+  "Identity & Access Management": "Enterprise Applications",
+  "SharePoint & File Storage": "Enterprise Applications",
+  "Outlook & Email": "Enterprise Applications",
+  "SimCorp Dimension": "Enterprise Applications",
+  "Emailed Support Tickets": "Service Desk"
+}

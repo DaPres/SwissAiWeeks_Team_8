@@ -31,13 +31,13 @@ class SuggestionTests(unittest.TestCase):
         body = json.loads(request.call_args.args[0].data)
         self.assertEqual(json.loads(body['input'])['description'], 'Known description')
         self.assertEqual(json.loads(body['input'])['additional_details'], {'context': 'Since 09:00'})
-        self.assertFalse(json.loads(body['input'])['evidence_needed'])
+        self.assertNotIn('readiness_markers', json.loads(body['input']))
         self.assertFalse(body['store'])
         self.assertEqual(result, guidance)
 
     @patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'})
     @patch('suggestions.urlopen')
-    def test_missing_evidence_is_explicitly_prioritized_for_openai(self, request):
+    def test_openai_assesses_evidence_from_description_without_jev_quality_questions(self, request):
         record = remember_evaluation('The sign-in page fails.', evaluation(evidence_probability=0.2), {'evidence': ''})
         guidance = {'summary': 'More detail would help.', 'improvements': [
             {'field': 'evidence', 'title': 'Evidence', 'detail': 'Please include the exact error message.'}]}
@@ -46,7 +46,8 @@ class SuggestionTests(unittest.TestCase):
         self.assertEqual(suggest_description({'evaluationId': record['evaluationId']}), guidance)
         body = json.loads(request.call_args.args[0].data)
         payload = json.loads(body['input'])
-        self.assertTrue(payload['evidence_needed'])
+        self.assertNotIn('evidence_needed', payload)
+        self.assertNotIn('readiness_markers', payload)
         self.assertEqual(payload['additional_details'], {})
         self.assertIn('put an evidence improvement first', body['instructions'])
 

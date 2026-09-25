@@ -1,17 +1,12 @@
 // Aspire TypeScript AppHost — runs the triage backend (FastAPI/uv) and the React frontend (Vite) locally.
 // Start with: aspire run
 import { existsSync, readFileSync } from 'node:fs';
+import { parseEnv } from 'node:util';
 import { createBuilder } from './.aspire/modules/aspire.mjs';
 
 // backend/.env (gitignored) is the single place for local settings, shared with standalone `uvicorn` runs.
-const dotenv: Record<string, string> = existsSync('./backend/.env')
-    ? Object.fromEntries(
-          readFileSync('./backend/.env', 'utf8')
-              .split('\n')
-              .map((line) => line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.*?)\s*$/))
-              .filter((m): m is RegExpMatchArray => m !== null && m[2] !== '')
-              .map((m) => [m[1], m[2]]),
-      )
+const dotenv: Record<string, string | undefined> = existsSync('./backend/.env')
+    ? parseEnv(readFileSync('./backend/.env', 'utf8'))
     : {};
 
 const builder = await createBuilder();
@@ -31,10 +26,39 @@ const backend = await builder
     .withUv()
     .withEnvironment('AZURE_FOUNDRY_ENDPOINT', foundryEndpoint)
     .withEnvironment('AZURE_FOUNDRY_API_KEY', foundryApiKey)
-    .withEnvironment('CHAT_DEPLOYMENT', 'gpt-5.6-terra')
-    .withEnvironment('VISION_DEPLOYMENT', 'gpt-5.6-terra')
-    .withEnvironment('EMBEDDING_DEPLOYMENT', 'text-embedding-3-small')
     .withHttpHealthCheck({ path: '/api/health' });
+
+// Keep secrets on server resources; never inject them into Vite/browser variables.
+for (const [name, value] of Object.entries(dotenv)) {
+    if (!value || name.startsWith('AZURE_FOUNDRY_') || name.startsWith('JEV_')) continue;
+    const setting = /KEY|TOKEN|SECRET/.test(name)
+        ? await builder.addParameter(name.toLowerCase().replaceAll('_', '-'), { secret: true, value })
+        : value;
+    await backend.withEnvironment(name, setting);
+}
+
+const intakeBackend = await builder.addPythonApp('intake-backend', './intake', 'server.py')
+    .withUv()
+    .withHttpEndpoint({ env: 'PORT' })
+    .withEnvironment('TRIAGE_BACKEND_URL', backend.getEndpoint('http'))
+    .withReference(backend)
+    .waitFor(backend)
+    .withHttpHealthCheck({ path: '/api/health' });
+
+for (const name of ['JEV_API_KEY', 'JEV_MODEL', 'OPENAI_API_KEY', 'OPENAI_MODEL']) {
+    if (!dotenv[name]) continue;
+    const setting = name.endsWith('_KEY')
+        ? await builder.addParameter(`intake-${name.toLowerCase().replaceAll('_', '-')}`, { secret: true, value: dotenv[name] })
+        : dotenv[name];
+    await intakeBackend.withEnvironment(name, setting);
+}
+
+await builder.addViteApp('intake', './intake')
+    .withReference(intakeBackend)
+    .withEnvironment('BACKEND_URL', intakeBackend.getEndpoint('http'))
+    .waitFor(intakeBackend)
+    .withHttpEndpointCallback(async endpoint => { await endpoint.port.set(8080); })
+    .withExternalHttpEndpoints();
 
 await builder
     .addViteApp('frontend', './triage-explorer')

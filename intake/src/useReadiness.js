@@ -9,17 +9,18 @@ export function useReadiness(snapshot, attempt, hasText) {
     if (!hasText) return;
     const controller = new AbortController();
     const timer = setTimeout(async () => {
-      setEvaluation(previous => ({ key, phase: 'checking', lastResult: previous?.result ?? previous?.lastResult, lastScore: previous?.result?.readiness ?? previous?.lastScore ?? 0 }));
+      setEvaluation(previous => ({ key, phase: 'checking', lastResult: previous?.result ?? previous?.lastResult,
+        lastDebug: previous?.result?.debug ?? previous?.debug ?? previous?.lastDebug }));
       try {
         const draft = JSON.parse(snapshot);
         const result = await evaluateDescription(draft.description,
-          AbortSignal.any([controller.signal, AbortSignal.timeout(12000)]), draft.details);
-        if (!Number.isFinite(result.readiness) || result.readiness < 0 || result.readiness > 100 || !result.evaluationId) throw new Error('Readiness check returned an invalid result.');
-        if (!controller.signal.aborted) {
-          setEvaluation({ key, phase: 'done', result });
-        }
+          AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]), draft.details);
+        if (!result.inferred || typeof result.inferred !== 'object' || !result.evaluationId) throw new Error('Readiness check returned an invalid result.');
+        if (!controller.signal.aborted) setEvaluation({ key, phase: 'done', result });
       } catch (error) {
-        if (!controller.signal.aborted) setEvaluation({ key, phase: 'error', error: error.name === 'TimeoutError' ? 'Readiness check timed out. Please retry.' : error.message });
+        if (!controller.signal.aborted) setEvaluation(previous => ({ key, phase: 'error',
+          debug: error.debug, lastDebug: previous?.result?.debug ?? previous?.lastDebug, lastResult: previous?.result ?? previous?.lastResult,
+          error: error.name === 'TimeoutError' ? 'Readiness check timed out. Please retry.' : error.message }));
       }
     }, 450);
     return () => { clearTimeout(timer); controller.abort(); };
@@ -32,7 +33,7 @@ export function useReadiness(snapshot, attempt, hasText) {
   useEffect(() => {
     if (evaluation?.phase !== 'done') return;
     const evaluatedKey = evaluation.key;
-    const expiry = setTimeout(() => setEvaluation({ key: evaluatedKey, phase: 'error', error: 'Readiness check expired. Check again to submit.' }), 590000);
+    const expiry = setTimeout(() => setEvaluation({ key: evaluatedKey, phase: 'error', error: 'Suggestions expired. Check again for updated advice.' }), 590000);
     return () => clearTimeout(expiry);
   }, [evaluation?.phase, evaluation?.key]);
   return {
@@ -40,6 +41,7 @@ export function useReadiness(snapshot, attempt, hasText) {
     result: current?.phase === 'done' ? current.result : null,
     error: current?.error,
     previousResult: evaluation?.result ?? evaluation?.lastResult,
-    score: hasText ? current?.result?.readiness ?? evaluation?.result?.readiness ?? evaluation?.lastScore ?? 0 : 0,
+    debug: hasText ? evaluation?.result?.debug ?? evaluation?.debug ?? evaluation?.lastDebug : null,
+    debugIsCurrent: Boolean(current?.result?.debug || current?.debug),
   };
 }

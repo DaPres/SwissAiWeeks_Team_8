@@ -6,7 +6,7 @@ function Loading() {
   return <div className="advice-loading" role="status" aria-label="Loading suggestions"><span className="thinking-dots" aria-hidden="true"><i /><i /><i /></span></div>;
 }
 
-function Suggestions({ evaluationId, paused, evidenceNeeded }) {
+function Suggestions({ evaluationId, paused }) {
   const [response, setResponse] = useState(null);
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -21,22 +21,15 @@ function Suggestions({ evaluationId, paused, evidenceNeeded }) {
   }, [evaluationId, attempt, paused]);
   if (!response) return <Loading />;
   if (response.error) return <div className="advice-content" role="alert"><p>{response.error}</p><Button type="button" className="text-button" onClick={() => { setResponse(null); setAttempt(value => value + 1); }}>Retry</Button></div>;
-  const suggestion = evidenceNeeded
-    ? response.result.improvements.find(item => item.field === 'evidence')
-    : response.result.improvements[0];
-  const message = suggestion?.detail || (evidenceNeeded
-    ? 'Please provide an error message, failed step, or troubleshooting result as evidence.'
-    : response.result.summary);
+  const message = response.result.improvements[0]?.detail || response.result.summary;
   return <div className="advice-content appear"><p>{message}</p></div>;
 }
 
-export default function AdvicePanel({ readiness, ready, paused, onRetry }) {
+export default function AdvicePanel({ readiness, paused, onRetry }) {
   let content;
-  const evidenceNeeded = readiness.result?.criteria?.some(item => item.id === 'evidence' && item.status !== 'met');
   if (readiness.phase === 'idle') content = <div className="advice-content"><p>Describe your issue to get suggestions.</p></div>;
   else if (readiness.phase === 'error') content = <div className="advice-content" role="alert"><p>{readiness.error}</p><Button type="button" className="text-button" onClick={onRetry}>Retry</Button></div>;
-  else if (ready && !evidenceNeeded) content = <div className="advice-content appear"><p>Your report has enough detail to submit.</p></div>;
-  else if (readiness.result) content = <Suggestions key={readiness.result.evaluationId} evaluationId={readiness.result.evaluationId} paused={paused} evidenceNeeded={evidenceNeeded} />;
+  else if (readiness.result) content = <Suggestions key={readiness.result.evaluationId} evaluationId={readiness.result.evaluationId} paused={paused} />;
   else content = <Loading />;
   return <aside className="composer advice-panel enter" aria-label="AI Suggestions" aria-live="polite">{content}</aside>;
 }

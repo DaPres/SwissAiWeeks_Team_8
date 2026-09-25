@@ -1,0 +1,10 @@
+{
+  "levels": ["highest", "high", "medium", "low", "lowest"],
+  "matrix": [
+    ["highest", "highest", "high", "medium", "medium"],
+    ["highest", "high", "high", "medium", "low"],
+    ["high", "high", "medium", "low", "low"],
+    ["medium", "medium", "low", "low", "lowest"],
+    ["medium", "low", "low", "lowest", "lowest"]
+  ]
+}

@@ -6,8 +6,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     host: '127.0.0.1',
-    port: 5174,
+    port: Number(process.env.PORT || 8080),
     strictPort: true,
-    proxy: { '/api': process.env.BACKEND_URL || 'http://127.0.0.1:8080' },
+    proxy: { '/api': process.env.BACKEND_URL || 'http://127.0.0.1:8081' },
   },
 });

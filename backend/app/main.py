@@ -24,6 +24,7 @@ from .knowledge import ensure_ready, learn_from_ticket, ticket_text
 from .llm import default_provider, get_llm, providers
 from .store import Store
 from .triage import assist, draft_resolution
+from .intake import enrich_intake
 
 logging.basicConfig(level=logging.INFO)
 store: Store
@@ -55,6 +56,18 @@ class AssistIn(BaseModel):
 
 class FeedbackIn(BaseModel):
     helpful: bool
+
+
+class IntakeIn(BaseModel):
+    description: str = Field(min_length=1, max_length=10000)
+    details: dict[str, str] = Field(default_factory=dict, max_length=16)
+
+
+@app.post('/api/intake/enrich')
+async def post_intake_enrichment(body: IntakeIn):
+    if not body.description.strip() or any(len(value) > 2000 for value in body.details.values()):
+        raise HTTPException(400, 'Provide a description and valid incident fields.')
+    return await run_in_threadpool(enrich_intake, store, body.description.strip(), body.details)
 
 
 class TicketIn(BaseModel):

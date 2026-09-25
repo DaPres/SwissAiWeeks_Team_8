@@ -1,4 +1,4 @@
-@baseUrl = https://api.typesafe.ai
+hgi@baseUrl = https://api.typesafe.ai
 @apiKey = {{$dotenv JEV_API_KEY}}
 
 ### Jev
