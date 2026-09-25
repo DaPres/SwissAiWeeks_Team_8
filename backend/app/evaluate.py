@@ -27,6 +27,7 @@ import copy
 import json
 import logging
 import os
+import re
 import sys
 import threading
 import time
@@ -58,7 +59,9 @@ Also choose the resolution status, using the service desk's vocabulary:
   had to be asked for details; the comment says what was asked.
 - cannot reproduce: the reported symptom could not be found or confirmed on investigation.
 - cancelled: the request was withdrawn, a duplicate, or not needed.
-Prefer done unless the ticket content clearly points to another outcome."""
+Prefer done unless the ticket content clearly points to another outcome. A clear request about a person the ticket does
+not name (the contractor, the new joiner) is actionable: the agent identifies them from the requester or HR records, so
+refer to them by role and resolve it."""
 
 
 @dataclass
@@ -95,10 +98,12 @@ def parse_args() -> argparse.Namespace:
 
 
 def ticket_text(r: dict) -> str:
-    """Everything the reporter gave us. Pre-filled routing fields are labelled as unverified."""
+    """Everything the reporter gave us. Pre-filled routing fields are labelled as unverified. The reporter's address is
+    replaced by their role (domain kept, so vendor mails stay recognisable): otherwise the model takes the requester for
+    the affected user and writes "licence provisioned for / access removed from <reporter>"."""
     services = ", ".join(r.get("Affected Business or IT Services") or []) or "(none)"
     comments = "\n".join(f"- {c}" for c in r.get("All Comments") or [])
-    return "\n".join(filter(None, [
+    text = "\n".join(filter(None, [
         f"Summary: {r.get('Summary') or ''}",
         f"Description: {r.get('Description') or ''}",
         f"Request type (intake channel): {r.get('Request type') or '(none)'}",
@@ -107,6 +112,10 @@ def ticket_text(r: dict) -> str:
         f"Reporter-selected work type (unverified, titles can be misleading): {r.get('Work type')}",
         f"Comments:\n{comments}" if comments else "",
     ]))
+    reporter = r.get("Reporter")
+    if reporter and "@" in reporter:
+        text = re.sub(re.escape(reporter), f"the reporter (@{reporter.split('@', 1)[1]})", text, flags=re.IGNORECASE)
+    return text
 
 
 def title(level: str) -> str:
