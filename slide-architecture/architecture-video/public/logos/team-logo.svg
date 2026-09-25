@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 64" width="340" height="64" role="img" aria-label="AI Support Agent, Team 8"><defs>
+  <linearGradient id="nbrand" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#00E5FF"/><stop offset="0.5" stop-color="#6C7BFF"/><stop offset="1" stop-color="#C04DFF"/>
+  </linearGradient>
+  <linearGradient id="ntile" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#1B2458"/><stop offset="1" stop-color="#0A0F2A"/>
+  </linearGradient>
+  <linearGradient id="nlow" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FF5A7A"/><stop offset="1" stop-color="#FF9A6B"/></linearGradient>
+  <linearGradient id="nmid" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#FFB443"/><stop offset="1" stop-color="#FFE27A"/></linearGradient>
+  <linearGradient id="nhigh" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#00D69A"/><stop offset="1" stop-color="#7CFFD6"/></linearGradient>
+  <linearGradient id="neight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7CF3FF"/><stop offset="1" stop-color="#C04DFF"/></linearGradient>
+</defs><rect x="2" y="2" width="60" height="60" rx="16" fill="url(#ntile)" stroke="url(#nbrand)" stroke-width="3"/>
+<rect x="11" y="37" width="6" height="11" rx="2" fill="url(#nlow)"/>
+<rect x="19.5" y="29" width="6" height="19" rx="2" fill="url(#nmid)"/>
+<rect x="28" y="19" width="6" height="29" rx="2" fill="url(#nhigh)"/>
+<text x="46.5" y="47.5" text-anchor="middle" font-family="'Inter','SF Pro Display','Segoe UI',Helvetica,Arial,sans-serif" font-size="34" font-weight="900" fill="url(#neight)">8</text>
+<path d="M53,9 Q53.8,13.2 58,14 Q53.8,14.8 53,19 Q52.2,14.8 48,14 Q52.2,13.2 53,9 Z" fill="#FFFFFF"/>
+<g font-family="'Inter','SF Pro Display','Segoe UI',Helvetica,Arial,sans-serif">
+  <text x="78" y="36" font-size="26" font-weight="800" fill="#FFFFFF" letter-spacing="-0.5">AI Support <tspan fill="url(#nbrand)">Agent</tspan></text>
+  <text x="79" y="55" font-size="11.5" font-weight="700" fill="#8E9BD6" letter-spacing="2.4">TEAM 8 · SWISS AI WEEKS</text>
+</g></svg>
