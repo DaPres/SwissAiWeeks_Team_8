@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Team 8 Triage Flow</title>
+<style>
+  :root {
+    --bg: #F9F4F8; --panel: #ffffff; --text: #2C1733; --muted: #6f5a74; --line: #EBD9E6;
+    --accent: #A0268B; --accent-bg: #F9E4F0; --chip: #FBF1F7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1a1020; --panel: #261730; --text: #F3E6F1; --muted: #b99cb5; --line: #45274a;
+      --accent: #E06FBC; --accent-bg: #3b1d3f; --chip: #2f1b35;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1a1020; --panel: #261730; --text: #F3E6F1; --muted: #b99cb5; --line: #45274a;
+    --accent: #E06FBC; --accent-bg: #3b1d3f; --chip: #2f1b35;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 20px 16px 40px; }
+  header h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  header p { margin: 0 0 14px; color: var(--muted); max-width: 80ch; }
+  .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; }
+  .stat b { display: block; font-size: 1.25rem; background: linear-gradient(90deg, #F45C6B, #A0268B 60%, #D84DAB); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .stat span { color: var(--muted); font-size: .8rem; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .tabs { display: flex; gap: 4px; background: var(--chip); padding: 4px; border-radius: 10px; }
+  button { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line);
+    border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  .tabs button { border: 0; background: transparent; }
+  .tabs button[aria-selected="true"] { background: linear-gradient(90deg, #9E258A, #D84DAB); color: #fff; font-weight: 600; }
+  .spacer { flex: 1; }
+  .layout { display: block; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+  .diagram { padding: 12px; overflow: auto; min-height: 320px; }
+  .diagram svg { max-width: none; height: auto; display: block; margin: 0 auto; }
+  .tag { display: inline-block; font-size: .75rem; padding: 1px 8px; border-radius: 999px;
+    background: var(--accent-bg); color: var(--accent); margin-bottom: 8px; }
+  .hint { color: var(--muted); }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; color: var(--muted); font-size: .85rem; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  footer { margin-top: 18px; color: var(--muted); font-size: .85rem; }
+  footer a { color: var(--accent); }
+  /* business tab */
+  #biz[hidden] { display: none; }
+  .biz-grid { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 14px; align-items: start; }
+  @media (max-width: 900px) { .biz-grid { grid-template-columns: 1fr; } }
+  .inputs { padding: 14px 16px; }
+  .inputs h3, .res h3 { font-size: .95rem; margin: 14px 0 6px; }
+  .inputs h3:first-child, .res h3:first-child { margin-top: 0; }
+  .f { display: grid; grid-template-columns: 1fr 96px; gap: 4px 8px; align-items: center; margin-bottom: 6px; font-size: .88rem; }
+  .f label { line-height: 1.25; }
+  .f small { grid-column: 1 / -1; color: var(--muted); font-size: .75rem; line-height: 1.3; margin-top: -2px; }
+  input[type=number] { width: 100%; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line);
+    border-radius: 6px; padding: 4px 6px; text-align: right; }
+  input[type=number]:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+  .unit { color: var(--muted); font-size: .75rem; margin-left: 4px; }
+  details.grp { border-top: 1px solid var(--line); padding: 6px 0; }
+  details.grp:first-child { border-top: 0; }
+  details.grp > summary { cursor: pointer; font-weight: 600; font-size: .95rem; padding: 4px 0; }
+  details.grp[open] > summary { margin-bottom: 6px; }
+  .presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .presets button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+  .res { padding: 14px 16px; margin-bottom: 14px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin-bottom: 6px; }
+  .kpi { background: var(--chip); border: 1px solid var(--line); border-radius: 10px; padding: 12px 12px 10px; position: relative; overflow: hidden; }
+  .kpi::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg, #F45C6B, #A0268B 55%, #D84DAB); }
+  .kpi span { color: var(--muted); font-size: .78rem; display: block; }
+  .kpi b { font-size: 1.3rem; display: block; line-height: 1.25; }
+  .kpi em { font-style: normal; font-size: .78rem; color: var(--muted); }
+  .kpi.good b { color: #1f8a4c; }
+  .kpi.bad b { color: #D6336C; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .kpi.good b { color: #5fc08c; } }
+  :root[data-theme="dark"] .kpi.good b { color: #5fc08c; }
+  table { border-collapse: collapse; width: 100%; font-size: .85rem; }
+  th, td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; white-space: normal; }
+  th { color: var(--muted); font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; background: var(--chip); }
+  .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+  table tr:nth-child(even) td { background: var(--chip); }
+  table tr:last-child th { border-bottom: 0; }
+  .mc { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
+  .mini { width: 70px; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; flex: none; }
+  .mini i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #F45C6B, #A0268B 60%, #D84DAB); }
+  .card { box-shadow: 0 1px 2px rgba(70, 20, 60, .04); }
+  td input[type=number] { width: 68px; padding: 2px 4px; }
+  .cmp { display: grid; grid-template-columns: 110px 1fr 90px; gap: 6px 8px; align-items: center; font-size: .82rem; margin-bottom: 6px; }
+  .cmp .track { background: var(--chip); border-radius: 5px; height: 14px; overflow: hidden; }
+  .cmp .fill { height: 100%; border-radius: 5px; }
+  .cmp .man { background: linear-gradient(90deg, #F3AFD6, #DA63AD); } .cmp .ai { background: linear-gradient(90deg, #9E258A, #D84DAB); }
+  .cmp .val { text-align: right; font-variant-numeric: tabular-nums; }
+  .notes { color: var(--muted); font-size: .82rem; }
+  .notes li { margin-bottom: 4px; }
+  .chk { display: flex; gap: 6px; align-items: center; font-size: .85rem; margin: 6px 0; }
+  /* workflow animation */
+  #anim[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+  .anim path.flowchart-link { stroke-dasharray: 7 5 !important; animation: flow 1.1s linear infinite; }
+  .anim path.flowchart-link.edge-pattern-dotted { stroke-dasharray: 2 5 !important; }
+  .anim g.node { animation: fadein .6s ease-out both; animation-delay: calc(var(--i, 0) * 90ms); }
+  .anim g.node.human { animation: fadein .6s ease-out both, glow 2.6s ease-in-out infinite; animation-delay: calc(var(--i, 0) * 90ms), 1.6s; }
+  @keyframes flow { to { stroke-dashoffset: -24; } }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes glow { 0%, 100% { filter: drop-shadow(0 0 0 rgba(216, 77, 171, 0)); } 50% { filter: drop-shadow(0 0 7px rgba(216, 77, 171, .75)); } }
+  .err { color: #c0392b; padding: 16px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Team 8 · AI-Powered Ticket Triage</h1>
+    <p>Swiss AI Weeks hackathon: triage Jira service-desk tickets like an experienced L2 agent. Our answer is a two-stage flow: guided intake to prevent poor tickets, then evidence-backed triage with a human in control.</p>
+    <div class="stats">
+      <div class="stat"><b>20,000</b><span>synthetic training tickets</span></div>
+      <div class="stat"><b>20</b><span>blind-eval challenge tickets</span></div>
+      <div class="stat"><b>129</b><span>unit tests (TriageMate)</span></div>
+
+    </div>
+  </header>
+
+  <div class="bar">
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-workflow" aria-selected="true" data-view="workflow">Ticket workflow</button>
+      <button role="tab" id="tab-arch" aria-selected="false" data-view="arch">Architecture</button>
+      <button role="tab" id="tab-biz" aria-selected="false" data-view="biz">Business metrics</button>
+    </div>
+    <span class="spacer"></span>
+    <button id="copy">Copy Mermaid</button>
+    <button id="svg">Download SVG</button>
+    <button id="anim" aria-pressed="true" title="Toggle flow animation">Animation</button>
+    <button id="theme" title="Toggle light / dark">Theme</button>
+  </div>
+
+  <div class="layout">
+    <div class="card diagram" id="diagram" aria-live="polite"></div>
+  </div>
+
+  <section id="biz" hidden>
+    <div class="biz-grid">
+      <div class="card inputs">
+        <div class="presets" id="presets" role="group" aria-label="Scenario presets"></div>
+        <div id="inputs"></div>
+        <button id="reset" style="margin-top:8px">Reset to defaults</button>
+      </div>
+      <div>
+        <div class="card res"><h3>Headline results (current inputs)</h3><div class="kpis" id="kpis"></div>
+          <label class="chk"><input type="checkbox" id="soft"> Include productivity gain from faster turnaround in savings (soft benefit)</label>
+        </div>
+        <div class="card res"><h3>Manual vs AI-assisted</h3><div id="bars"></div></div>
+        <div class="card res"><h3>Scenarios (effect assumptions only; volume and cost inputs as on the left)</h3><div class="tw" id="scen"></div></div>
+        <div class="card res"><h3>By application domain</h3>
+          <p class="notes" style="margin-top:0">Mix and manual resolution effort are editable. Defaults: service mix of the 20,000 synthetic training tickets (the real Swiss Life mix will differ).</p>
+          <div class="tw" id="dom"></div></div>
+        <div class="card res"><h3>Assumptions and sources</h3><ul class="notes" id="notes"></ul></div>
+      </div>
+    </div>
+  </section>
+  <div class="legend" id="legend"></div>
+  <footer>
+    Sources: <a href="https://github.com/DaPres/SwissAiWeeks_Team_8">repo README</a> and
+    <a href="https://github.com/DaPres/SwissAiWeeks_Team_8/blob/main/FinalPitch.md">FinalPitch.md</a>.
+    Dashed links in the architecture view are inferred from the repo layout, not stated in the sources.
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<script>
+const SOURCES = {
+  workflow: "flowchart TD\n    U([\"Employee / submitter\"]):::user\n\n    subgraph S1[\"Stage 1 · Guided Intake (0–23 s)\"]\n        D[\"Describes issue in natural language\"]\n        M{\"Missing info?\u003cbr/\u003ereal-time check\"}\n        Q[\"Focused follow-up question\"]\n        C[\"Complete ticket\"]\n        D --\u003e M\n        M -- yes --\u003e Q --\u003e D\n        M -- no --\u003e C\n    end\n    U --\u003e D\n\n    subgraph S2[\"Stage 2 · Triage \u0026 Proposal (23–60 s)\"]\n        R[\"Business rules\"]:::input\n        K[(\"Knowledge base\u003cbr/\u003ehistorical resolutions\")]:::input\n        A[\"AI reasoning\"]:::input\n        E[\"Triage engine\u003cbr/\u003eanalyses complete ticket\"]:::engine\n        T[\"Identify team, service\u003cbr/\u003e\u0026 priority\"]:::engine\n        P[\"Retrieve historical\u003cbr/\u003eprecedents\"]:::engine\n        X[\"Evidence-backed\u003cbr/\u003eresolution proposal\"]:::engine\n        R --\u003e E\n        K --\u003e E\n        A --\u003e E\n        E --\u003e T --\u003e P --\u003e X\n        K -. precedents .-\u003e P\n    end\n    C --\u003e E\n\n    X --\u003e H{\"Human analyst\u003cbr/\u003ereview\"}:::human\n    H -- approve --\u003e Done([\"Ticket routed / resolved\"]):::user\n    H -- edit --\u003e Ed[\"Analyst edits proposal\"]:::human --\u003e Done\n\n    class D,M,Q,C intake\n    classDef user fill:#FBF1F7,stroke:#A0268B,color:#2C1733\n    classDef intake fill:#BB399B,stroke:#7d1c6e,color:#ffffff\n    classDef input fill:#D8506F,stroke:#BD377F,color:#ffffff\n    classDef engine fill:#BB399B,stroke:#7d1c6e,color:#ffffff\n    classDef human fill:#FFFFFF,stroke:#A0268B,color:#2C1733,stroke-width:3px\n",
+  arch: "flowchart LR\n    Sub([\"Submitter\"]):::user\n    Ana([\"L2 analyst\"]):::user\n\n    subgraph FE[\"Frontend · triage-explorer/ (React + Vite)\"]\n        IUI[\"Guided intake UI\"]\n        AUI[\"Analyst UI\u003cbr/\u003etriage + evidence\"]\n    end\n\n    subgraph BE[\"Backend · backend/ (FastAPI, Python)\"]\n        API[\"REST + WebSocket service\"]\n        HL[\"/api/health\"]\n    end\n\n    subgraph TM[\"TriageMate engine · Main2/ (Python · 129 unit tests)\"]\n        EN[\"POST /api/intake/enrich\"]\n        AS[\"POST /api/intake/assist\"]\n        WS[\"WS /ws/intake/assist\"]\n        RU[\"Rule-based triage\u003cbr/\u003eservice · team · assignee\"]\n        MX[\"Urgency × Impact matrix\u003cbr/\u003e→ priority\"]\n        KB[(\"SQLite knowledge base\")]\n        LL[\"LLM integration\"]\n    end\n\n    subgraph PR[\"LLM providers\"]\n        OA[\"OpenAI\"]\n        AZ[\"Azure\"]\n        AP[\"Apertus\"]\n    end\n\n    subgraph DATA[\"Data\"]\n        TD[(\"20,000 synthetic tickets\u003cbr/\u003epan-European asset manager\")]\n        CH[\"20 blind-eval\u003cbr/\u003echallenge tickets\"]\n    end\n\n    subgraph EV[\"Evaluation\"]\n        OUT[\"Triage output: work type, service, team,\u003cbr/\u003eassignee, priority, status, resolution comment\"]\n        SC[\"Scoring: routing · matrix-consistent\u003cbr/\u003epriority · plausible commentary\"]\n    end\n\n    subgraph OPS[\"Build \u0026 deploy\"]\n        DV[\"Local: aspire run\u003cbr/\u003e(apphost.mts)\"]\n        TG[\"git tag\"]\n        GH[\"GitHub Actions\"]\n        AC[\"Container registry\u003cbr/\u003eaiweeksteam8.azurecr.io/triage\"]\n        CA[\"Azure Container Apps\"]\n        HC[\"Health check\u003cbr/\u003e/api/health\"]\n        TG --\u003e GH --\u003e AC --\u003e CA --\u003e HC\n    end\n\n    Sub --\u003e IUI\n    Ana --\u003e AUI\n    IUI --\u003e API\n    AUI --\u003e API\n    API -.-\u003e EN\n    API -.-\u003e AS\n    API -.-\u003e WS\n    EN --\u003e RU\n    AS --\u003e RU\n    WS --\u003e RU\n    RU --\u003e MX\n    RU --\u003e KB\n    RU --\u003e LL\n    LL --\u003e OA\n    LL --\u003e AZ\n    LL --\u003e AP\n    TD -- \"KB rebuilt on each deploy\" --\u003e KB\n    CH --\u003e RU\n    RU --\u003e OUT --\u003e SC\n    CA -. serves .-\u003e HL\n    DV -. runs .-\u003e API\n\n    class IUI,AUI,API,HL fe\n    class EN,AS,WS,RU,MX,LL engine\n    class KB,TD,CH data\n    class OA,AZ,AP llm\n    class DV,TG,GH,AC,CA,HC ops\n    class OUT,SC eval\n    classDef user fill:#FBF1F7,stroke:#A0268B,color:#2C1733\n    classDef fe fill:#E58CC1,stroke:#A83196,color:#2C1733\n    classDef engine fill:#BB399B,stroke:#7d1c6e,color:#ffffff\n    classDef data fill:#D8506F,stroke:#BD377F,color:#ffffff\n    classDef llm fill:#F9E4F0,stroke:#DA63AD,color:#2C1733\n    classDef ops fill:#EDE3EB,stroke:#8a6a86,color:#3a2a40\n    classDef eval fill:#FFFFFF,stroke:#A0268B,color:#2C1733,stroke-width:3px\n"
+};
+
+const GRADS = { pink: ["#F3AFD6", "#DA63AD"], coral: ["#F45C6B", "#BD377F"], magenta: ["#9E258A", "#D84DAB"] };
+const GRAD_OF = { intake: "magenta", fe: "pink", input: "coral", data: "coral", engine: "magenta" };
+const gradCss = (k) => "linear-gradient(135deg," + GRADS[k][0] + "," + GRADS[k][1] + ")";
+
+const PL = "fill:#FBF1F7,stroke:#A0268B,color:#2C1733";           // light tint, plum outline
+const PD = "fill:#3A2040,stroke:#DA63AD,color:#F9F4F8";           // dark tint
+const HL = "fill:#FFFFFF,stroke:#A0268B,color:#2C1733,stroke-width:3px";
+const HD = "fill:#261730,stroke:#E06FBC,color:#F9F4F8,stroke-width:3px";
+const PINK = (t) => "fill:#E58CC1,stroke:#A83196,color:" + t;
+const CORAL = "fill:#D8506F,stroke:#BD377F,color:#ffffff";
+const MAGENTA = "fill:#BB399B,stroke:#7d1c6e,color:#ffffff";
+const CLASSDEFS = {
+  light: {
+    workflow: ["user " + PL, "intake " + MAGENTA, "input " + CORAL, "engine " + MAGENTA, "human " + HL],
+    arch: ["user " + PL, "fe " + PINK("#2C1733"), "engine " + MAGENTA, "data " + CORAL,
+      "llm fill:#F9E4F0,stroke:#DA63AD,color:#2C1733", "ops fill:#EDE3EB,stroke:#8a6a86,color:#3a2a40", "eval " + HL]
+  },
+  dark: {
+    workflow: ["user " + PD, "intake " + MAGENTA, "input " + CORAL, "engine " + MAGENTA, "human " + HD],
+    arch: ["user " + PD, "fe " + PINK("#2C1733"), "engine " + MAGENTA, "data " + CORAL,
+      "llm fill:#3b1d3f,stroke:#DA63AD,color:#F9F4F8", "ops fill:#33283a,stroke:#a58ba1,color:#eadfe8", "eval " + HD]
+  }
+};
+const THEME_VARS = {
+  light: { background: "#F9F4F8", primaryColor: "#FBF1F7", primaryTextColor: "#2C1733", primaryBorderColor: "#A0268B", lineColor: "#8a3a7e",
+    secondaryColor: "#FBF1F7", tertiaryColor: "#FEF9FC", clusterBkg: "#FEF9FC", clusterBorder: "#E3BFD8", edgeLabelBackground: "#F9F4F8",
+    textColor: "#2C1733", titleColor: "#2C1733" },
+  dark: { background: "#1a1020", primaryColor: "#3A2040", primaryTextColor: "#F3E6F1", primaryBorderColor: "#DA63AD", lineColor: "#D98BC6",
+    secondaryColor: "#2f1b35", tertiaryColor: "#261730", clusterBkg: "#261730", clusterBorder: "#5a3a5f", edgeLabelBackground: "#1a1020",
+    textColor: "#F3E6F1", titleColor: "#F3E6F1" }
+};
+
+const LEGEND = {
+  workflow: [["#FBF1F7;border:1.5px solid #A0268B","Person"],[gradCss("magenta"),"Intake and triage engine"],[gradCss("coral"),"Engine input"],["#fff;border:2.5px solid #A0268B","Human control"]],
+  arch: [["#FBF1F7;border:1.5px solid #A0268B","Person"],[gradCss("pink"),"Frontend / backend"],[gradCss("magenta"),"TriageMate engine"],[gradCss("coral"),"Data / KB"],["#F9E4F0;border:1.5px solid #DA63AD","LLM provider"],["#EDE3EB;border:1.5px solid #8a6a86","Build and deploy"],["#fff;border:2.5px solid #A0268B","Evaluation"]]
+};
+
+function applyGradients(svg, n) {
+  if (!svg) return;
+  let defs = "";
+  Object.keys(GRADS).forEach(k => defs += '<linearGradient id="g-' + k + '-' + n + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="' +
+    GRADS[k][0] + '"/><stop offset="1" stop-color="' + GRADS[k][1] + '"/></linearGradient>');
+  svg.insertAdjacentHTML("afterbegin", "<defs>" + defs + "</defs>");
+  svg.querySelectorAll("g.node").forEach(node => {
+    const cls = Object.keys(GRAD_OF).find(c => node.classList.contains(c));
+    if (!cls) return;
+    node.querySelectorAll("rect,polygon,path,circle,ellipse").forEach(s => {
+      if (s.closest(".label") || s.closest("foreignObject")) return;
+      s.style.setProperty("fill", "url(#g-" + GRAD_OF[cls] + "-" + n + ")", "important");
+    });
+  });
+}
+const $ = (s) => document.querySelector(s);
+const state = { view: "workflow", theme: null, anim: true };
+const WF_ORDER = ["U", "D", "M", "Q", "C", "R", "K", "A", "E", "T", "P", "X", "H", "Ed", "Done"];
+function applyAnim() {
+  const box = $("#diagram"), on = state.anim && state.view === "workflow";
+  box.classList.toggle("anim", on);
+  $("#anim").setAttribute("aria-pressed", String(state.anim));
+  box.querySelectorAll("g.node").forEach(n => {
+    const m = /flowchart-(.+)-\d+$/.exec(n.id);
+    const i = m ? WF_ORDER.indexOf(m[1]) : -1;
+    n.style.setProperty("--i", i < 0 ? 0 : i);
+  });
+}
+let renderCount = 0;
+
+function currentTheme() {
+  if (state.theme) return state.theme;
+  return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function buildSource(view, theme) {
+  const body = SOURCES[view].split("\n").filter(l => !/^\s*classDef\s/.test(l)).join("\n");
+  const defs = CLASSDEFS[theme][view].map(d => "    classDef " + d).join("\n");
+  return body + "\n" + defs + "\n";
+}
+
+function esc(s) { return s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+async function render() {
+  const theme = currentTheme();
+  document.documentElement.dataset.theme = theme;
+  if (state.view === "biz") return;
+  mermaid.initialize({
+    startOnLoad: false, theme: "base", themeVariables: Object.assign({ fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, sans-serif" }, THEME_VARS[theme]),
+    securityLevel: "strict", flowchart: { htmlLabels: true, curve: "basis" }
+  });
+  const box = $("#diagram");
+  try {
+    const { svg } = await mermaid.render("mmd" + (++renderCount), buildSource(state.view, theme));
+    box.innerHTML = svg; applyGradients(box.querySelector("svg"), renderCount); applyAnim();
+  } catch (e) {
+    box.innerHTML = '<div class="err">Mermaid failed to render:\n' + esc(String(e.message || e)) + '</div>';
+    return;
+  }
+  $("#legend").innerHTML = LEGEND[state.view].map(l => '<span><i style="background:' + l[0] + '"></i>' + esc(l[1]) + '</span>').join("");
+}
+
+function setView(v) {
+  state.view = v;
+  document.querySelectorAll(".tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
+  const biz = v === "biz";
+  $("#biz").hidden = !biz;
+  document.querySelector(".layout").hidden = biz;
+  $("#legend").hidden = biz;
+  $("#copy").hidden = biz; $("#svg").hidden = biz; $("#anim").hidden = v !== "workflow";
+  if (biz) { initBiz(); return; }
+  render();
+}
+
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
+$("#anim").addEventListener("click", () => { state.anim = !state.anim; applyAnim(); });
+$("#theme").addEventListener("click", () => { state.theme = currentTheme() === "dark" ? "light" : "dark"; render(); });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (!state.theme) render(); });
+
+$("#copy").addEventListener("click", async () => {
+  const btn = $("#copy");
+  const text = SOURCES[state.view];
+  try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; }
+  catch (e) {
+    const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta);
+    ta.select(); try { document.execCommand("copy"); btn.textContent = "Copied"; } catch (_) { btn.textContent = "Copy failed"; }
+    ta.remove();
+  }
+  setTimeout(() => btn.textContent = "Copy Mermaid", 1500);
+});
+
+$("#svg").addEventListener("click", () => {
+  const svg = $("#diagram svg");
+  if (!svg) return;
+  const xml = new XMLSerializer().serializeToString(svg);
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([xml], { type: "image/svg+xml" }));
+  a.download = "team8-" + state.view + ".svg";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+});
+
+/* ---------- Business metrics tab ---------- */
+const ASSUME = "Assumption";
+// [id, label, default, unit, hint]
+const BIZ_FIELDS = [
+  ["Volume", [
+    ["emp", "Employees in scope", 10844, "FTE", "Swiss Life Group FTE at end of 2025 (Annual Report 2025, found via web search, not re-verified). Lower it if only some entities are in scope."],
+    ["rate", "IT tickets per employee per year", 6, "/yr", ASSUME + ". Replace with the real figure from service-desk reporting. Cross-check: the training data annualises to 30,000 tickets/yr for 5 entities."],
+    ["adopt", "Share of tickets using the AI-assisted flow", 70, "%", ASSUME + " (adoption)."]
+  ]],
+  ["Effort per ticket (manual to AI-assisted)", [
+    ["triageMan", "Triage effort, manual", 8, "min", ASSUME + ": read, classify, route, set priority."],
+    ["triageAi", "Triage effort, AI-assisted", 2, "min", ASSUME + ": review and approve the proposal."],
+    ["cycMan", "Clarification rounds, manual", 1.5, "rounds", ASSUME + ": back-and-forth on incomplete tickets."],
+    ["cycAi", "Clarification rounds, guided intake", 0.6, "rounds", ASSUME + "."],
+    ["cycAnalyst", "Analyst time per round", 8, "min", ASSUME + "."],
+    ["cycSub", "Submitter time per round", 5, "min", ASSUME + "."],
+    ["resRed", "Resolution effort saved by precedents", 15, "%", ASSUME + ": evidence-backed proposals."],
+    ["prevent", "Tickets never created (deflected)", 6, "%", ASSUME + ": 'the best ticket is the one that never gets created'."],
+    ["misMan", "Misrouted tickets, manual", 12, "%", ASSUME + "."],
+    ["misAi", "Misrouted tickets, AI-assisted", 4, "%", ASSUME + "."],
+    ["reroute", "Analyst effort per misroute", 20, "min", ASSUME + "."]
+  ]],
+  ["Turnaround (elapsed working hours)", [
+    ["queueMan", "Wait until triage, manual", 4, "h", ASSUME + "."],
+    ["queueAi", "Wait until triage, AI-assisted", 1, "h", ASSUME + "."],
+    ["cycHours", "Elapsed time per clarification round", 6, "h", ASSUME + "."],
+    ["resHours", "Resolution time, baseline", 24, "h", ASSUME + ". The synthetic data (median ~262 h) is not realistic enough to use as a baseline."],
+    ["rerouteDelay", "Delay per misroute", 16, "h", ASSUME + "."]
+  ]],
+  ["Costs", [
+    ["analystRate", "Analyst loaded cost", 85, "CHF/h", ASSUME + "."],
+    ["subRate", "Employee loaded cost", 90, "CHF/h", ASSUME + "."],
+    ["hoursFte", "Productive hours per FTE per year", 1600, "h", ASSUME + "."],
+    ["blockShare", "Tickets that block the submitter", 25, "%", ASSUME + " (soft benefit only)."],
+    ["blockFactor", "Productivity lost while blocked", 50, "%", ASSUME + " (soft benefit only)."]
+  ]],
+  ["Investment and run cost", [
+    ["oneTime", "One-time build and rollout", 250000, "CHF", ASSUME + ": integration, knowledge base, security review, training."],
+    ["llm", "LLM and API cost per ticket", 0.15, "CHF", ASSUME + "."],
+    ["hosting", "Hosting per year", 36000, "CHF", ASSUME + ": container apps, storage, monitoring."],
+    ["opsFte", "Maintenance effort", 0.5, "FTE", ASSUME + ": rules, knowledge base refresh, evaluation."],
+    ["fteCost", "Cost per maintenance FTE", 150000, "CHF/yr", ASSUME + "."],
+    ["years", "ROI horizon", 3, "years", ""]
+  ]]
+];
+// domain, dataset examples, share in training data (%), manual resolution effort (min, assumption)
+const DOMAIN_DEFAULTS = [
+  ["Email / service desk", 27.1, 15],
+  ["Workplace and collaboration", 7.8, 20],
+  ["Identity and access", 3.8, 15],
+  ["Trading and order management", 11.7, 45],
+  ["Investment ops and valuation", 19.4, 40],
+  ["Settlement and treasury", 7.5, 40],
+  ["Risk, regulatory and tax", 11.3, 45],
+  ["Client services and reporting", 7.6, 30],
+  ["Market data", 3.8, 35]
+];
+const PRESETS = {
+  Conservative: { prevent: 3, triageAi: 4, cycAi: 1.0, resRed: 5, misAi: 8, adopt: 40 },
+  Base: { prevent: 6, triageAi: 2, cycAi: 0.6, resRed: 15, misAi: 4, adopt: 70 },
+  Optimistic: { prevent: 12, triageAi: 1, cycAi: 0.3, resRed: 25, misAi: 2, adopt: 90 }
+};
+const NOTES = [
+  "Every number except the employee count is a placeholder assumption. Type your real figures into the fields on the left; all results update immediately.",
+  'Employees: Swiss Life Group had 10,844 FTE at the end of 2025 (<a href="https://www.swisslife.com/en/home/media/media-releases/newsfeed-eqs/adhoc/2026/20260415_0500.html">2025 Annual Report release</a>; figure taken from a web search summary).',
+  "Domain mix: taken from the 20,000 synthetic training tickets (Jan to Aug 2026, 5 business entities, 27% unstructured emailed tickets). It describes an asset manager, so an insurer's mix (claims, policy administration) will differ.",
+  "Ticket volume: tickets per year = employees x tickets per employee. AI-assisted volume removes the deflected share of the tickets that use the guided flow.",
+  "Savings = analyst hours saved x analyst cost + submitter hours saved x employee cost. Turnaround uses elapsed working hours: queue wait + clarification rounds + resolution + misroute delay.",
+  "First-time-complete rate is approximated as exp(-rounds), i.e. tickets that need no clarification if rounds are Poisson distributed.",
+  "ROI = (net annual benefit x horizon - one-time cost) / one-time cost. Payback = one-time cost / monthly net benefit. Discounting is ignored.",
+  "Savings are freed capacity valued at loaded cost. They become cash only if that capacity is redeployed or headcount is reduced; for the jury, the Conservative scenario is the safer headline.",
+  "The human approval step remains, so the model keeps a review effort (AI-assisted triage minutes) instead of assuming full automation."
+];
+
+const bizState = { p: {}, dom: [], soft: true, preset: "Base", ready: false };
+const nf = new Intl.NumberFormat("de-CH", { maximumFractionDigits: 0 });
+const nf1 = new Intl.NumberFormat("de-CH", { maximumFractionDigits: 1 });
+const fmt = (n, d) => Number.isFinite(n) ? (d ? nf1 : nf).format(n) : "n/a";
+const chf = (n) => Number.isFinite(n) ? "CHF " + nf.format(Math.round(n)) : "n/a";
+
+function bizDefaults() {
+  const p = {};
+  BIZ_FIELDS.forEach(g => g[1].forEach(f => p[f[0]] = f[2]));
+  Object.assign(p, PRESETS.Base);
+  return { p, dom: DOMAIN_DEFAULTS.map(d => ({ name: d[0], mix: d[1], res: d[2] })) };
+}
+
+function calc(p, dom, soft) {
+  const V = p.emp * p.rate, ad = p.adopt / 100, pv = p.prevent / 100;
+  const mixSum = dom.reduce((s, d) => s + d.mix, 0) || 1;
+  let hM = 0, hA = 0; const rows = [];
+  dom.forEach(d => {
+    const v = V * d.mix / mixSum;
+    const am = p.triageMan + p.cycMan * p.cycAnalyst + d.res + p.misMan / 100 * p.reroute;
+    const aa = p.triageAi + p.cycAi * p.cycAnalyst + d.res * (1 - p.resRed / 100) + p.misAi / 100 * p.reroute;
+    const m = v * am / 60, a = v * ((1 - ad) * am + ad * (1 - pv) * aa) / 60;
+    hM += m; hA += a;
+    rows.push({ name: d.name, vM: v, vA: v * (1 - ad * pv), hM: m, hA: a });
+  });
+  const vA = V * (1 - ad * pv);
+  const blend = (xm, xa) => vA > 0 ? ((1 - ad) * xm + ad * (1 - pv) * xa) / (1 - ad * pv) : xm;
+  const sM = V * p.cycMan * p.cycSub / 60;
+  const sA = V * ((1 - ad) * p.cycMan + ad * (1 - pv) * p.cycAi) * p.cycSub / 60;
+  const tM = p.queueMan + p.cycMan * p.cycHours + p.resHours + p.misMan / 100 * p.rerouteDelay;
+  const tA = p.queueAi + p.cycAi * p.cycHours + p.resHours * (1 - p.resRed / 100) + p.misAi / 100 * p.rerouteDelay;
+  const tB = blend(tM, tA);
+  const saveAnalyst = (hM - hA) * p.analystRate;
+  const saveSub = (sM - sA) * p.subRate;
+  const saveSoft = (tM - tB) * vA * p.blockShare / 100 * p.blockFactor / 100 * p.subRate;
+  const gross = saveAnalyst + saveSub + (soft ? saveSoft : 0);
+  const run = p.llm * V * ad + p.hosting + p.opsFte * p.fteCost;
+  const net = gross - run;
+  const total = net * p.years - p.oneTime;
+  return {
+    V, vA, hM, hA, sM, sA, tM, tA, tB, saveAnalyst, saveSub, saveSoft, gross, run, net, total, rows,
+    fteFreed: (hM - hA) / p.hoursFte,
+    roi: p.oneTime > 0 ? total / p.oneTime : NaN,
+    payback: net > 0 ? p.oneTime / net * 12 : NaN,
+    cptM: (hM * p.analystRate + sM * p.subRate) / V,
+    cptA: (hA * p.analystRate + sA * p.subRate + run) / vA,
+    ftcM: Math.exp(-p.cycMan), ftcA: blend(Math.exp(-p.cycMan), Math.exp(-p.cycAi)),
+    misM: p.misMan / 100, misA: blend(p.misMan / 100, p.misAi / 100)
+  };
+}
+
+function bizSave() {
+  try { localStorage.setItem("team8-biz-v2", JSON.stringify({ p: bizState.p, dom: bizState.dom, soft: bizState.soft, preset: bizState.preset })); } catch (e) {}
+}
+
+function numInput(id, val, step) {
+  return '<input type="number" inputmode="decimal" step="' + (step || "any") + '" min="0" id="' + id + '" value="' + val + '">';
+}
+
+function buildInputs() {
+  $("#inputs").innerHTML = BIZ_FIELDS.map((g, gi) => '<details class="grp"' + (gi === 0 ? ' open' : '') + '><summary>' + esc(g[0]) + '</summary>' + g[1].map(f =>
+    '<div class="f"><label for="in-' + f[0] + '">' + esc(f[1]) + '</label><span>' + numInput("in-" + f[0], bizState.p[f[0]]) +
+    '<span class="unit">' + esc(f[3]) + '</span></span>' + (f[4] ? '<small>' + esc(f[4]) + '</small>' : '') + '</div>').join("") + '</details>').join("");
+  $("#inputs").querySelectorAll("input").forEach(el => el.addEventListener("input", () => {
+    const v = parseFloat(el.value);
+    bizState.p[el.id.slice(3)] = Number.isFinite(v) && v >= 0 ? v : 0;
+    bizState.preset = null; markPreset(); updateBiz();
+  }));
+}
+
+function markPreset() {
+  $("#presets").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.preset === bizState.preset)));
+}
+
+function applyPreset(name) {
+  Object.assign(bizState.p, PRESETS[name]);
+  Object.keys(PRESETS[name]).forEach(k => { const el = $("#in-" + k); if (el) el.value = PRESETS[name][k]; });
+  bizState.preset = name; markPreset(); updateBiz();
+}
+
+function bar(label, m, a, unitFmt) {
+  const max = Math.max(m, a, 1e-9);
+  const row = (cls, v) => '<div class="cmp"><span>' + (cls === "man" ? esc(label) : "") + '</span><div class="track"><div class="fill ' + cls +
+    '" style="width:' + Math.max(1, v / max * 100) + '%"></div></div><span class="val">' + unitFmt(v) + '</span></div>';
+  return '<div style="margin-bottom:10px">' + row("man", m) + row("ai", a) + '</div>';
+}
+
+function updateBiz() {
+  const p = bizState.p, r = calc(p, bizState.dom, bizState.soft);
+  const pct = (a, b) => b > 0 ? "-" + fmt((1 - a / b) * 100) + "%" : "n/a";
+  const kpi = (label, val, sub, cls) => '<div class="kpi ' + (cls || "") + '"><span>' + esc(label) + '</span><b>' + val + '</b><em>' + sub + '</em></div>';
+  $("#kpis").innerHTML =
+    kpi("Tickets per year", fmt(r.V) + " → " + fmt(r.vA), "manual → AI-assisted (" + pct(r.vA, r.V) + ")") +
+    kpi("Analyst hours per year", fmt(r.hM) + " → " + fmt(r.hA), "≈ " + fmt(r.fteFreed, 1) + " FTE freed") +
+    kpi("Turnaround per ticket", fmt(r.tM, 1) + " h → " + fmt(r.tB, 1) + " h", pct(r.tB, r.tM) + " blended; " + fmt(r.tA, 1) + " h if fully AI-assisted") +
+    kpi("Gross savings per year", chf(r.gross), "analyst " + chf(r.saveAnalyst) + ", submitters " + chf(r.saveSub) + (bizState.soft ? ", soft " + chf(r.saveSoft) : ""), "good") +
+    kpi("Run cost per year", chf(r.run), "LLM + hosting + maintenance") +
+    kpi("Net benefit per year", chf(r.net), "one-time cost " + chf(p.oneTime), r.net >= 0 ? "good" : "bad") +
+    kpi("Payback", Number.isFinite(r.payback) ? fmt(r.payback, 1) + " months" : "no payback", "at current inputs", Number.isFinite(r.payback) ? "good" : "bad") +
+    kpi("ROI over " + fmt(p.years) + " years", Number.isFinite(r.roi) ? fmt(r.roi * 100) + "%" : "n/a", "net " + chf(r.total), r.total >= 0 ? "good" : "bad") +
+    kpi("Cost per ticket", "CHF " + fmt(r.cptM, 1) + " → " + fmt(r.cptA, 1), "handling incl. run cost") +
+    kpi("Complete on first submit", fmt(r.ftcM * 100) + "% → " + fmt(r.ftcA * 100) + "%", "approximation, no clarification needed") +
+    kpi("Misrouted tickets", fmt(r.misM * 100, 1) + "% → " + fmt(r.misA * 100, 1) + "%", "manual → AI-assisted");
+
+  $("#bars").innerHTML =
+    bar("Tickets / yr", r.V, r.vA, v => fmt(v)) +
+    bar("Analyst hours / yr", r.hM, r.hA, v => fmt(v)) +
+    bar("Turnaround (h)", r.tM, r.tB, v => fmt(v, 1)) +
+    bar("Cost / ticket (CHF)", r.cptM, r.cptA, v => fmt(v, 1)) +
+    '<div class="notes"><span style="color:#DA63AD">■</span> manual &nbsp; <span style="color:#9E258A">■</span> AI-assisted (blended by adoption)</div>';
+
+  const miniBar = (v, max, txt) => '<div class="mc"><div class="mini"><i style="width:' + (max > 0 ? Math.max(2, Math.min(100, v / max * 100)) : 0) + '%"></i></div><span>' + txt + '</span></div>';
+  const head = ["Scenario", "AI tickets/yr", "Analyst h saved", "FTE freed", "Net/yr", "Payback", "ROI", "Turnaround"];
+  const scen = Object.keys(PRESETS).map(name => [name, calc(Object.assign({}, p, PRESETS[name]), bizState.dom, bizState.soft)]);
+  const maxFte = Math.max.apply(null, scen.map(s => s[1].fteFreed));
+  let sc = '<table><tr>' + head.map(h => '<th>' + h + '</th>').join("") + '</tr>';
+  scen.forEach(s => {
+    const q = s[1];
+    sc += '<tr><td>' + s[0] + '</td><td>' + fmt(q.vA) + '</td><td>' + fmt(q.hM - q.hA) + '</td><td>' + miniBar(q.fteFreed, maxFte, fmt(q.fteFreed, 1)) + '</td><td>' + chf(q.net) +
+      '</td><td>' + (Number.isFinite(q.payback) ? fmt(q.payback, 1) + " mo" : "none") + '</td><td>' + (Number.isFinite(q.roi) ? fmt(q.roi * 100) + "%" : "n/a") +
+      '</td><td>' + pct(q.tB, q.tM) + '</td></tr>';
+  });
+    $("#scen").innerHTML = sc + '</table>';
+
+  const upd = $("#dom").querySelector("table");
+  if (!upd) {
+    let t = '<table><tr><th>Domain</th><th>Mix %</th><th>Manual effort (min)</th><th>Tickets manual</th><th>Tickets AI</th><th>Analyst h saved</th></tr>';
+    bizState.dom.forEach((d, i) => {
+      t += '<tr><td>' + esc(d.name) + '</td><td>' + numInput("dm-" + i, d.mix, "0.1") + '</td><td>' + numInput("dr-" + i, d.res, "1") +
+        '</td><td class="o-vm"></td><td class="o-va"></td><td class="o-hs"></td></tr>';
+    });
+    t += '<tr><th>Total</th><th id="mixTot"></th><th></th><th id="tVm"></th><th id="tVa"></th><th id="tHs"></th></tr></table>';
+    $("#dom").innerHTML = t;
+    $("#dom").querySelectorAll("input").forEach(el => el.addEventListener("input", () => {
+      const i = +el.id.slice(3), v = parseFloat(el.value), val = Number.isFinite(v) && v >= 0 ? v : 0;
+      bizState.dom[i][el.id[1] === "m" ? "mix" : "res"] = val;
+      updateBiz();
+    }));
+  }
+  const cells = (c) => $("#dom").querySelectorAll(c);
+  const maxHs = Math.max.apply(null, r.rows.map(x => x.hM - x.hA));
+  r.rows.forEach((row, i) => {
+    cells(".o-vm")[i].textContent = fmt(row.vM); cells(".o-va")[i].textContent = fmt(row.vA); cells(".o-hs")[i].innerHTML = miniBar(row.hM - row.hA, maxHs, fmt(row.hM - row.hA));
+  });
+  $("#mixTot").textContent = fmt(bizState.dom.reduce((s, d) => s + d.mix, 0), 1) + "% (normalised)";
+  $("#tVm").textContent = fmt(r.V); $("#tVa").textContent = fmt(r.vA); $("#tHs").textContent = fmt(r.hM - r.hA);
+  bizSave();
+}
+
+function initBiz() {
+  if (bizState.ready) return;
+  bizState.ready = true;
+  const d = bizDefaults();
+  bizState.p = d.p; bizState.dom = d.dom;
+  try {
+    const s = JSON.parse(localStorage.getItem("team8-biz-v2") || "null");
+    if (s && s.p && s.dom && s.dom.length === d.dom.length) {
+      Object.keys(d.p).forEach(k => { if (Number.isFinite(s.p[k])) bizState.p[k] = s.p[k]; });
+      s.dom.forEach((x, i) => { if (Number.isFinite(x.mix) && Number.isFinite(x.res)) { bizState.dom[i].mix = x.mix; bizState.dom[i].res = x.res; } });
+      bizState.soft = s.soft !== false; bizState.preset = s.preset || null;
+    }
+  } catch (e) {}
+  $("#presets").innerHTML = Object.keys(PRESETS).map(n => '<button data-preset="' + n + '" aria-pressed="false">' + n + '</button>').join("");
+  $("#presets").querySelectorAll("button").forEach(b => b.addEventListener("click", () => applyPreset(b.dataset.preset)));
+  buildInputs();
+  $("#soft").checked = bizState.soft;
+  $("#soft").addEventListener("change", () => { bizState.soft = $("#soft").checked; updateBiz(); });
+  $("#reset").addEventListener("click", () => {
+    const f = bizDefaults(); bizState.p = f.p; bizState.dom = f.dom; bizState.preset = "Base"; bizState.soft = true;
+    $("#soft").checked = true; buildInputs(); $("#dom").innerHTML = ""; markPreset(); updateBiz();
+  });
+  $("#notes").innerHTML = NOTES.map(n => '<li>' + (n.indexOf("<a ") >= 0 ? n : esc(n)) + '</li>').join("");
+  markPreset(); updateBiz();
+}
+
+if (typeof mermaid === "undefined") {
+  $("#diagram").innerHTML = '<div class="err">Mermaid could not be loaded from cdn.jsdelivr.net. Check your connection, or paste workflow.mmd / architecture.mmd into mermaid.live.</div>';
+} else {
+  render();
+}
+</script>
+</body>
+</html>

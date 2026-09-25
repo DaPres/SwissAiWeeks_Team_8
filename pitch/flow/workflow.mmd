@@ -1,0 +1,40 @@
+flowchart TD
+    U(["Employee / submitter"]):::user
+
+    subgraph S1["Stage 1 · Guided Intake (0–23 s)"]
+        D["Describes issue in natural language"]
+        M{"Missing info?<br/>real-time check"}
+        Q["Focused follow-up question"]
+        C["Complete ticket"]
+        D --> M
+        M -- yes --> Q --> D
+        M -- no --> C
+    end
+    U --> D
+
+    subgraph S2["Stage 2 · Triage & Proposal (23–60 s)"]
+        R["Business rules"]:::input
+        K[("Knowledge base<br/>historical resolutions")]:::input
+        A["AI reasoning"]:::input
+        E["Triage engine<br/>analyses complete ticket"]:::engine
+        T["Identify team, service<br/>& priority"]:::engine
+        P["Retrieve historical<br/>precedents"]:::engine
+        X["Evidence-backed<br/>resolution proposal"]:::engine
+        R --> E
+        K --> E
+        A --> E
+        E --> T --> P --> X
+        K -. precedents .-> P
+    end
+    C --> E
+
+    X --> H{"Human analyst<br/>review"}:::human
+    H -- approve --> Done(["Ticket routed / resolved"]):::user
+    H -- edit --> Ed["Analyst edits proposal"]:::human --> Done
+
+    class D,M,Q,C intake
+    classDef user fill:#FBF1F7,stroke:#A0268B,color:#2C1733
+    classDef intake fill:#BB399B,stroke:#7d1c6e,color:#ffffff
+    classDef input fill:#D8506F,stroke:#BD377F,color:#ffffff
+    classDef engine fill:#BB399B,stroke:#7d1c6e,color:#ffffff
+    classDef human fill:#FFFFFF,stroke:#A0268B,color:#2C1733,stroke-width:3px

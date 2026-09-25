@@ -1,0 +1,85 @@
+flowchart LR
+    Sub(["Submitter"]):::user
+    Ana(["L2 analyst"]):::user
+
+    subgraph FE["Frontend · triage-explorer/ (React + Vite)"]
+        IUI["Guided intake UI"]
+        AUI["Analyst UI<br/>triage + evidence"]
+    end
+
+    subgraph BE["Backend · backend/ (FastAPI, Python)"]
+        API["REST + WebSocket service"]
+        HL["/api/health"]
+    end
+
+    subgraph TM["TriageMate engine · Main2/ (Python · 129 unit tests)"]
+        EN["POST /api/intake/enrich"]
+        AS["POST /api/intake/assist"]
+        WS["WS /ws/intake/assist"]
+        RU["Rule-based triage<br/>service · team · assignee"]
+        MX["Urgency × Impact matrix<br/>→ priority"]
+        KB[("SQLite knowledge base")]
+        LL["LLM integration"]
+    end
+
+    subgraph PR["LLM providers"]
+        OA["OpenAI"]
+        AZ["Azure"]
+        AP["Apertus"]
+    end
+
+    subgraph DATA["Data"]
+        TD[("20,000 synthetic tickets<br/>pan-European asset manager")]
+        CH["20 blind-eval<br/>challenge tickets"]
+    end
+
+    subgraph EV["Evaluation"]
+        OUT["Triage output: work type, service, team,<br/>assignee, priority, status, resolution comment"]
+        SC["Scoring: routing · matrix-consistent<br/>priority · plausible commentary"]
+    end
+
+    subgraph OPS["Build & deploy"]
+        DV["Local: aspire run<br/>(apphost.mts)"]
+        TG["git tag"]
+        GH["GitHub Actions"]
+        AC["Container registry<br/>aiweeksteam8.azurecr.io/triage"]
+        CA["Azure Container Apps"]
+        HC["Health check<br/>/api/health"]
+        TG --> GH --> AC --> CA --> HC
+    end
+
+    Sub --> IUI
+    Ana --> AUI
+    IUI --> API
+    AUI --> API
+    API -.-> EN
+    API -.-> AS
+    API -.-> WS
+    EN --> RU
+    AS --> RU
+    WS --> RU
+    RU --> MX
+    RU --> KB
+    RU --> LL
+    LL --> OA
+    LL --> AZ
+    LL --> AP
+    TD -- "KB rebuilt on each deploy" --> KB
+    CH --> RU
+    RU --> OUT --> SC
+    CA -. serves .-> HL
+    DV -. runs .-> API
+
+    class IUI,AUI,API,HL fe
+    class EN,AS,WS,RU,MX,LL engine
+    class KB,TD,CH data
+    class OA,AZ,AP llm
+    class DV,TG,GH,AC,CA,HC ops
+    class OUT,SC eval
+    classDef user fill:#FBF1F7,stroke:#A0268B,color:#2C1733
+    classDef fe fill:#E58CC1,stroke:#A83196,color:#2C1733
+    classDef engine fill:#BB399B,stroke:#7d1c6e,color:#ffffff
+    classDef data fill:#D8506F,stroke:#BD377F,color:#ffffff
+    classDef llm fill:#F9E4F0,stroke:#DA63AD,color:#2C1733
+    classDef ops fill:#EDE3EB,stroke:#8a6a86,color:#3a2a40
+    classDef eval fill:#FFFFFF,stroke:#A0268B,color:#2C1733,stroke-width:3px
