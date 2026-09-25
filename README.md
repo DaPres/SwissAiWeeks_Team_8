@@ -8,8 +8,8 @@
 [![Swisscom Apertus Ready](https://img.shields.io/badge/Swisscom%20Apertus-Sovereign%20Swiss%20AI-red.svg)](https://www.apertus-ai.org/)
 [![Zero-Leak PII Shield](https://img.shields.io/badge/Security-Zero--Leak%20PII%20Gate-success.svg)](#1-zero-leak-safety-gate-pii-shield)
 [![ITIL Deterministic 5x5](https://img.shields.io/badge/ITIL%20Matrix-Deterministic%205x5-blue.svg)](#2-deterministic-55-itil-priority-engine)
-[![Compound AI System](https://img.shields.io/badge/Architecture-Compound%20AI%20System-orange.svg)](#-compound-ai-architecture)
-[![100% Reproducible](https://img.shields.io/badge/Testing-100%25%20Reproducible%20%2B%20Offline-purple.svg)](#-quickstart--reproducibility)
+[![Compound AI System](https://img.shields.io/badge/Architecture-Compound%20AI%20System-orange.svg)](#compound-ai-architecture)
+[![100% Reproducible](https://img.shields.io/badge/Testing-100%25%20Reproducible%20%2B%20Offline-purple.svg)](#quickstart)
 
 ---
 
@@ -34,6 +34,7 @@ Enterprise IT service desks face a compounding double-sided challenge:
 
 ---
 
+<a id="compound-ai-architecture"></a>
 ## 🏗️ Compound AI Architecture
 
 Rather than relying on a fragile, monolithic LLM prompt, **team8** is engineered as a **Compound AI System**: AI handles semantic parsing, evidence extraction, and text synthesis; pure deterministic code handles security gates, ITIL matrix calculation, and SLA enforcement.
@@ -128,6 +129,7 @@ Before writing code, our team performed deep data forensics on the **20,000 synt
 
 ---
 
+<a id="quickstart"></a>
 ## 🚀 Quickstart & Reproducibility
 
 ### Option 1: Run the Intake Partner UI (`intake/`)
