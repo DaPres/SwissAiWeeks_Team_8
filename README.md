@@ -15,8 +15,8 @@
 
 ## ⚡ Executive Quick Links
 
-| 🎥 **[60s Split-Screen Movie Script](pitch/FinalPitchPlaybook.md#1-the-60-second-split-screen-movie-timeline)** | 📖 **[3-Min Jury Q&A Defense Playbook](pitch/FinalPitchPlaybook.md#4-master-3-minute-jury-qa-defense-playbook)** | 🌐 **[Intake Partner UI (`intake/`)](intake/)** | ⚙️ **[TriageMate Core Engine (`Main2/`)](Main2/)** | 📊 **[Fast E2E PoC & Dashboard](backend/)** |
-|---|---|---|---|---|
+| 🎥 **[60s Split-Screen Movie Script](pitch/FinalPitchPlaybook.md#1-the-60-second-split-screen-movie-timeline)** | 📖 **[3-Min Jury Q&A Defense](pitch/FinalPitchPlaybook.md#4-master-3-minute-jury-qa-defense-playbook)** | 🌐 **[Intake UI (`intake/`)](intake/)** | ⚙️ **[TriageMate (`Main2/`)](Main2/)** | 📊 **[Fast PoC](backend/)** | 📋 **[Challenge Brief](CHALLENGE.md)** |
+|---|---|---|---|---|---|
 
 ---
 
@@ -159,6 +159,7 @@ cd Main2 && pytest tests -q
 ---
 
 ## 📋 Challenge Reference: ITIL Matrix & Critical Services
+*(For the full original hackathon problem statement and dataset description, see [`CHALLENGE.md`](CHALLENGE.md))*
 
 ### Incident Priority Calculation Matrix
 
