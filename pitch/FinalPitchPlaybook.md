@@ -143,3 +143,70 @@ The 3-minute Q&A is where the jury tests whether this is a superficial hackathon
 > * Day 1: One team member built the complete rapid E2E baseline with a dashboard to de-risk the challenge and guarantee a working fallback.
 > * Simultaneously, our team split: one stream engineered the real-time Intake Partner UX, while another built the TriageMate core engine with the ITIL matrix, PII gate, and evaluation harness.
 > * Day 2: We merged both into `main` and wired them together into our flagship solution. We didn't debate—we engineered in parallel."*
+
+---
+
+### Category G: Submission & Single Hyperlink Strategy
+
+#### Q10: "Why did you choose your GitHub repository as your single submission hyperlink instead of a direct live web app URL?"
+> **Answer:**
+> *"In enterprise software—especially for a financial institution like Swiss Life—stability and auditability are non-negotiable. 
+> A live web link carries the constant risk of third-party API rate limits, cold-start latency, or temporary network glitches while judges are clicking around.
+> Instead, our **GitHub repository with a polished README landing page** provides a 100% resilient, zero-downtime portal:
+> 1. **For Executive Judges:** A 30-second experience featuring our 60-second split-screen pitch movie, clear ROI metrics, and executive summaries.
+> 2. **For Technical Architects:** Full auditability—inspecting our deterministic 5×5 ITIL code, PII safety gates, Swisscom Apertus integration, and reproducible Docker quickstart.
+> 3. **Interactive Hub:** The landing page links directly to hosted live demo instances, giving judges the best of all worlds without single-point-of-failure risks."*
+
+---
+
+## 5. The "Exactly One Hyperlink" Strategy: Executive GitHub Landing Page
+
+When submitting **exactly one hyperlink** to the jury, the single best choice is the **GitHub Repository Root (`https://github.com/DaPres/SwissAiWeeks_Team_8`)** with an executive-grade, polished `README.md` that functions as a high-impact product landing page.
+
+### Why This is the Winning Choice:
+1. **Zero Demo-Crash Risk:**
+   * Live web apps deployed on free or shared tiers can hit cold-start timeouts, token rate limits, or transient errors during jury reviews.
+   * GitHub has **100% uptime, fast global CDNs, and zero crash risk**.
+2. **"One Link to Rule Them All":**
+   * A GitHub landing page is not a dead end. From this single URL, judges can:
+     * 🎥 **Watch the 60s split-screen pitch movie** (linked directly at the top).
+     * 🌐 **Access hosted demo environments** (Intake UI, TriageMate, or Dashboard).
+     * 📖 **Inspect the complete Pitch Playbook and Q&A defense** ([`pitch/FinalPitchPlaybook.md`](file:///home/romano/SwissAiWeeks_Team_8/SwissAiWeeks_Team_8/pitch/FinalPitchPlaybook.md)).
+     * 💻 **Review production-grade source code, unit tests, and schemas**.
+3. **Appeals to Both Judge Profiles:**
+   * **Executive Judges:** Skim the hero section, watch the 1-minute video, and digest the business impact metrics.
+   * **Technical Judges:** Dive into the Mermaid architecture diagrams, 5×5 ITIL priority implementation, and zero-leak PII sanitization.
+
+### Blueprint for the Executive `README.md` Landing Page:
+
+```text
+1. HERO BANNER & 60s VIDEO CTA
+   ├── Project Title: TriageMate & Intake Partner
+   ├── Badges: [Swisscom Apertus Ready] [Zero-Leak PII Shield] [Deterministic ITIL 5x5] [100% Reproducible]
+   └── Primary Action: 🎥 Watch the 60-Second Split-Screen Pitch Movie
+
+2. EXECUTIVE SUMMARY & AMBITION
+   └── "The best ticket is the one that never gets created. When support is needed, it arrives with everything required to act."
+
+3. COMPOUND AI ARCHITECTURE DIAGRAM (Mermaid)
+   ├── Track A: Front-of-House (Intake Partner with 80% Readiness Gate)
+   ├── Track B: Back-of-House (TriageMate Engine with Deterministic ITIL & KB Citations)
+   └── Operational Fallback: Day 1 Rapid E2E Baseline & Analytics Dashboard
+
+4. THE FOUR ENTERPRISE PILLARS
+   ├── 1. Zero-Leak Safety Gate (Pre-LLM PII masking of IBANs/names + injection defense)
+   ├── 2. Deterministic 5×5 ITIL Matrix (Pure code priority mapping, zero hallucination)
+   ├── 3. Swiss AI Sovereignty (Native Swisscom Apertus integration + offline mode)
+   └── 4. Grounded Resolution Notes (Mined [KB-01] to [KB-26] playbooks with quoted evidence)
+
+5. DATASET FORENSICS & REALITY CHECK
+   └── Summary of 20k tickets collapsing into 173 unique texts; why naive training fails.
+
+6. QUICKSTART & REPRODUCIBILITY
+   └── 2-minute local setup commands & Docker one-liner.
+
+7. REPOSITORY NAVIGATION & ARTIFACTS
+   ├── 📄 Final Pitch Playbook & 3-Min Q&A Defense (pitch/FinalPitchPlaybook.md)
+   ├── 🛠️ TriageMate Core Engine (Main2/)
+   └── 💻 Intake Partner UI (intake/)
+```
