@@ -1,6 +1,8 @@
 # 🤝 team8 (`team_mate`)
 ### *The Enterprise Incident Intake & Triage Teammate*
 
+🌐 **[Open the live Intake app](https://intake.ambitiousbay-1f7011ae.swedencentral.azurecontainerapps.io/)**
+
 📸 **[View product screenshots](screenshots/)** — Outlook client resolution and an LEI regulatory-reporting incident, from intake to expert handover.
 
 > ### *"Thanks team8, you did gr8!"* 🚀

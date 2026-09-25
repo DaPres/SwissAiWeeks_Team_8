@@ -49,12 +49,40 @@ class SuggestionTests(unittest.TestCase):
         self.assertNotIn('evidence_needed', payload)
         self.assertNotIn('readiness_markers', payload)
         self.assertEqual(payload['additional_details'], {})
-        self.assertIn('put an evidence improvement first', body['instructions'])
+        self.assertEqual(body['text']['format']['schema']['properties']['improvements']['maxItems'], 1)
 
     @patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'})
     @patch('suggestions.urlopen')
     def test_incomplete_response_is_not_shown(self, request):
         record = remember_evaluation('Broken', evaluation())
         request.return_value = io.BytesIO(json.dumps({'status': 'incomplete', 'output': []}).encode())
+        with self.assertRaises(QualityError):
+            suggest_description({'evaluationId': record['evaluationId']})
+
+    @patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'})
+    @patch('suggestions.urlopen')
+    def test_description_and_explicit_negative_answers_reach_the_model_intact(self, request):
+        description = 'SharePoint shows a blank screen with "loading", nothing else, no troubleshooting performed.'
+        record = remember_evaluation(description, {'inferred': {'workType': 'Incident'},
+                                     'unresolvedFields': ['urgency', 'priority']}, {'context': "I don't know when it began"})
+        guidance = {'summary': 'The symptom is clear.', 'improvements': [
+            {'field': 'urgency', 'title': 'Deadline', 'detail': 'Is there a deadline for accessing SharePoint?'}]}
+        request.return_value = io.BytesIO(json.dumps({'status': 'completed', 'output': [
+            {'type': 'message', 'content': [{'type': 'output_text', 'text': json.dumps(guidance)}]}]}).encode())
+        self.assertEqual(suggest_description({'evaluationId': record['evaluationId']}), guidance)
+        payload = json.loads(json.loads(request.call_args.args[0].data)['input'])
+        self.assertEqual(payload['description'], description)
+        self.assertEqual(payload['additional_details']['context'], "I don't know when it began")
+        self.assertEqual(payload['unresolved_fields'], ['urgency', 'priority'])
+
+    @patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'})
+    @patch('suggestions.urlopen')
+    def test_multiple_questions_are_rejected(self, request):
+        record = remember_evaluation('Broken', evaluation())
+        guidance = {'summary': 'More detail would help.', 'improvements': [
+            {'field': 'context', 'title': 'Timing', 'detail': 'When did it start?'},
+            {'field': 'impact', 'title': 'Scope', 'detail': 'Who is affected?'}]}
+        request.return_value = io.BytesIO(json.dumps({'status': 'completed', 'output': [
+            {'type': 'message', 'content': [{'type': 'output_text', 'text': json.dumps(guidance)}]}]}).encode())
         with self.assertRaises(QualityError):
             suggest_description({'evaluationId': record['evaluationId']})

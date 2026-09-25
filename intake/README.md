@@ -41,7 +41,7 @@ Set `JEV_API_KEY` and `OPENAI_API_KEY` in `backend/.env` (see `backend/.env.exam
 
 `JEV_MODEL` defaults to `jev-latest`. The five question definitions come from `Jev.http`; its sample state is replaced by the live description and manual selections. The API returns inferred fields and unresolved fields without a fabricated description-quality score. Manual values take precedence during drafting; the final neural-engine review can correct them. No auxiliary classification or quality questions are sent. The shared backend supplies service, assignee, and resolutions after submission.
 
-OpenAI sidebar suggestions now assess the description and current field selections directly. They do not depend on the removed Jev quality markers, and remain advisory.
+OpenAI sidebar suggestions assess the entire description and current field selections and ask at most one genuinely unanswered question. Concrete symptoms count as evidence, and explicit answers such as no troubleshooting performed or unknown timing are accepted. Once the symptom is clear, guidance favors missing business context such as a deadline or blocked work; actionable reports and simple information questions need no extra diagnostic checklist. Suggestions remain advisory. Opt-in live semantic regressions run with `RUN_LIVE_SUGGESTION_TESTS=1 uv run python -m unittest test_suggestion_behavior -v` from `intake/`.
 
 `service-teams.json` supplies routing context to Jev and mirrors the ownership mapping in `backend/app/catalog.py`. Keep these catalogues in sync when ownership changes; users can describe the affected service without knowing the owning department.
 
