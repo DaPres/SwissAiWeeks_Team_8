@@ -84,10 +84,11 @@ Rules:
   * Impact: decide critical vs non-critical service and full vs partial unavailability first, then the scope:
     highest = a critical service fully down for key operations (or all funds/clients affected);
     high = a critical service partially unavailable or degraded (a failed job, feed, queue or workflow; blocked,
-    stale or wrong output), or financial counterparts (brokers, custodians, clients) affected - even when only one
-    business entity is affected ("1+ business entities" includes one);
-    medium = a non-critical service fully unavailable, or a problem limited to one business entity or team that does
-    not degrade a critical service; low = a non-critical service partially unavailable, or individuals affected.
+    stale or wrong output), or two or more business entities affected, or financial counterparts (brokers,
+    custodians, clients) affected - each criterion is enough on its own;
+    medium = a non-critical service fully unavailable, or at most one business entity affected;
+    low = a non-critical service partially unavailable, or individuals affected.
+    The service criteria come first: a degraded critical service is high even when only one entity is affected.
   * Urgency: deadlines (cut-offs, NAV/publication times, regulatory filings), whether a workaround exists and how
     painful it is, and any regulatory breach or security compromise (a suspected compromise is highest urgency and
     at least high impact on a critical service).
