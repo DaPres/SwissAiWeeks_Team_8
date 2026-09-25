@@ -15,7 +15,7 @@
 
 ## ⚡ Executive Quick Links
 
-| 🎥 **[60s Split-Screen Movie Script](pitch/FinalPitchPlaybook.md#1-the-60-second-split-screen-movie-timeline)** | 🏆 **[Challenge Result JSON](team8-challenge-result.json)** | 🌐 **[Intake UI (`intake/`)](intake/)** | ⚙️ **[Next-Gen Engine (`Main2/`)](Main2/)** | 📊 **[Fast Baseline (`backend/`)](backend/)** | 📋 **[Challenge Brief](CHALLENGE.md)** |
+| 🎥 **[team8 pitch video](team8pitch.mp4)** | 🏆 **[Challenge Result JSON](team8-challenge-result.json)** | 🌐 **[Intake UI (`intake/`)](intake/)** | ⚙️ **[Next-Gen Engine (`Main2/`)](Main2/)** | 📊 **[Fast Baseline (`backend/`)](backend/)** | 📋 **[Challenge Brief](CHALLENGE.md)** |
 |---|---|---|---|---|---|
 
 ---
@@ -271,6 +271,7 @@ SwissAiWeeks_Team_8/
 ├── 📂 infra/                        # Cloud infrastructure & Aspire AppHost orchestration
 ├── 📂 .github/                      # CI/CD workflows (release packaging, automated tests)
 ├── 📊 team8-challenge-result.json   # Official hackathon blind evaluation challenge output (20 tickets)
+├── 🎥 team8pitch.mp4                # Team 8 video pitch presentation
 └── 🐳 Dockerfile                    # Container build for full service stack
 ```
 
