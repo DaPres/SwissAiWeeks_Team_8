@@ -3,14 +3,13 @@ import { Button } from '@base-ui/react/button';
 import { Popover } from '@base-ui/react/popover';
 import { chipFields, resolvedFields, calculatePriority } from './incident-fields.js';
 import { PriorityEditor } from './IncidentFieldEditors.jsx';
-import { ChevronDown, SquareCheck, Moon, Sun } from 'lucide-react';
+import { ChevronDown, Check, Moon, Sun } from 'lucide-react';
 import '@fontsource-variable/geist';
 import AdvicePanel from './AdvicePanel.jsx';
 import AccountSwitcher from './AccountSwitcher.jsx';
 import { accounts } from './accounts.js';
 import IncidentDialog from './IncidentDialog.jsx';
 import ValidationMessage from './ValidationMessage.jsx';
-import JevDebug from './JevDebug.jsx';
 import IncidentsView from './IncidentsView.jsx';
 import { useReadiness } from './useReadiness.js';
 import { decideIncident, listIncidents, processIncident } from './quality-api.js';
@@ -45,8 +44,8 @@ function EnrichmentChip({ id, config, onSave, index, disabled, values, loading, 
     <Popover.Trigger type="button" className="field-chip" data-filled={Boolean(value)} data-loading={loading && !value}
       style={{ animationDelay: `${index * 45}ms`, '--chip-delay': `${loadingIndex * 220}ms` }} disabled={disabled}
       aria-label={`Edit ${config.label}${value ? `: ${label}` : ''}`} title={config.label}>
-      <span className="chip-label" key={label}>{label}</span>
-      {value ? <SquareCheck size={15} aria-hidden="true" /> : <ChevronDown size={12} aria-hidden="true" />}
+      <span className="chip-label" key={label}>{config.label}{value ? `: ${label}` : ''}</span>
+      {value ? <Check size={15} strokeWidth={1.75} aria-hidden="true" /> : <ChevronDown size={12} aria-hidden="true" />}
     </Popover.Trigger>
     <Popover.Portal><Popover.Positioner className="chip-positioner" side="bottom" align="start" sideOffset={8} collisionPadding={12}>
       <Popover.Popup className="chip-popover">
@@ -194,21 +193,19 @@ export default function App() {
   }
 
   return <div className="app-shell min-h-svh bg-[var(--page)] text-[var(--text)] transition-colors duration-200">
-    <aside className="sidebar">
-      <div className="sidebar-brand"><a href="/" className="wordmark" aria-label="team8 home">team8</a></div>
-      <nav aria-label="Main navigation">
+    <div className="workspace">
+    <header className="app-header">
+      <a href="/" className="wordmark" aria-label="team8 home">team8</a>
+      <nav className="header-nav" aria-label="Main navigation">
         <Button type="button" className="nav-item" aria-current={view === 'create' ? 'page' : undefined} onClick={() => { setView('create'); setSelectedIncident(null); }}>Create Incident</Button>
         <Button type="button" className="nav-item" aria-current={view === 'incidents' ? 'page' : undefined} onClick={() => { setView('incidents'); setSelectedIncident(null); }}>My Incidents</Button>
       </nav>
-    </aside>
-    <div className="workspace">
-    <header className="app-header">
       <div className="header-controls"><AccountSwitcher account={account} onChange={switchAccount} />
         <Button type="button" className="theme-toggle" onClick={() => setDark(value => !value)} aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}>{dark ? <Sun size={17} /> : <Moon size={17} />}</Button></div>
     </header>
     <main className={`workspace-main ${view === 'create' ? 'workspace-create' : ''}`}>
       {view === 'create' ? <div className="create-stage">
-        <div className="intake-layout" data-single={!showEnrichment}><div className="input-column"><form id="incident-form" onSubmit={submit} className={`composer enter ${typing ? 'typing-glow' : ''}`}>
+        <div className="intake-layout"><div className="input-column"><form id="incident-form" onSubmit={submit} className={`composer enter ${typing ? 'typing-glow' : ''}`}>
           <label className="sr-only" htmlFor="incident-description">What do you need help with?</label>
           <textarea ref={descriptionInput} id="incident-description" placeholder="What do you need help with?" value={description} onPointerDown={dismissValidation} onFocus={dismissValidation} onChange={event => edit(event.target.value)} maxLength={10000} disabled={saving} spellCheck rows={3} />
           {hasText && <div className="composer-footer appear">
@@ -220,7 +217,6 @@ export default function App() {
         </div>
         {showEnrichment && !error && <AdvicePanel readiness={panelReadiness} paused={typing} onRetry={() => setAttempt(value => value + 1)} />}
         </div>
-        <JevDebug readiness={readiness} />
       </div> : <IncidentsView account={account} records={records} loading={listState.loading} error={listState.error}
         onRetry={() => setListRefresh(value => value + 1)} selectedId={selectedIncident} onSelect={setSelectedIncident}
         onReviewFix={record => setHandoff({ phase: 'fix', record })} />}

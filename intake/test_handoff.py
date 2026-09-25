@@ -106,37 +106,62 @@ class HandoffTests(unittest.TestCase):
             with self.assertRaises(IncidentError):
                 decide_incident(saved['id'], 'resolved', 'client', db_path)
 
-    def test_manual_comment_and_resolution_survive_and_priority_is_recomputed(self):
+    def test_engine_can_correct_manual_chips_and_persists_the_audit(self):
+        manual = dict(SELECTED)
+        draft = validate_handoff({**request(), 'details': manual, 'selected': manual})
+        result = enrichment('INC-000000000002', False)
+        result.update({'workType': 'Service Request', 'team': 'Risk & Controls',
+                       'urgency': 'low', 'impact': 'lowest', 'priority': 'highest'})
         with tempfile.TemporaryDirectory() as directory:
-            draft = validate_handoff(request())
-            draft['manual'] = {'assignee': ASSIGNEES[-1], 'resolution': 'cannot reproduce',
-                               'resolutionComment': 'Could not reproduce after checking the same order with the reporter.',
-                               'urgency': 'lowest', 'impact': 'lowest'}
-            result = enrichment('INC-0123456789AB', False)
-            result['priority'] = 'highest'
-            saved = save_processed_incident(draft, result, result['id'], Path(directory) / 'db')
-            self.assertEqual(saved['incident']['Priority'], 'lowest')
-            self.assertEqual(saved['incident']['Resolution'], 'cannot reproduce')
-            self.assertEqual(saved['incident']['Assignee'], ASSIGNEES[-1])
-            self.assertEqual(saved['incident']['All Comments'][-1], ASSIGNEES[-1] + ': ' + draft['manual']['resolutionComment'])
-
-    def test_manual_chips_survive_conflicting_engine_result(self):
-        manual = {'workType': 'Service Request', 'department': 'Risk & Controls',
-                  'urgency': 'low', 'impact': 'lowest', 'priority': 'lowest'}
-        token = remember_evaluation(DESCRIPTION, {**parse_answers({'answers': {
-            key: {'noul': .95} for key in CRITERIA}}), 'inferred': SELECTED}, manual)
-        draft = validate_handoff({**request(), 'details': manual, 'selected': manual,
-                                  'evaluationId': token['evaluationId']})
-        with tempfile.TemporaryDirectory() as directory:
-            saved = save_processed_incident(draft, enrichment('INC-000000000002'),
-                                            'INC-000000000002', Path(directory) / 'db')
+            path = Path(directory) / 'db'
+            saved = save_processed_incident(draft, result, result['id'], path)
+            reloaded = list_incidents('client', path)[0]
+            self.assertEqual(reloaded, saved)
+            self.assertEqual(list_incidents('Trading Support', path), [])
+            self.assertEqual(list_incidents('Risk & Controls', path), [saved])
         incident, enriched = saved['incident'], saved['enriched']
         self.assertEqual(incident['Work type'], 'Service Request')
         self.assertEqual(incident['Service Team(s)'], ['Risk & Controls'])
         self.assertEqual((incident['Urgency'], incident['Impact'], incident['Priority']), ('low', 'lowest', 'lowest'))
-        self.assertEqual(enriched['team'], 'Risk & Controls')
-        self.assertEqual(enriched['workType'], 'Service Request')
         self.assertEqual(enriched['expertResolution']['team'], 'Risk & Controls')
+        self.assertEqual(enriched['fieldCorrections'], {
+            'Work type': {'before': 'Incident', 'after': 'Service Request'},
+            'Service Team(s)': {'before': ['Trading Support'], 'after': ['Risk & Controls']},
+            'Urgency': {'before': 'high', 'after': 'low'},
+            'Impact': {'before': 'high', 'after': 'lowest'},
+            'Priority': {'before': 'high', 'after': 'lowest'},
+        })
+        self.assertEqual(enriched['submittedFields']['Urgency'], 'high')
+        self.assertEqual(draft['manual'], manual)
+
+    def test_unchanged_values_and_new_enrichment_are_not_marked_as_overrides(self):
+        with tempfile.TemporaryDirectory() as directory:
+            result = enrichment('INC-000000000004', False)
+            saved = save_processed_incident(validate_handoff(request()), result, result['id'], Path(directory) / 'db')
+        self.assertEqual(saved['enriched']['fieldCorrections'], {})
+        self.assertNotIn('Assignee', saved['enriched']['submittedFields'])
+
+    def test_engine_resolution_and_assignee_override_draft_hints(self):
+        details = {'assignee': ASSIGNEES[-1], 'resolution': 'cannot reproduce',
+                   'resolutionComment': 'An unverified draft note.'}
+        draft = validate_handoff({**request(), 'details': details})
+        with tempfile.TemporaryDirectory() as directory:
+            result = enrichment('INC-000000000005', False)
+            saved = save_processed_incident(draft, result, result['id'], Path(directory) / 'db')
+        self.assertEqual(saved['incident']['Assignee'], ASSIGNEES[0])
+        self.assertEqual(saved['incident']['Resolution'], 'done')
+        self.assertEqual(saved['incident']['All Comments'][-1], ASSIGNEES[0] + ': Investigate the upstream gateway.')
+        self.assertEqual(saved['enriched']['fieldCorrections']['Resolution'],
+                         {'before': 'cannot reproduce', 'after': 'done'})
+
+    def test_correction_audit_survives_client_decision(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'db'
+            result = enrichment('INC-000000000006')
+            result['urgency'] = 'low'
+            saved = save_processed_incident(validate_handoff(request()), result, result['id'], path)
+            decided = decide_incident(result['id'], 'resolved', 'client', path)
+            self.assertEqual(decided['enriched']['fieldCorrections'], saved['enriched']['fieldCorrections'])
 
     def test_all_priority_matrix_cells_match_challenge_policy(self):
         expected_rows = ['highest highest high medium medium', 'highest high high medium low',

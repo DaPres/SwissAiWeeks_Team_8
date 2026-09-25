@@ -98,14 +98,15 @@ class Handler(SimpleHTTPRequestHandler):
 
 def main():
     parser = argparse.ArgumentParser(description="Run Intake locally")
+    parser.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"))
     parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", "8081")))
     args = parser.parse_args()
     frontend = Path(__file__).resolve().parent / "dist"
     if not (frontend / "index.html").exists():
         print("Frontend build missing. Run npm ci && npm run build, or use npm run dev.", flush=True)
     handler = partial(Handler, directory=str(frontend))
-    with ThreadingHTTPServer(("127.0.0.1", args.port), handler) as server:
-        print(f"Intake is running at http://127.0.0.1:{args.port}", flush=True)
+    with ThreadingHTTPServer((args.host, args.port), handler) as server:
+        print(f"Intake is running at http://{args.host}:{args.port}", flush=True)
         try:
             server.serve_forever()
         except KeyboardInterrupt:

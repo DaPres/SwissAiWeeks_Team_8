@@ -1,0 +1,40 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: backend/.env
+    ports:
+      - "127.0.0.1:${TRIAGE_PORT:-8000}:8000"
+    volumes:
+      - backend-data:/app/backend/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      start_period: 120s
+      retries: 10
+    restart: unless-stopped
+
+  intake:
+    build:
+      context: .
+      dockerfile: intake/Dockerfile
+    env_file: backend/.env
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8080"
+      TRIAGE_BACKEND_URL: http://backend:8000
+    ports:
+      # Keep the Aspire development UI on 8080 available.
+      - "127.0.0.1:${INTAKE_PORT:-8082}:8080"
+    volumes:
+      - intake-data:/app/intake/data
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  backend-data:
+  intake-data:

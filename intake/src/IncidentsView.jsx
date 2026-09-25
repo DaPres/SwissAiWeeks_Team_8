@@ -1,4 +1,6 @@
 import { Button } from '@base-ui/react/button';
+import { Tooltip } from '@base-ui/react/tooltip';
+import { Info } from 'lucide-react';
 
 const statusText = { 'awaiting client': 'Waiting for your reply', open: 'Handed over', done: 'Resolved' };
 
@@ -8,25 +10,34 @@ function displayedValue(value) {
   return String(value);
 }
 
+function CorrectionInfo({ field, correction }) {
+  if (!correction) return null;
+  return <Tooltip.Root>
+    <Tooltip.Trigger className="correction-info" aria-label={`${field} corrected by AI`} closeOnClick={false}>
+      <Info size={14} strokeWidth={1.6} aria-hidden="true" />
+    </Tooltip.Trigger>
+    <Tooltip.Portal><Tooltip.Positioner side="top" sideOffset={8}>
+      <Tooltip.Popup className="correction-tooltip">
+        <strong>Corrected by AI</strong>
+        <span>Submitted: {displayedValue(correction.before)}</span>
+        <span>After review: {displayedValue(correction.after)}</span>
+        {field === 'Priority' && <span>Calculated from the reviewed urgency and impact.</span>}
+      </Tooltip.Popup>
+    </Tooltip.Positioner></Tooltip.Portal>
+  </Tooltip.Root>;
+}
+
 function IncidentDetail({ record, account, onBack, onReviewFix }) {
   const incident = record.incident;
   const expert = record.enriched?.expertResolution;
   const client = record.enriched?.clientResolution;
+  const corrections = record.enriched?.fieldCorrections || {};
   const otherFields = Object.entries(incident).filter(([key]) => !['Summary', 'Description', 'All Comments'].includes(key));
-  return <section className="incident-detail enter" aria-label={`Incident ${record.id}`}>
+  return <Tooltip.Provider delay={180}><section className="incident-detail enter" aria-label={`Incident ${record.id}`}>
     <Button type="button" className="back-link" onClick={onBack}>← My Incidents</Button>
-    <div className="detail-heading"><div><span className="detail-id">{record.id}</span><h1>{incident.Summary || 'Untitled incident'}</h1></div>
+    <div className="detail-heading"><div><span className="detail-id">{record.id}</span><h1>{incident.Summary || 'Untitled incident'} <CorrectionInfo field="Summary" correction={corrections.Summary} /></h1></div>
       <span className="status-pill">{statusText[incident.Status] || incident.Status}</span></div>
-    <div className="detail-layout"><div className="detail-main">
-      <section className="detail-section"><h2>Description</h2><p className="detail-description">{incident.Description}</p></section>
-      <section className="detail-section"><h2>Incident details</h2><dl className="field-grid">
-        {otherFields.map(([key, value]) => <div key={key} className="field-pair"><dt>{key}</dt><dd>{displayedValue(value)}</dd></div>)}
-      </dl></section>
-      <section className="detail-section"><h2>Comments</h2>
-        {incident['All Comments']?.length ? <div className="comment-list">{incident['All Comments'].map((comment, index) => <p key={`${index}-${comment}`}>{comment}</p>)}</div>
-          : <p className="detail-muted">No comments yet.</p>}
-      </section>
-    </div><aside className="detail-aside">
+    <div className="detail-layout"><div className="detail-resolutions">
       <section className="detail-section"><h2>Proposed expert fix</h2>
         {expert ? <><p className="detail-description">{expert.note || expert.jiraComment}</p>
           {expert.steps?.length > 0 && <ol className="expert-steps">{expert.steps.map((step, index) => <li key={`${index}-${step}`}>{step}</li>)}</ol>}
@@ -38,8 +49,19 @@ function IncidentDetail({ record, account, onBack, onReviewFix }) {
         {incident.Status === 'awaiting client' && account === 'client' &&
           <Button type="button" className="detail-action" onClick={() => onReviewFix(record)}>Respond to suggestion</Button>}
       </section>}
-    </aside></div>
-  </section>;
+    </div>
+<div className="detail-main">
+      <section className="detail-section"><h2>Description <CorrectionInfo field="Description" correction={corrections.Description} /></h2><p className="detail-description">{incident.Description}</p></section>
+      <section className="detail-section"><h2>Incident details</h2><dl className="field-grid">
+        {otherFields.map(([key, value]) => <div key={key} className="field-pair"><dt>{key}</dt><dd>{displayedValue(value)} <CorrectionInfo field={key} correction={corrections[key]} /></dd></div>)}
+      </dl></section>
+      <section className="detail-section"><h2>Comments</h2>
+        {incident['All Comments']?.length ? <div className="comment-list">{incident['All Comments'].map((comment, index) => <p key={`${index}-${comment}`}>{comment}</p>)}</div>
+          : <p className="detail-muted">No comments yet.</p>}
+      </section>
+    </div>
+    </div>
+  </section></Tooltip.Provider>;
 }
 
 export default function IncidentsView({ account, records, loading, error, onRetry, selectedId, onSelect, onReviewFix }) {
@@ -55,6 +77,7 @@ export default function IncidentsView({ account, records, loading, error, onRetr
         <span className="card-top"><span>{record.id}</span><span className="card-status">{statusText[item.Status] || item.Status}</span></span>
         <strong>{item.Summary || item.Description}</strong>
         <span className="card-description">{item.Description}</span>
+        {Object.keys(record.enriched?.fieldCorrections || {}).length > 0 && <span className="card-corrections">AI corrected {Object.keys(record.enriched.fieldCorrections).length} {Object.keys(record.enriched.fieldCorrections).length === 1 ? 'field' : 'fields'}</span>}
         <span className="card-bottom"><span>{item['Service Team(s)']?.[0] || 'Unassigned'}</span><span>{item['Created date'] || ''}</span></span>
       </button>; })}
     </div> : <div className="empty-incidents"><h2>No incidents yet</h2><p>{account === 'client' ? 'Your submitted incidents will appear here.' : `Incidents handed to ${account} will appear here.`}</p></div>)}

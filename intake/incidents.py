@@ -143,26 +143,29 @@ def save_processed_incident(draft, enriched, identifier, db_path=DB_PATH):
     fields = draft['fields']
     account = draft['account']
     now = datetime.now().strftime('%Y-%m-%d %H:%M')
-    manual = draft['manual']
-    work_type = manual.get('workType') or enriched.get('workType') or fields.get('workType') or 'Incident'
-    service = manual.get('service') or enriched.get('service') or fields.get('service')
+    work_type = enriched.get('workType') or fields.get('workType') or 'Incident'
+    if work_type not in ('Incident', 'Service Request'):
+        raise ValueError('The neural engine returned an invalid work type.')
+    service = enriched.get('service') or fields.get('service')
     if service not in CATALOG['Affected Business or IT Services']:
         raise ValueError('The neural engine returned an invalid service.')
-    team = manual.get('department') or enriched.get('team') or fields['department']
-    entity = manual.get('entity') or enriched.get('entity') or fields.get('entity')
-    assignee = manual.get('assignee') or enriched.get('assignee') or fields.get('assignee', '')
+    team = enriched.get('team') or fields['department']
+    if team not in CATALOG['Service Team(s)']:
+        raise ValueError('The neural engine returned an invalid team.')
+    entity = enriched.get('entity') or fields.get('entity')
+    assignee = enriched.get('assignee') or fields.get('assignee', '')
     if assignee not in ASSIGNEES:
         assignee = fields.get('assignee', '')
-    urgency = manual.get('urgency') or enriched.get('urgency') or fields['urgency']
-    impact = manual.get('impact') or enriched.get('impact') or fields['impact']
+    urgency = enriched.get('urgency') or fields['urgency']
+    impact = enriched.get('impact') or fields['impact']
     priority = calculate_priority(urgency, impact)
     if not priority:
         raise ValueError('The neural engine returned invalid priority inputs.')
-    resolution = manual.get('resolution') or enriched.get('resolutionStatus') or fields.get('resolution', 'clarification')
+    resolution = enriched.get('resolutionStatus') or fields.get('resolution', 'clarification')
     if resolution not in RESOLUTIONS:
         raise ValueError('The neural engine returned an invalid resolution.')
     expert = enriched.get('expertResolution') or {}
-    note = manual.get('resolutionComment') or expert.get('note') or fields.get('resolutionComment', '')
+    note = expert.get('note') or fields.get('resolutionComment', '')
     author = assignee or team
     comment = note if note.startswith(author + ':') else f'{author}: {note}'
     enriched = {**enriched, 'workType': work_type, 'service': service, 'team': team, 'entity': entity, 'assignee': assignee, 'urgency': urgency, 'impact': impact,
@@ -189,6 +192,22 @@ def save_processed_incident(draft, enriched, identifier, db_path=DB_PATH):
         'All Comments': [f'{key.title()}: {value}' for key, value in draft['manual'].items()
                          if key in ('context', 'evidence')] + ([comment] if note else []),
         'Submitted account': account,
+    }
+    # Compare the final persisted values with the exact submitted draft, not
+    # with later Jev predictions. Missing inputs are enrichment, not overrides.
+    submitted = {'Description': draft['description']}
+    for source, target in {
+        'workType': 'Work type', 'summary': 'Summary', 'assignee': 'Assignee',
+        'urgency': 'Urgency', 'impact': 'Impact', 'priority': 'Priority',
+        'resolution': 'Resolution', 'service': 'Affected Business or IT Services',
+        'department': 'Service Team(s)', 'entity': 'Business Entity',
+    }.items():
+        if fields.get(source):
+            submitted[target] = [fields[source]] if source in ('service', 'department', 'entity') else fields[source]
+    enriched['submittedFields'] = submitted
+    enriched['fieldCorrections'] = {
+        key: {'before': before, 'after': incident[key]}
+        for key, before in submitted.items() if before != incident[key]
     }
     db_path.parent.mkdir(parents=True, exist_ok=True)
     with closing(sqlite3.connect(db_path)) as db, db:

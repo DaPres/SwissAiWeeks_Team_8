@@ -1,0 +1,16 @@
+# This image has a separate build context allowlist from the explorer image.
+**
+!intake/
+!intake/**
+intake/node_modules
+intake/dist
+intake/.venv
+intake/__pycache__
+intake/.pytest_cache
+intake/data
+intake/.env
+intake/.env.*
+intake/*.private.env.json
+intake/http-client.private.env.json
+intake/test_*.py
+intake/.DS_Store

@@ -1,5 +1,5 @@
 # Push a version tag (e.g. `git tag v1.2.0 && git push origin v1.2.0`) to:
-#   1. build the single app image (frontend + backend) and push it to ACR as :1.2.0 and :latest
+#   1. build both app images (triage explorer + backend, and Intake + Python) and push them to ACR
 #   2. roll the Azure Container App to the new image
 #   3. create a GitHub release with generated notes
 # Azure login uses OIDC (federated credential on environment "production"); see infra/setup-azure.sh.
@@ -55,8 +55,20 @@ jobs:
           tags: |
             ${{ env.ACR }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
             ${{ env.ACR }}.azurecr.io/${{ env.IMAGE_NAME }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=triage
+          cache-to: type=gha,scope=triage,mode=max
+
+      - name: Build and publish Intake frontend and Python API
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: intake/Dockerfile
+          push: true
+          tags: |
+            ${{ env.ACR }}.azurecr.io/intake:${{ steps.version.outputs.version }}
+            ${{ env.ACR }}.azurecr.io/intake:latest
+          cache-from: type=gha,scope=intake
+          cache-to: type=gha,scope=intake,mode=max
 
       - name: Deploy to Container App
         id: deploy

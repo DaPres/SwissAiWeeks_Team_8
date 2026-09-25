@@ -1,5 +1,26 @@
 import { Dialog } from '@base-ui/react/dialog';
 import { Button } from '@base-ui/react/button';
+import { Search, SlidersHorizontal, Lightbulb, LoaderCircle } from 'lucide-react';
+
+const reviewSteps = [
+  { Icon: Search, label: 'Find similar incidents', detail: 'Look for solutions that worked before.' },
+  { Icon: SlidersHorizontal, label: 'Review details and routing', detail: 'Check the fields, priority, and responsible team.' },
+  { Icon: Lightbulb, label: 'Prepare a resolution', detail: 'Find a fix for you or the expert team.' },
+];
+
+function EngineReview() {
+  return <div className="engine-review" role="status" aria-live="polite">
+    <Dialog.Title>Reviewing your incident</Dialog.Title>
+    <Dialog.Description className="handoff-description">The neural engine is working on it.</Dialog.Description>
+    <ul className="engine-review-list" aria-label="Neural engine review">
+      {reviewSteps.map(({ Icon, label, detail }, index) => <li key={label} className="engine-review-step" style={{ '--step-delay': `${index * 1.6}s`, '--entry-delay': `${index * 100}ms` }}>
+        <span className="engine-step-icon" aria-hidden="true"><Icon size={21} strokeWidth={1.5} /></span>
+        <span className="engine-step-copy"><span>{label}</span><span>{detail}</span></span>
+        <span className="engine-step-pulse" aria-hidden="true" />
+      </li>)}
+    </ul>
+  </div>;
+}
 
 function DialogActions({ children }) {
   return <div className="handoff-actions">{children}</div>;
@@ -14,10 +35,11 @@ export default function IncidentDialog({ state, onDecision, onRetry, onBack, onD
     <Dialog.Portal>
       <Dialog.Backdrop className="handoff-backdrop" />
       <Dialog.Popup className="handoff-dialog" tabIndex={-1}>
-        {(phase === 'loading' || phase === 'deciding') && <div className="handoff-wait" role="status">
-          <div className="handoff-orbit" aria-hidden="true"><span /><span /><span /></div>
-          <Dialog.Title>{phase === 'loading' ? 'Reviewing your incident' : 'Saving your choice'}</Dialog.Title>
-          <Dialog.Description>{phase === 'loading' ? 'Looking for a fix and the right team.' : 'One moment.'}</Dialog.Description>
+        {phase === 'loading' && <EngineReview />}
+        {phase === 'deciding' && <div className="handoff-wait" role="status">
+          <LoaderCircle className="handoff-saving-icon" size={28} strokeWidth={1.5} aria-hidden="true" />
+          <Dialog.Title>Saving your choice</Dialog.Title>
+          <Dialog.Description>One moment.</Dialog.Description>
         </div>}
 
         {phase === 'fix' && <>

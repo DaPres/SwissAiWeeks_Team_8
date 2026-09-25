@@ -37,7 +37,23 @@ function createAvatar(id, colorway) {
 }
 
 
+// Display names drawn from the sample ticket reporters and team assignees.
+const accountNames = {
+  "client": "Luca Rinaldi",
+  "Client Services": "Carlos Ortiz",
+  "Enterprise Applications": "David Kim",
+  "Investment Operations": "Vicky Chen",
+  "Market Data Services": "Gina Muller",
+  "Risk & Controls": "Maya Kerr",
+  "Securities Operations": "Nora Leclerc",
+  "Service Desk": "Leo Zimmer",
+  "Tax & Reporting": "William Maier",
+  "Trading Support": "Adam Paul",
+  "Treasury & Cash": "Oliver Varga",
+  "Valuation & Pricing": "Irina Sokolov"
+};
+
 export const accounts = [
   { id: 'client', label: 'Client' },
   ...catalog['Service Team(s)'].map(team => ({ id: team, label: team })),
-].map((account, index) => ({ ...account, avatar: createAvatar(account.id, index) }));
+].map((account, index) => ({ ...account, name: accountNames[account.id], avatar: createAvatar(account.id, index) }));
