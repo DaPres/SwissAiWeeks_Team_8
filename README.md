@@ -1,6 +1,8 @@
 # 🤝 team8 (`team_mate`)
 ### *The Enterprise Incident Intake & Triage Teammate*
 
+📸 **[View product screenshots](screenshots/)** — Outlook client resolution and an LEI regulatory-reporting incident, from intake to expert handover.
+
 > ### *"Thanks team8, you did gr8!"* 🚀
 > 
 > **"The best ticket is the one that never gets created. And when support is needed, it should arrive with everything required to act."**
