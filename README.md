@@ -5,7 +5,7 @@
 > 
 > **"The best ticket is the one that never gets created. And when support is needed, it should arrive with everything required to act."**
 
-[![Swisscom Apertus Ready](https://img.shields.io/badge/Swisscom%20Apertus-Sovereign%20Swiss%20AI-red.svg)](https://swisscom.ch)
+[![Swisscom Apertus Ready](https://img.shields.io/badge/Swisscom%20Apertus-Sovereign%20Swiss%20AI-red.svg)](https://www.apertus-ai.org/)
 [![Zero-Leak PII Shield](https://img.shields.io/badge/Security-Zero--Leak%20PII%20Gate-success.svg)](#1-zero-leak-safety-gate-pii-shield)
 [![ITIL Deterministic 5x5](https://img.shields.io/badge/ITIL%20Matrix-Deterministic%205x5-blue.svg)](#2-deterministic-55-itil-priority-engine)
 [![Compound AI System](https://img.shields.io/badge/Architecture-Compound%20AI%20System-orange.svg)](#-compound-ai-architecture)
