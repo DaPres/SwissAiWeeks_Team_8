@@ -31,6 +31,7 @@ Enterprise IT service desks face a compounding double-sided challenge:
 * **Front-of-House (The Guided Intake Partner — `intake/`):** Progressive disclosure and real-time guidance detect missing diagnostic dimensions as the requester types. An **80% readiness gate** prevents incomplete tickets from entering the queue in the first place.
 * **The Unified Production App (`main`):** Both backends offered unique, powerful advantages. Our Day 1 backend gave us immediate operational readiness, rapid dispatch, and an Aspire telemetry dashboard, while the next-gen architecture introduced deep mathematical determinism and safety. We synthesized the best of both worlds and merged them into `main` to deliver a cohesive, end-user ready application.
 * **The Next-Gen Powerhouse (`Main2/`):** Treated as our super-sophisticated, future-proof, and horizontally scalable next-gen option. Featuring pre-LLM PII scrubbing, deterministic mathematical **5×5 ITIL priority scoring**, hybrid retrieval across **26 mined Knowledge Base playbooks (`[KB-01]` to `[KB-26]`)**, and real-time typing-assist APIs, `Main2` serves as the high-capability engine that constantly feeds into and upgrades the end-user ready main app.
+* **Universal Work Management Extensibility:** While built and validated specifically for **IT Service Management (ITSM)** to solve the hackathon challenge, the underlying Compound AI architecture is **domain-agnostic**. The intake readiness gates, deterministic policy engines, PII shields, and hybrid playbook retrieval are easily trainable and extendable to **Agile sprint planning, project & portfolio management (PPM), HR operations, and all enterprise work item tracking**.
 
 ---
 
@@ -109,6 +110,29 @@ By uniting the operational robustness of our baseline with the advanced cognitiv
 ### 4. Grounded Resolution Notes with Cited Evidence
 * **Mined Knowledge Base:** We analyzed the historical training dataset and distilled 26 canonical playbooks ([`Main2/kb/KB-01.md`](Main2/kb/KB-01.md) through [`KB-26.md`](Main2/kb/KB-26.md)).
 * **Mandatory Citation Tags:** Drafted resolutions must cite the exact `[KB-xx]` playbook and reference quoted incident facts. No generic filler like *"issue fixed"*.
+
+---
+
+## 🌐 Beyond ITSM: Extensible to Universal Enterprise Work Management
+
+> [!NOTE]
+> **Current Challenge Focus:** **team8** is tailored and benchmarked for **IT Service Management (ITSM)** and ITIL incident triage under the Swiss AI Weeks Challenge. However, our modular Compound AI architecture is explicitly designed to be **domain-agnostic and horizontally extendable** to any work item or workflow management system.
+
+Because the system cleanly decouples **intake guidance**, **PII safety interception**, **deterministic mathematical policy calculation**, and **playbook retrieval**, adapting the platform to new enterprise domains requires zero fundamental architectural changes:
+
+| Work Management Paradigm | Intake Guidance Dimensions | Deterministic Policy Engine (Pure Code) | Retrieval Knowledge Base | Target Assignee Teams |
+| :--- | :--- | :--- | :--- | :--- |
+| **IT Service Management (Current)** | Error logs, affected users, business impact, environment | **5×5 ITIL Priority Matrix**<br>*(Urgency × Impact)* | 26 Mined Incident Playbooks (`KB-01` to `KB-26`) | L2 Core ERP, Database Ops, Cloud Infra, Network |
+| **Agile & Scrum Delivery** | User stories, acceptance criteria, reproduction steps, sprint goals | **WSJF, RICE, or MoSCoW Scoring**<br>*(Reach × Impact × Confidence / Effort)* | Definition of Done (DoD), Architecture Decision Records (ADRs) | Feature Squads, Platform Eng, QA / Automation |
+| **Project & Portfolio Management (PPM)** | Milestone dates, resource dependencies, deliverables, budget impact | **Critical Path Risk & Governance Matrix**<br>*(Schedule Risk × Financial Exposure)* | PMBOK / PRINCE2 execution templates, corporate governance rules | PMO, Steering Committees, Workstream Leads |
+| **HR & Employee Operations** | Request category, jurisdiction, employee tier, urgency | **SLA Escalation & Confidentiality Tiering**<br>*(Role Tier × Sensitivity)* | HR Policies, Benefits Handbook, Collective Labor Agreements | People Ops, Payroll, Talent Acquisition, Legal |
+| **Legal & Compliance Case Triage** | Regulatory jurisdiction, filing deadlines, monetary exposure | **Compliance Risk Scoring**<br>*(Filing Deadline × Exposure Tier)* | Regulatory Frameworks (GDPR, FINMA, Basel III, ISO 27001) | Compliance Officers, In-house Counsel, Risk Audit |
+
+### Why Retraining & Extension is Fast and Frictionless:
+1. **Configurable Readiness Markers:** The 5-marker qualification evaluator in [`intake/quality.py`](intake/quality.py) can be reconfigured via simple JSON schema to require user story acceptance criteria, project risk assessments, or HR case details instead of IT error logs.
+2. **Pluggable Pure-Code Policy Rules:** The priority calculation in [`Main2/triagemate/priority.py`](Main2/triagemate/priority.py) is deterministic Python code. Replacing the 5×5 ITIL matrix with WSJF, RICE, or project risk matrices takes minutes, ensuring 100% mathematical consistency without LLM hallucinations.
+3. **Zero-Code Playbook Extension:** New domains simply add markdown playbooks into `kb/` (e.g., agile DoD templates or compliance checklists). The dense LSA + sparse hybrid retriever automatically vectorizes and indexes them without retraining any neural models.
+4. **Universal Work Item Export:** The dispatch payload seamlessly maps to Jira Software issues, GitHub Issues, Azure DevOps work items, ServiceNow cases, or Asana tasks.
 
 ---
 
