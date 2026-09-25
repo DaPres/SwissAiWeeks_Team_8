@@ -73,7 +73,8 @@ class SuggestionTests(unittest.TestCase):
         payload = json.loads(json.loads(request.call_args.args[0].data)['input'])
         self.assertEqual(payload['description'], description)
         self.assertEqual(payload['additional_details']['context'], "I don't know when it began")
-        self.assertEqual(payload['unresolved_fields'], ['urgency', 'priority'])
+        self.assertNotIn('unresolved_fields', payload)
+        self.assertNotIn('inferred_fields', payload)
 
     @patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'})
     @patch('suggestions.urlopen')

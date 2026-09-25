@@ -37,6 +37,21 @@ class SuggestionBehaviorTests(unittest.TestCase):
             'I can use local copies to continue work and have no deadline.')
         self.assertEqual(result['improvements'], [])
 
+    def test_strong_reports_stop_without_optional_followups(self):
+        for description in [
+            'Since 09:00 all twelve settlement analysts receive HTTP 503 when opening the settlement '
+            'dashboard. No trades can be processed and the cutoff is 14:00. Reloading did not help.',
+            'The quarterly risk report export downloads a zero-byte CSV instead of the displayed data. '
+            'It affects the entire Risk & Controls team. We need the report for the board meeting tomorrow. '
+            'Exporting another quarter also produces an empty file.',
+            'Please grant read-only access to the Zurich Client Reporting workspace for our new colleague '
+            'Maya Kerr, starting Monday. Her manager has approved the request.',
+        ]:
+            with self.subTest(description=description):
+                result = self.guidance(description, ['urgency', 'priority'])
+                self.assertEqual(result['relevance'], 'support')
+                self.assertEqual(result['improvements'], [])
+
     def test_previous_attempts_and_unknown_timing_are_not_asked_again(self):
         result = self.guidance(
             'SharePoint stays blank with "loading". Reloading and a private browser window did not help. '

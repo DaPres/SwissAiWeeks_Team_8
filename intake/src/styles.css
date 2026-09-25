@@ -47,6 +47,8 @@ textarea::placeholder,input::placeholder { color:var(--muted); }
 .submit-button { border:1px solid transparent; padding:10px 16px; color:var(--on-primary); background:var(--primary); border-radius:9px; font-size:13px; font-weight:500; transition:opacity .2s,transform .2s,box-shadow .2s; }
 .submit-button:not(:disabled):hover { transform:translateY(-1px); box-shadow:0 4px 12px color-mix(in srgb,var(--primary) 24%,transparent); }
 .submit-button:disabled { background:var(--wash); color:var(--muted); border-color:var(--border); }
+.submit-button[data-ready] { position:relative; }
+.submit-button[data-ready]::after { content:""; position:absolute; inset:-4px; padding:1.5px; border-radius:inherit; pointer-events:none; background:conic-gradient(from var(--glow-angle),transparent 55%,color-mix(in srgb,var(--primary) 25%,transparent) 72%,var(--primary) 92%,transparent); -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; animation:glow-path 2.4s linear infinite; }
 .text-button { text-decoration:underline; text-underline-offset:4px; background:none; border:0; font-size:13px; color:var(--text); }
 .check-error { flex:1; min-width:0; margin:0 0 -8px; font-size:13px; line-height:1.5; color:var(--muted); transition:opacity .35s ease-out,transform .35s ease-out,filter .35s ease-out; }
 .check-error[data-closing="true"] { animation:none; opacity:0; transform:translateY(5px); filter:blur(2px); }

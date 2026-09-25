@@ -12,6 +12,7 @@ import IncidentDialog from './IncidentDialog.jsx';
 import ValidationMessage from './ValidationMessage.jsx';
 import IncidentsView from './IncidentsView.jsx';
 import { useReadiness } from './useReadiness.js';
+import { useGuidance } from './useGuidance.js';
 import { decideIncident, listIncidents, processIncident } from './quality-api.js';
 
 const emptyHiddenDetails = { summary: '', reporter: '', context: '', evidence: '' };
@@ -132,11 +133,14 @@ export default function App() {
   const typing = hasText && readiness.phase === 'waiting';
   const showEnrichment = hasText && (submitAttempt > 0 || !typing || lastPanelReadiness !== null);
   const panelReadiness = typing && lastPanelReadiness ? lastPanelReadiness : readiness;
+  const guidance = useGuidance(hasText ? panelReadiness.result?.evaluationId : null, typing || view !== 'create');
   const inferred = (readiness.result || readiness.previousResult)?.inferred || {};
   const fieldValues = resolvedFields(details, inferred);
   const chipValues = Object.fromEntries(Object.keys(chipFields).map(id => [id,
     fieldValues[id] || '']));
   const missingFields = Object.entries(chipFields).filter(([id]) => !chipValues[id]).map(([, config]) => config.label);
+  const readyToSubmit = hasText && !missingFields.length && !handoff && !error && readiness.phase === 'done'
+    && guidance.result?.relevance === 'support' && guidance.result.improvements.length === 0;
   useEffect(() => {
     if (!hasText || typing) return;
     setLastPanelReadiness({ phase: readiness.phase, result: readiness.result, error: readiness.error });
@@ -212,12 +216,12 @@ export default function App() {
           <textarea ref={descriptionInput} id="incident-description" placeholder="What do you need help with?" value={description} onPointerDown={dismissValidation} onFocus={dismissValidation} onChange={event => edit(event.target.value)} maxLength={10000} disabled={saving} spellCheck rows={3} />
           {hasText && <div className="composer-footer appear">
             {error && <ValidationMessage key={`validation-${submitAttempt}`} message={error} closing={validationClosing} />}
-            <Button key={`submit-${submitAttempt}`} type="submit" className={`submit-button ${submitAttempt ? 'button-wobble' : ''}`} aria-busy={saving}>{saving ? 'Submitting…' : 'Submit Incident'}</Button>
+            <Button key={`submit-${submitAttempt}`} type="submit" className={`submit-button ${submitAttempt ? 'button-wobble' : ''}`} data-ready={readyToSubmit || undefined} aria-busy={saving}>{saving ? 'Submitting…' : 'Submit Incident'}</Button>
           </div>}
         </form>
           {showEnrichment && <EnrichmentChips onInteract={dismissValidation} values={fieldValues} onSave={changeChip} saving={saving} loading={['checking', 'slow', 'enriching'].includes(readiness.phase)} invalidAttempt={error && !validationClosing ? submitAttempt : 0} />}
         </div>
-        {showEnrichment && !error && <AdvicePanel readiness={panelReadiness} paused={typing} onRetry={() => setAttempt(value => value + 1)} />}
+        {showEnrichment && !error && <AdvicePanel readiness={panelReadiness} onRetry={() => setAttempt(value => value + 1)} guidance={guidance} fieldsComplete={!missingFields.length} />}
         </div>
       </div> : <IncidentsView account={account} records={records} loading={listState.loading} error={listState.error}
         onRetry={() => setListRefresh(value => value + 1)} selectedId={selectedIncident} onSelect={setSelectedIncident}
