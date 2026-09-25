@@ -15,8 +15,8 @@
 
 ## ⚡ Executive Quick Links
 
-| 🎥 **[60s Split-Screen Movie Script](pitch/FinalPitchPlaybook.md#1-the-60-second-split-screen-movie-timeline)** | 🌐 **[Intake UI (`intake/`)](intake/)** | ⚙️ **[Next-Gen Engine (`Main2/`)](Main2/)** | 📊 **[Fast Baseline (`backend/`)](backend/)** | 📋 **[Challenge Brief](CHALLENGE.md)** |
-|---|---|---|---|---|
+| 🎥 **[60s Split-Screen Movie Script](pitch/FinalPitchPlaybook.md#1-the-60-second-split-screen-movie-timeline)** | 🏆 **[Challenge Result JSON](team8-challenge-result.json)** | 🌐 **[Intake UI (`intake/`)](intake/)** | ⚙️ **[Next-Gen Engine (`Main2/`)](Main2/)** | 📊 **[Fast Baseline (`backend/`)](backend/)** | 📋 **[Challenge Brief](CHALLENGE.md)** |
+|---|---|---|---|---|---|
 
 ---
 
@@ -214,7 +214,7 @@ cd Main2 && pytest tests -q
 ---
 
 ## 📋 Challenge Reference: ITIL Matrix & Critical Services
-*(For the full original hackathon problem statement and dataset description, see [`CHALLENGE.md`](CHALLENGE.md))*
+*(For the full original hackathon problem statement and dataset description, see [`CHALLENGE.md`](CHALLENGE.md); for our official 20-ticket blind evaluation output, see [`team8-challenge-result.json`](team8-challenge-result.json))*
 
 ### Incident Priority Calculation Matrix
 
@@ -270,6 +270,7 @@ SwissAiWeeks_Team_8/
 ├── 📂 analysis/                     # Jupyter / exploratory data forensics & clustering notebooks
 ├── 📂 infra/                        # Cloud infrastructure & Aspire AppHost orchestration
 ├── 📂 .github/                      # CI/CD workflows (release packaging, automated tests)
+├── 📊 team8-challenge-result.json   # Official hackathon blind evaluation challenge output (20 tickets)
 └── 🐳 Dockerfile                    # Container build for full service stack
 ```
 
