@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>team8 Pitch Teleprompter (00:00 - 00:27)</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(255, 255, 255, 0.04);
+      --border: rgba(255, 255, 255, 0.1);
+      --text-upcoming: #94a3b8;
+      --text-active: #fbbf24;
+      --text-past: #475569;
+      --accent: #38bdf8;
+      --emerald: #10b981;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: var(--bg);
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      padding-bottom: 120px;
+    }
+
+    /* Fixed Top HUD */
+    .hud {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(9, 13, 22, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 18px 8px;
+    }
+    .hud-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .timer {
+      font-size: 2.4rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+    }
+    .timer span {
+      color: var(--accent);
+      font-size: 1.4rem;
+      font-weight: 600;
+    }
+    .phase-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 5px 10px;
+      border-radius: 9999px;
+      background: rgba(56, 189, 248, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      transition: all 0.3s ease;
+    }
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 9999px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #38bdf8, #10b981, #fbbf24);
+      transition: width 0.05s linear;
+    }
+
+    /* Teleprompter Content */
+    .content {
+      padding: 20px 20px 40px;
+      max-width: 640px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 22px 20px;
+      margin-bottom: 24px;
+      transition: border-color 0.3s ease, transform 0.3s ease;
+    }
+    .section-card.active-card {
+      border-color: rgba(251, 191, 36, 0.5);
+      background: rgba(251, 191, 36, 0.03);
+      box-shadow: 0 0 30px rgba(251, 191, 36, 0.08);
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #64748b;
+    }
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #94a3b8;
+    }
+    .section-duration {
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stage-direction {
+      font-size: 0.8rem;
+      line-height: 1.35;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.08);
+      border-left: 3px solid #38bdf8;
+      padding: 8px 12px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 16px;
+      font-weight: 500;
+    }
+
+    .script-text {
+      font-size: 1.6rem;
+      line-height: 1.5;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      word-spacing: 0.06em;
+    }
+    .word {
+      display: inline;
+      color: var(--text-upcoming);
+      transition: color 0.12s ease, text-shadow 0.12s ease;
+      padding: 0 1px;
+    }
+    .word.active {
+      color: #ffffff;
+      background: rgba(251, 191, 36, 0.35);
+      border-radius: 4px;
+      text-shadow: 0 0 12px rgba(251, 191, 36, 0.8);
+      padding: 2px 4px;
+      font-weight: 800;
+    }
+    .word.past {
+      color: var(--text-past);
+    }
+
+    /* Pause / Transition Card */
+    .pause-card {
+      text-align: center;
+      padding: 12px;
+      margin-bottom: 24px;
+      border-radius: 12px;
+      background: rgba(148, 163, 184, 0.06);
+      border: 1px dashed rgba(148, 163, 184, 0.2);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #94a3b8;
+    }
+    .pause-card.active-card {
+      border-color: var(--emerald);
+      color: var(--emerald);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    /* Floating Bottom Action Bar */
+    .control-dock {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(9, 13, 22, 0.94);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border);
+      padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+    .btn {
+      border: none;
+      border-radius: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.1s active, opacity 0.2s;
+    }
+    .btn:active {
+      transform: scale(0.96);
+    }
+    .btn-main {
+      flex: 1;
+      height: 52px;
+      font-size: 1.15rem;
+      background: #38bdf8;
+      color: #090d16;
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.35);
+    }
+    .btn-main.running {
+      background: #fbbf24;
+      box-shadow: 0 4px 20px rgba(251, 191, 36, 0.35);
+      color: #090d16;
+    }
+    .btn-secondary {
+      height: 52px;
+      padding: 0 18px;
+      font-size: 0.95rem;
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      border: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Fixed HUD -->
+  <header class="hud">
+    <div class="hud-top">
+      <div class="timer" id="timerDisplay">00:00<span>.0</span></div>
+      <div class="phase-badge" id="phaseBadge">Ready (0:27 Total)</div>
+    </div>
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+  </header>
+
+  <!-- Script Sections -->
+  <main class="content">
+
+    <!-- Section 1 (00:00 - 00:12) -->
+    <section class="section-card" id="card1">
+      <div class="section-header">
+        <div class="section-title">⚡ TIMEFRAME 1: THE HOOK</div>
+        <div class="section-duration">00:00 – 00:12 (12s)</div>
+      </div>
+      <div class="stage-direction">
+        📺 <strong>Screen Cue:</strong> Left: Intake Partner open • Right: Dual-Engine architecture lights up
+      </div>
+      <div class="script-text" id="script1">
+        <!-- Words injected dynamically with timing -->
+      </div>
+    </section>
+
+    <!-- Transition (00:12 - 00:14) -->
+    <div class="pause-card" id="pauseCard">
+      ⏸️ <strong>00:12 – 00:14 (2s)</strong>: Eye Contact • Cut to Live FAQ Question Demo
+    </div>
+
+    <!-- Section 2 (00:14 - 00:27) -->
+    <section class="section-card" id="card2">
+      <div class="section-header">
+        <div class="section-title">🚀 TIMEFRAME 2: ZERO-TICKET DEFLECTION</div>
+        <div class="section-duration">00:14 – 00:27 (13s)</div>
+      </div>
+      <div class="stage-direction">
+        📺 <strong>Screen Cue:</strong> Left: Employee types "Which mail client?" → Instant Outlook card popup → Solved!
+      </div>
+      <div class="script-text" id="script2">
+        <!-- Words injected dynamically with timing -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Fixed Bottom Controls -->
+  <footer class="control-dock">
+    <button class="btn btn-secondary" id="resetBtn">↺ Reset</button>
+    <button class="btn btn-main" id="playBtn">▶ Start Pitch</button>
+  </footer>
+
+  <script>
+    // -------------------------------------------------------------
+    // Word-level timestamps (seconds)
+    // -------------------------------------------------------------
+    const TIMEFRAME_1 = [
+      { text: "“The", start: 0.0, end: 0.35 },
+      { text: "best", start: 0.35, end: 0.70 },
+      { text: "ticket", start: 0.70, end: 1.10 },
+      { text: "is", start: 1.10, end: 1.30 },
+      { text: "the", start: 1.30, end: 1.50 },
+      { text: "one", start: 1.50, end: 1.85 },
+      { text: "that", start: 1.85, end: 2.10 },
+      { text: "never", start: 2.10, end: 2.50 },
+      { text: "gets", start: 2.50, end: 2.85 },
+      { text: "created—", start: 2.85, end: 3.50 },
+      { text: "and", start: 3.50, end: 3.75 },
+      { text: "the", start: 3.75, end: 3.95 },
+      { text: "second", start: 3.95, end: 4.35 },
+      { text: "best", start: 4.35, end: 4.70 },
+      { text: "arrives", start: 4.70, end: 5.15 },
+      { text: "fully", start: 5.15, end: 5.50 },
+      { text: "qualified.", start: 5.50, end: 6.20 },
+      { text: "Instead", start: 6.20, end: 6.60 },
+      { text: "of", start: 6.60, end: 6.80 },
+      { text: "band-aiding", start: 6.80, end: 7.45 },
+      { text: "noisy", start: 7.45, end: 7.85 },
+      { text: "tickets,", start: 7.85, end: 8.35 },
+      { text: "our", start: 8.35, end: 8.60 },
+      { text: "dual-engine", start: 8.60, end: 9.30 },
+      { text: "architecture", start: 9.30, end: 9.95 },
+      { text: "stops", start: 9.95, end: 10.35 },
+      { text: "problems", start: 10.35, end: 10.85 },
+      { text: "at", start: 10.85, end: 11.05 },
+      { text: "intake", start: 11.05, end: 11.45 },
+      { text: "and", start: 11.45, end: 11.65 },
+      { text: "scales", start: 11.65, end: 12.00 },
+      { text: "deterministically.”", start: 12.00, end: 12.60 }
+    ];
+
+    const TIMEFRAME_2 = [
+      { text: "“Watch:", start: 14.0, end: 14.50 },
+      { text: "an", start: 14.50, end: 14.70 },
+      { text: "employee", start: 14.70, end: 15.20 },
+      { text: "asks", start: 15.20, end: 15.55 },
+      { text: "a", start: 15.55, end: 15.70 },
+      { text: "routine", start: 15.70, end: 16.15 },
+      { text: "question—", start: 16.15, end: 16.70 },
+      { text: "‘Which", start: 16.70, end: 17.05 },
+      { text: "mail", start: 17.05, end: 17.35 },
+      { text: "client", start: 17.35, end: 17.75 },
+      { text: "do", start: 17.75, end: 17.95 },
+      { text: "we", start: 17.95, end: 18.15 },
+      { text: "use?’", start: 18.15, end: 18.70 },
+      { text: "Instead", start: 18.70, end: 19.10 },
+      { text: "of", start: 19.10, end: 19.30 },
+      { text: "clogging", start: 19.30, end: 19.75 },
+      { text: "the", start: 19.75, end: 19.95 },
+      { text: "queue", start: 19.95, end: 20.35 },
+      { text: "with", start: 20.35, end: 20.60 },
+      { text: "another", start: 20.60, end: 21.05 },
+      { text: "ticket,", start: 21.05, end: 21.55 },
+      { text: "Intake", start: 21.55, end: 21.95 },
+      { text: "answers", start: 21.95, end: 22.40 },
+      { text: "instantly", start: 22.40, end: 22.95 },
+      { text: "from", start: 22.95, end: 23.20 },
+      { text: "verified", start: 23.20, end: 23.70 },
+      { text: "enterprise", start: 23.70, end: 24.30 },
+      { text: "knowledge.", start: 24.30, end: 24.95 },
+      { text: "Problem", start: 24.95, end: 25.40 },
+      { text: "solved", start: 25.40, end: 25.80 },
+      { text: "in", start: 25.80, end: 26.00 },
+      { text: "seconds—", start: 26.00, end: 26.45 },
+      { text: "with", start: 26.45, end: 26.65 },
+      { text: "zero", start: 26.65, end: 27.00 },
+      { text: "tickets", start: 27.00, end: 27.40 },
+      { text: "created.”", start: 27.40, end: 28.00 }
+    ];
+
+    const TOTAL_DURATION = 28.0;
+
+    // Render words to DOM
+    function renderScript(words, containerId, prefix) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = words.map((w, idx) => 
+        `<span class="word" id="${prefix}_${idx}">${w.text} </span>`
+      ).join("");
+    }
+
+    renderScript(TIMEFRAME_1, "script1", "w1");
+    renderScript(TIMEFRAME_2, "script2", "w2");
+
+    // Teleprompter state
+    let isRunning = false;
+    let startTime = null;
+    let elapsedPaused = 0;
+    let animationFrame = null;
+    let wakeLock = null;
+
+    const timerDisplay = document.getElementById("timerDisplay");
+    const progressBar = document.getElementById("progressBar");
+    const phaseBadge = document.getElementById("phaseBadge");
+    const playBtn = document.getElementById("playBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const card1 = document.getElementById("card1");
+    const card2 = document.getElementById("card2");
+    const pauseCard = document.getElementById("pauseCard");
+
+    // Request Screen Wake Lock so mobile display stays on
+    async function requestWakeLock() {
+      try {
+        if ("wakeLock" in navigator) {
+          wakeLock = await navigator.wakeLock.request("screen");
+        }
+      } catch (err) {
+        console.log("WakeLock error:", err);
+      }
+    }
+
+    function releaseWakeLock() {
+      if (wakeLock) {
+        wakeLock.release();
+        wakeLock = null;
+      }
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      const ms = Math.floor((sec % 1) * 10);
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}<span>.${ms}</span>`;
+    }
+
+    function update(timestamp) {
+      if (!startTime) startTime = timestamp - elapsedPaused;
+      const current = (timestamp - startTime) / 1000;
+
+      // Update timer HUD
+      timerDisplay.innerHTML = formatTime(Math.min(current, TOTAL_DURATION));
+      const pct = Math.min((current / TOTAL_DURATION) * 100, 100);
+      progressBar.style.width = pct + "%";
+
+      // Phase badge & Card focus
+      if (current < 12.0) {
+        phaseBadge.innerText = "Timeframe 1 (0:00 - 0:12)";
+        phaseBadge.style.color = "#fbbf24";
+        card1.classList.add("active-card");
+        card2.classList.remove("active-card");
+        pauseCard.classList.remove("active-card");
+      } else if (current >= 12.0 && current < 14.0) {
+        phaseBadge.innerText = "Breather / Cut (0:12 - 0:14)";
+        phaseBadge.style.color = "#10b981";
+        card1.classList.remove("active-card");
+        pauseCard.classList.add("active-card");
+        card2.classList.remove("active-card");
+      } else if (current >= 14.0 && current <= TOTAL_DURATION) {
+        phaseBadge.innerText = "Timeframe 2 (0:14 - 0:27)";
+        phaseBadge.style.color = "#38bdf8";
+        card1.classList.remove("active-card");
+        pauseCard.classList.remove("active-card");
+        card2.classList.add("active-card");
+      } else {
+        phaseBadge.innerText = "Finished (0:27)";
+        phaseBadge.style.color = "#a855f7";
+      }
+
+      // Word highlighting for Section 1
+      TIMEFRAME_1.forEach((w, idx) => {
+        const el = document.getElementById(`w1_${idx}`);
+        if (!el) return;
+        if (current >= w.start && current < w.end) {
+          el.className = "word active";
+        } else if (current >= w.end) {
+          el.className = "word past";
+        } else {
+          el.className = "word";
+        }
+      });
+
+      // Word highlighting for Section 2
+      TIMEFRAME_2.forEach((w, idx) => {
+        const el = document.getElementById(`w2_${idx}`);
+        if (!el) return;
+        if (current >= w.start && current < w.end) {
+          el.className = "word active";
+        } else if (current >= w.end) {
+          el.className = "word past";
+        } else {
+          el.className = "word";
+        }
+      });
+
+      if (current < TOTAL_DURATION) {
+        animationFrame = requestAnimationFrame(update);
+      } else {
+        pause();
+      }
+    }
+
+    function play() {
+      isRunning = true;
+      playBtn.innerText = "⏸ Pause";
+      playBtn.classList.add("running");
+      requestWakeLock();
+      animationFrame = requestAnimationFrame(update);
+    }
+
+    function pause() {
+      isRunning = false;
+      playBtn.innerText = "▶ Resume";
+      playBtn.classList.remove("running");
+      if (animationFrame) cancelAnimationFrame(animationFrame);
+      if (startTime) elapsedPaused = performance.now() - startTime;
+      releaseWakeLock();
+    }
+
+    function reset() {
+      pause();
+      startTime = null;
+      elapsedPaused = 0;
+      timerDisplay.innerHTML = "00:00<span>.0</span>";
+      progressBar.style.width = "0%";
+      phaseBadge.innerText = "Ready (0:27 Total)";
+      phaseBadge.style.color = "var(--accent)";
+      playBtn.innerText = "▶ Start Pitch";
+
+      document.querySelectorAll(".word").forEach(el => el.className = "word");
+      card1.classList.remove("active-card");
+      card2.classList.remove("active-card");
+      pauseCard.classList.remove("active-card");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    playBtn.addEventListener("click", () => {
+      if (isRunning) pause();
+      else play();
+    });
+
+    resetBtn.addEventListener("click", reset);
+  </script>
+</body>
+</html>
