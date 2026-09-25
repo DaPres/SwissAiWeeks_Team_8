@@ -1,6 +1,6 @@
 # Push a version tag (e.g. `git tag v1.2.0 && git push origin v1.2.0`) to:
 #   1. build both app images (triage explorer + backend, and Intake + Python) and push them to ACR
-#   2. roll the Azure Container App to the new image
+#   2. roll both Azure Container Apps (triage, intake) to the new images
 #   3. create a GitHub release with generated notes
 # Azure login uses OIDC (federated credential on environment "production"); see infra/setup-azure.sh.
 name: release
@@ -22,6 +22,7 @@ env:
   RESOURCE_GROUP: ai-weeks
   CONTAINER_APP: triage
   IMAGE_NAME: triage
+  INTAKE_APP: intake
 
 jobs:
   release:
@@ -80,6 +81,19 @@ jobs:
             --image "$ACR.azurecr.io/$IMAGE_NAME:$version" --revision-suffix "$suffix" -o none
           fqdn=$(az containerapp show -n "$CONTAINER_APP" -g "$RESOURCE_GROUP" --query properties.configuration.ingress.fqdn -o tsv)
           echo "url=https://$fqdn" >> "$GITHUB_OUTPUT"
+          for i in $(seq 1 40); do
+            curl -sf "https://$fqdn/api/health" && exit 0
+            sleep 15
+          done
+          echo "::error::health check failed at https://$fqdn/api/health"; exit 1
+
+      - name: Deploy Intake Container App
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          suffix="v$(echo "$version" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9\n' '-')"
+          az containerapp update -n "$INTAKE_APP" -g "$RESOURCE_GROUP" \
+            --image "$ACR.azurecr.io/intake:$version" --revision-suffix "$suffix" -o none
+          fqdn=$(az containerapp show -n "$INTAKE_APP" -g "$RESOURCE_GROUP" --query properties.configuration.ingress.fqdn -o tsv)
           for i in $(seq 1 40); do
             curl -sf "https://$fqdn/api/health" && exit 0
             sleep 15

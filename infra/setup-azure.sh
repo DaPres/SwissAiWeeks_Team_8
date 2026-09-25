@@ -3,6 +3,7 @@
 #
 #   ACR (aiweeksteam8)  <- GitHub Actions pushes images on version tags (v*)
 #   Container Apps env + app "triage" pulls from ACR with its managed identity
+#   App "intake" (intake/Dockerfile) calls triage over HTTPS; same ACR pull setup
 #   App identity gets "Foundry User" on the Foundry account -> no Foundry key needed
 #   SPN "gh-swissaiweeks-team8-deploy" with a GitHub OIDC federated credential
 #   (environment "production") -> AcrPush on ACR + Contributor on the resource group
@@ -21,6 +22,8 @@ GH_REPO=${GH_REPO:-DaPres/SwissAiWeeks_Team_8}
 GH_ENVIRONMENT=${GH_ENVIRONMENT:-production}
 SPN_NAME=${SPN_NAME:-gh-swissaiweeks-team8-deploy}
 IMAGE=${IMAGE:-$ACR.azurecr.io/$APP:bootstrap}
+INTAKE_APP=${INTAKE_APP:-intake}
+INTAKE_IMAGE=${INTAKE_IMAGE:-$ACR.azurecr.io/$INTAKE_APP:bootstrap}
 
 cd "$(dirname "$0")/.."
 az account set --subscription "$SUBSCRIPTION"
@@ -76,6 +79,37 @@ FOUNDRY_ID=$(az cognitiveservices account show -n "$FOUNDRY" -g "$RG" --query id
 az role assignment create --assignee-object-id "$APP_PRINCIPAL" --assignee-principal-type ServicePrincipal \
   --role "Foundry User" --scope "$FOUNDRY_ID" -o none
 
+echo "==> Container App $INTAKE_APP"
+az acr repository show -n "$ACR" --image "${INTAKE_IMAGE#*/}" -o none 2>/dev/null ||
+  az acr build -r "$ACR" -t "${INTAKE_IMAGE#*/}" -f intake/Dockerfile . -o none
+if ! az containerapp show -n "$INTAKE_APP" -g "$RG" -o none 2>/dev/null; then
+  az containerapp create -n "$INTAKE_APP" -g "$RG" --environment "$ENV_NAME" \
+    --image "$INTAKE_IMAGE" --registry-server "$ACR.azurecr.io" --registry-identity system \
+    --system-assigned --target-port 8080 --ingress external \
+    --cpu 0.5 --memory 1Gi --min-replicas 1 --max-replicas 1 -o none
+fi
+INTAKE_PRINCIPAL=$(az containerapp show -n "$INTAKE_APP" -g "$RG" --query identity.principalId -o tsv)
+az role assignment create --assignee-object-id "$INTAKE_PRINCIPAL" --assignee-principal-type ServicePrincipal \
+  --role AcrPull --scope "$ACR_ID" -o none
+az containerapp registry set -n "$INTAKE_APP" -g "$RG" --server "$ACR.azurecr.io" --identity system -o none
+TRIAGE_FQDN=$(az containerapp show -n "$APP" -g "$RG" --query properties.configuration.ingress.fqdn -o tsv)
+INTAKE_SECRETS=() INTAKE_ENVS=("TRIAGE_BACKEND_URL=https://$TRIAGE_FQDN")
+for key in OPENAI_API_KEY JEV_API_KEY JEV_MODEL OPENAI_MODEL; do
+  value=$(grep -hE "^$key=" backend/.env intake/.env 2>/dev/null | head -1 | cut -d= -f2- | sed -E 's/[[:space:]]+#.*$//; s/^"//; s/"$//' || true)
+  [[ -z "$value" ]] && continue
+  if [[ $key == *_KEY ]]; then
+    secret=$(echo "$key" | tr 'A-Z_' 'a-z-')
+    INTAKE_SECRETS+=("$secret=$value")
+    INTAKE_ENVS+=("$key=secretref:$secret")
+  else
+    INTAKE_ENVS+=("$key=$value")
+  fi
+done
+[[ ${#INTAKE_SECRETS[@]} -gt 0 ]] && az containerapp secret set -n "$INTAKE_APP" -g "$RG" --secrets "${INTAKE_SECRETS[@]}" -o none
+CURRENT_IMAGE=$(az containerapp show -n "$INTAKE_APP" -g "$RG" --query "properties.template.containers[0].image" -o tsv)
+[[ "$CURRENT_IMAGE" == "$ACR.azurecr.io/"* ]] || CURRENT_IMAGE=$INTAKE_IMAGE
+az containerapp update -n "$INTAKE_APP" -g "$RG" --image "$CURRENT_IMAGE" --set-env-vars "${INTAKE_ENVS[@]}" -o none
+
 echo "==> Deploy SPN $SPN_NAME (GitHub OIDC)"
 CLIENT_ID=$(az ad app list --display-name "$SPN_NAME" --query "[0].appId" -o tsv)
 if [[ -z "$CLIENT_ID" ]]; then
@@ -100,9 +134,11 @@ az role assignment create --assignee-object-id "$SPN_OBJECT" --assignee-principa
   --role Contributor --scope "$RG_ID" -o none
 
 FQDN=$(az containerapp show -n "$APP" -g "$RG" --query properties.configuration.ingress.fqdn -o tsv)
+INTAKE_FQDN=$(az containerapp show -n "$INTAKE_APP" -g "$RG" --query properties.configuration.ingress.fqdn -o tsv)
 cat <<EOF
 
 Done. App: https://$FQDN
+Intake:    https://$INTAKE_FQDN
 
 GitHub repo secrets ($GH_REPO):
   AZURE_CLIENT_ID=$CLIENT_ID
