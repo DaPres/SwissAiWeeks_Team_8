@@ -35,15 +35,17 @@ function ChipOptions({ config, value, onSelect }) {
   </div>;
 }
 
-function EnrichmentChip({ id, config, onSave, index, disabled, values, loading, loadingIndex }) {
+function EnrichmentChip({ id, config, onSave, index, disabled, values, loading, loadingIndex, invalidAttempt }) {
   const [open, setOpen] = useState(false);
   const value = values[id];
   const label = value ? (config.format?.(value) || value) : config.label;
   const save = next => { onSave(id, next); setOpen(false); };
   return <Popover.Root open={open} onOpenChange={setOpen}>
-    <Popover.Trigger type="button" className="field-chip" data-filled={Boolean(value)} data-loading={loading && !value}
+    <Popover.Trigger type="button" className="field-chip" data-filled={Boolean(value)} data-loading={loading && !value && !invalidAttempt}
+      aria-invalid={Boolean(invalidAttempt && !value) || undefined}
       style={{ animationDelay: `${index * 45}ms`, '--chip-delay': `${loadingIndex * 220}ms` }} disabled={disabled}
       aria-label={`Edit ${config.label}${value ? `: ${label}` : ''}`} title={config.label}>
+      {invalidAttempt > 0 && !value && <span key={invalidAttempt} className="chip-validation-outline" aria-hidden="true" />}
       <span className="chip-label" key={label}>{config.label}{value ? `: ${label}` : ''}</span>
       {value ? <Check size={15} strokeWidth={1.75} aria-hidden="true" /> : <ChevronDown size={12} aria-hidden="true" />}
     </Popover.Trigger>
@@ -57,12 +59,12 @@ function EnrichmentChip({ id, config, onSave, index, disabled, values, loading, 
   </Popover.Root>;
 }
 
-function EnrichmentChips({ values, onSave, saving, loading, onInteract }) {
+function EnrichmentChips({ values, onSave, saving, loading, onInteract, invalidAttempt }) {
   const missing = Object.keys(chipFields).filter(field => !values[field]);
   return <div className="chip-list" onPointerDownCapture={onInteract} onFocusCapture={onInteract}>
     {Object.entries(chipFields).map(([id, config], index) =>
       <EnrichmentChip key={id} index={index} id={id} config={config} disabled={saving} onSave={onSave}
-        values={values} loading={loading} loadingIndex={Math.max(0, missing.indexOf(id))} />)}
+        values={values} loading={loading} loadingIndex={Math.max(0, missing.indexOf(id))} invalidAttempt={invalidAttempt} />)}
   </div>;
 }
 
@@ -128,7 +130,7 @@ export default function App() {
   const readiness = useReadiness(snapshot, attempt, Boolean(description.trim()) && view === 'create');
   const hasText = Boolean(description.trim());
   const typing = hasText && readiness.phase === 'waiting';
-  const showEnrichment = hasText && (!typing || lastPanelReadiness !== null);
+  const showEnrichment = hasText && (submitAttempt > 0 || !typing || lastPanelReadiness !== null);
   const panelReadiness = typing && lastPanelReadiness ? lastPanelReadiness : readiness;
   const inferred = (readiness.result || readiness.previousResult)?.inferred || {};
   const fieldValues = resolvedFields(details, inferred);
@@ -213,7 +215,7 @@ export default function App() {
             <Button key={`submit-${submitAttempt}`} type="submit" className={`submit-button ${submitAttempt ? 'button-wobble' : ''}`} aria-busy={saving}>{saving ? 'Submitting…' : 'Submit Incident'}</Button>
           </div>}
         </form>
-          {showEnrichment && <EnrichmentChips onInteract={dismissValidation} values={fieldValues} onSave={changeChip} saving={saving} loading={['checking', 'slow', 'enriching'].includes(readiness.phase)} />}
+          {showEnrichment && <EnrichmentChips onInteract={dismissValidation} values={fieldValues} onSave={changeChip} saving={saving} loading={['checking', 'slow', 'enriching'].includes(readiness.phase)} invalidAttempt={error && !validationClosing ? submitAttempt : 0} />}
         </div>
         {showEnrichment && !error && <AdvicePanel readiness={panelReadiness} paused={typing} onRetry={() => setAttempt(value => value + 1)} />}
         </div>

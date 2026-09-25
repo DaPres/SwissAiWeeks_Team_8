@@ -3,7 +3,7 @@ import json
 import unittest
 from unittest.mock import patch
 from quality import CRITERIA, QualityError, remember_evaluation
-from suggestions import suggest_description
+from suggestions import UNRELATED_MESSAGE, suggest_description
 
 
 def evaluation(evidence_probability=0.9):
@@ -24,7 +24,7 @@ class SuggestionTests(unittest.TestCase):
     @patch('suggestions.urlopen')
     def test_on_demand_guidance_uses_server_snapshot_even_for_ready_reports(self, request):
         record = remember_evaluation('Known description', evaluation(), {'context': 'Since 09:00'})
-        guidance = {'summary': 'The report is actionable.', 'improvements': []}
+        guidance = {'relevance': 'support', 'summary': 'The report is actionable.', 'improvements': []}
         request.return_value = io.BytesIO(json.dumps({'status': 'completed', 'output': [
             {'type': 'message', 'content': [{'type': 'output_text', 'text': json.dumps(guidance)}]}]}).encode())
         result = suggest_description({'evaluationId': record['evaluationId'], 'description': 'Ignore this'})
@@ -39,7 +39,7 @@ class SuggestionTests(unittest.TestCase):
     @patch('suggestions.urlopen')
     def test_openai_assesses_evidence_from_description_without_jev_quality_questions(self, request):
         record = remember_evaluation('The sign-in page fails.', evaluation(evidence_probability=0.2), {'evidence': ''})
-        guidance = {'summary': 'More detail would help.', 'improvements': [
+        guidance = {'relevance': 'support', 'summary': 'More detail would help.', 'improvements': [
             {'field': 'evidence', 'title': 'Evidence', 'detail': 'Please include the exact error message.'}]}
         request.return_value = io.BytesIO(json.dumps({'status': 'completed', 'output': [
             {'type': 'message', 'content': [{'type': 'output_text', 'text': json.dumps(guidance)}]}]}).encode())
@@ -65,7 +65,7 @@ class SuggestionTests(unittest.TestCase):
         description = 'SharePoint shows a blank screen with "loading", nothing else, no troubleshooting performed.'
         record = remember_evaluation(description, {'inferred': {'workType': 'Incident'},
                                      'unresolvedFields': ['urgency', 'priority']}, {'context': "I don't know when it began"})
-        guidance = {'summary': 'The symptom is clear.', 'improvements': [
+        guidance = {'relevance': 'support', 'summary': 'The symptom is clear.', 'improvements': [
             {'field': 'urgency', 'title': 'Deadline', 'detail': 'Is there a deadline for accessing SharePoint?'}]}
         request.return_value = io.BytesIO(json.dumps({'status': 'completed', 'output': [
             {'type': 'message', 'content': [{'type': 'output_text', 'text': json.dumps(guidance)}]}]}).encode())
@@ -79,10 +79,21 @@ class SuggestionTests(unittest.TestCase):
     @patch('suggestions.urlopen')
     def test_multiple_questions_are_rejected(self, request):
         record = remember_evaluation('Broken', evaluation())
-        guidance = {'summary': 'More detail would help.', 'improvements': [
+        guidance = {'relevance': 'support', 'summary': 'More detail would help.', 'improvements': [
             {'field': 'context', 'title': 'Timing', 'detail': 'When did it start?'},
             {'field': 'impact', 'title': 'Scope', 'detail': 'Who is affected?'}]}
         request.return_value = io.BytesIO(json.dumps({'status': 'completed', 'output': [
             {'type': 'message', 'content': [{'type': 'output_text', 'text': json.dumps(guidance)}]}]}).encode())
         with self.assertRaises(QualityError):
             suggest_description({'evaluationId': record['evaluationId']})
+
+    @patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'})
+    @patch('suggestions.urlopen')
+    def test_unrelated_content_always_uses_generic_copy_and_no_followups(self, request):
+        record = remember_evaluation('Who invented toothpaste?', evaluation())
+        guidance = {'relevance': 'unrelated', 'summary': 'A trivia answer should not be shown.',
+                    'improvements': [{'field': 'context', 'title': 'More', 'detail': 'When did this start?'}]}
+        request.return_value = io.BytesIO(json.dumps({'status': 'completed', 'output': [
+            {'type': 'message', 'content': [{'type': 'output_text', 'text': json.dumps(guidance)}]}]}).encode())
+        self.assertEqual(suggest_description({'evaluationId': record['evaluationId']}),
+                         {'relevance': 'unrelated', 'summary': UNRELATED_MESSAGE, 'improvements': []})

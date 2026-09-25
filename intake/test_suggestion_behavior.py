@@ -7,7 +7,7 @@ import os
 import unittest
 
 from quality import remember_evaluation
-from suggestions import suggest_description
+from suggestions import UNRELATED_MESSAGE, suggest_description
 
 
 @unittest.skipUnless(os.getenv('RUN_LIVE_SUGGESTION_TESTS') == '1', 'Live model checks are opt-in')
@@ -51,3 +51,16 @@ class SuggestionBehaviorTests(unittest.TestCase):
         result = self.guidance('It does not work.')
         self.assertEqual(len(result['improvements']), 1)
         self.assertIn(result['improvements'][0]['field'], ('service', 'evidence'))
+
+    def test_unrelated_questions_get_generic_guidance(self):
+        for description in ['what is the weather todaay', 'who invented toothpaste']:
+            with self.subTest(description=description):
+                result = self.guidance(description)
+                self.assertEqual(result['relevance'], 'unrelated')
+                self.assertEqual(result['summary'], UNRELATED_MESSAGE)
+                self.assertEqual(result['improvements'], [])
+
+    def test_weather_keyword_in_a_work_issue_is_not_rejected(self):
+        result = self.guidance('Our weather dashboard stopped refreshing and blocks the flight operations team.')
+        self.assertEqual(result['relevance'], 'support')
+        self.assertNotEqual(result['summary'], UNRELATED_MESSAGE)
