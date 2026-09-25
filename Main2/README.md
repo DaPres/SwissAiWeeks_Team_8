@@ -19,6 +19,7 @@ python -m triagemate.cli run-challenge    # triage the challenge file           
 python -m triagemate.cli eval --offline   # stress + post-freeze validation + holdout        -> eval/results_offline.json
 python -m triagemate.cli serve --port 8765   # analyst UI + REST API                        -> http://127.0.0.1:8765
 python -m pytest tests -q                 # 100+ tests, no network
+python scripts/validate_submission.py    # independent audit of the output against the organisers' rules (matrix, vocabulary, voice, ...)
 ```
 
 Windows: run the same commands in PowerShell (no `make` needed). Linux/macOS: `make check` runs the whole gate.
@@ -64,7 +65,7 @@ and raw ticket text contains personal data (masked before any model call).
 | Priority consistent with the matrix | urgency/impact from evidence, **matrix computed in code**; 25 cells tested against the README table; never freehand | `priority.py` |
 | Resolution status | policy over signals (`done`, `clarification` for unclear/injection, `cancelled` for duplicates, `cannot reproduce` for transient) | `resolutions.py` |
 | Resolution comment (specific, in the agent's voice, reuse similar history) | best-matching mined human note adapted with ticket identifiers, or an LLM rewrite grounded in playbook + KB; written as `agent@intcom.com: Resolution: ...` and appended to `All Comments` | `resolutions.py`, `retrieve.py`, `challenge.py` |
-| No hardcoded answers | the runner has no notion of ticket identity; `test_runner_is_ticket_agnostic_no_hardcoded_answers` triages a fresh synthetic ticket; lexicon contains generic domain terms only | `tests/` |
+| No hardcoded answers | the runner has no notion of ticket identity; `test_runner_is_ticket_agnostic_no_hardcoded_answers` triages a fresh synthetic ticket; `test_no_hardcoding.py` fails if any identifier or title of a bundled challenge ticket appears in code, prompts, KB, UI or tests; lexicon contains generic domain terms only; the decision cache is git-ignored | `tests/` |
 
 The challenge file in the repo is `jira_hackathon_blind_eval_challenge_*.json` (Jira-export envelope), not the README's `jira_hackathon_20_new_tickets_challenge.json`;
 the loader accepts either name, an envelope, a bare list or JSONL, and the output keeps the input schema.
@@ -139,7 +140,7 @@ Mode: **offline** - stress set n=106, priority consistency over 5 runs.
 | PII redaction recall | - | 1.000 | - |
 | Citation coverage (EN replies) | - | 1.0 | target >= 0.9 |
 | Duplicate linking P / R | - | 1.000 / 1.000 | - |
-| Latency p50 / p95 (ms/ticket) | - | 47.1 / 67.9 | target p95 < 6000 |
+| Latency p50 / p95 (ms/ticket) | - | 34.9 / 50.2 | target p95 < 6000 |
 | Cost per ticket (USD) | - | 0.0 | - |
 
 #### Post-freeze validation set (n=37, written after the rules were frozen; hybrid numbers are post prompt-fix, see first-run files)

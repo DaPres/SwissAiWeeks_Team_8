@@ -114,7 +114,7 @@
       "Resolution date": null,
       "All Comments": [
         "maia.berg@intcom.com: Standard processing access required for month-end reconciliation support.",
-        "carla.dubois@intcom.com: Resolution: Reviewed the access request for the new operations joiner, granted the standard Portfolio Accounting processing role and read access to the reconciliation dashboards as confirmed by the requester, and verified that the employee could access the necessary resources to support month-end reconciliation and exception review."
+        "carla.dubois@intcom.com: Resolution: Reviewed the access request for the new operations joiner, granted the standard Portfolio Accounting processing role and read access to the reconciliation dashboards as required for month-end reconciliation support, and confirmed the requester verified the access."
       ]
     },
     {
@@ -146,7 +146,7 @@
       "Resolution date": null,
       "All Comments": [
         "maia.berg@intcom.com: Standard compliance analyst license requested for sanctions screening dashboard.",
-        "daniel.taylor@intcom.com: Resolution: Reviewed the license request for the sanctions screening dashboard, provisioned a standard compliance analyst license to enable monitoring of rule exceptions and review of escalated alerts, and confirmed the requester’s access to the dashboard for daily control activities."
+        "daniel.taylor@intcom.com: Resolution: Reviewed the license request for the sanctions screening dashboard and provisioned a standard compliance analyst license suitable for monitoring rule exceptions and reviewing escalated alerts. Verified that the new user had appropriate access to the dashboard and could perform daily control activities as required."
       ]
     },
     {
@@ -179,7 +179,7 @@
       "All Comments": [
         "info@extcom_08.com: MT536 settlement status messages delayed for several France books. Next vendor update expected soon.",
         "service.desk@intcom.com: Vendor notice copied into Jira. Functional owner still unknown.",
-        "benjamin.hale@intcom.com: Resolution: Diagnosed delayed MT536 settlement status messages affecting France books due to upstream processing delays. Cleared the settlement message queue and replayed pending status updates to synchronize custody settlement records. Verified that final custody settlement updates arrived and matched the trades as expected."
+        "benjamin.hale@intcom.com: Resolution: Diagnosed delayed MT536 settlement status messages for France books as caused by a stalled consumer on the settlement queue. Restarted the listener service, replayed the backlog of pending messages, and verified that custody settlement updates were received and matched to the trades."
       ]
     },
     {
@@ -214,7 +214,7 @@
       "All Comments": [
         "sa_securities@intcom.com: Adapter TMA-402 rejected 16 allocation messages for broker JPM. Matching state remains pending.",
         "monitoring.bot@intcom.com: Automated incident created from matching adapter error threshold.",
-        "karen.brown@intcom.com: Resolution: Diagnosed that the TMA-402 adapter rejected 16 allocations from broker JPM due to unmatched inbound execution references. Verified broker account setup and SSI mappings, corrected any discrepancies, then reprocessed the rejected allocation messages. Confirmed that the matching backlog was cleared and the confirmation workflow resumed successfully."
+        "karen.brown@intcom.com: Resolution: Diagnosed that the TMA-402 adapter rejected 16 allocations from broker JPM due to unmatched inbound execution references. Verified broker account setup and SSI mappings were complete and correct. Reprocessed the affected allocation messages and confirmed the confirmation workflow resumed with all trades matched successfully."
       ]
     },
     {
@@ -234,9 +234,9 @@
       ],
       "Reporter": "nadia.morgan@intcom.com",
       "Assignee": "jack.martin@intcom.com",
-      "Priority": "Low",
-      "Urgency": "Medium",
-      "Impact": "Low",
+      "Priority": "High",
+      "Urgency": "High",
+      "Impact": "High",
       "Severity": null,
       "Created date": "2026-09-22 07:05",
       "Status": "done",
@@ -248,7 +248,7 @@
       "Resolution date": null,
       "All Comments": [
         "nadia.morgan@intcom.com: Preview looked correct, but the generated PDF pack for Nordics dropped the management fee block on every report tested.",
-        "jack.martin@intcom.com: Resolution: Diagnosed that the management fee section was blank due to a faulty conditional in the Nordics client report template. Corrected the template logic, regenerated the affected quarterly batch, and verified that the fee section now appears correctly in the output PDFs before release."
+        "jack.martin@intcom.com: Resolution: Diagnosed that the management fee section was blank due to a faulty conditional in the Nordics client report template. Corrected the template logic, regenerated the affected quarterly batch, and verified that the fee section now appears correctly in the output PDFs before approving distribution."
       ]
     },
     {
@@ -280,7 +280,7 @@
       "Resolution date": null,
       "All Comments": [
         "helen.smith@intcom.com: Margin cash looked wrong after yesterday close. Need help quickly.",
-        "nora.leclerc@intcom.com: Resolution: Diagnosed the missing cash as a result of the margin sweep missing the prior day's banking cutoff. Applied a value-dated adjustment to correct the cash balance and confirmed the updated balance with the treasury team."
+        "nora.leclerc@intcom.com: Resolution: Diagnosed the missing cash as a result of the margin sweep missing the prior day's banking cutoff. Applied a value-dated adjustment to the affected account for the previous day and confirmed the corrected balance with the treasury team."
       ]
     },
     {
@@ -315,7 +315,7 @@
       "All Comments": [
         "info@extcom_11.com: Late feed delivery update for DM_RIMES_FU_PR_BBG3_EODD_20260918_1.txt. Delivery completed after the expected cutoff.",
         "service.desk@intcom.com: Intake created from external vendor mail. Awaiting service triage.",
-        "frank.ross@intcom.com: Resolution: Diagnosed the late arrival of the benchmark file DM_RIMES_FU_PR_BBG3_EODD_20260918_1.txt causing the price mastering job for the Germany book to start with stale input. Notified the vendor for an updated file ETA and assessed the impact on downstream valuation processes. Verified that the issue was logged and monitored for vendor feed alignment."
+        "frank.ross@intcom.com: Resolution: Identified that the Rimes benchmark file DM_RIMES_FU_PR_BBG3_EODD_20260918_1.txt arrived after the downstream cutoff, causing the price mastering job for the Germany book to start with stale input. Notified the vendor for the corrected file ETA and assessed the impact on downstream valuation processes. Confirmed that the issue was logged promptly to mitigate further risk."
       ]
     },
     {
@@ -348,7 +348,7 @@
       "All Comments": [
         "info@extcom_15.com: Delayed benchmark publication for Americas universe. Corrected publication ETA later today.",
         "service.desk@intcom.com: Mail copied into Jira. Awaiting functional routing.",
-        "samuel.hughes@intcom.com: Resolution: Identified that the Americas benchmark publication delay from the vendor caused incomplete price snapshots in the Rimes Data Feed. Notified the pricing and NAV teams about the stale inputs and recorded the delay against the vendor service level. Verified that downstream consumers were informed of the issue until corrected files are posted."
+        "samuel.hughes@intcom.com: Resolution: Identified the delay in the Americas benchmark publication from the vendor notice impacting the Rimes Data Feed service. Warned the pricing and NAV teams about potential stale price inputs and recorded the delay against the vendor service level. Confirmed that downstream consumers were informed of incomplete price snapshots until corrected files are posted."
       ]
     },
     {
@@ -381,7 +381,7 @@
       "All Comments": [
         "info@extcom_20.com: Submission file rejected by the regulator gateway. Error text mentions missing classification segment in the LEI submission payload.",
         "service.desk@intcom.com: Forwarded from vendor onboarding mailbox. Service needs confirmation.",
-        "oliver.varga@intcom.com: Resolution: Diagnosed the rejection as caused by an empty mandatory classification segment in the LEI submission file. Corrected the classification data in the vendor onboarding records, regenerated the submission file, and confirmed it was accepted by the regulator gateway."
+        "oliver.varga@intcom.com: Resolution: Diagnosed the rejection as caused by an empty mandatory classification segment in the LEI submission file. Corrected the classification data in the vendor records, regenerated the submission file, and verified that it was accepted by the regulator gateway."
       ]
     },
     {
@@ -416,7 +416,7 @@
       "All Comments": [
         "sa_accounting@intcom.com: Job SCD_POS_SYNC failed on EAPW8504 with replication timeout.",
         "monitoring.bot@intcom.com: Automated incident created because reporting synchronization did not complete.",
-        "tania.gupta@intcom.com: Resolution: Diagnosed the failure of the SimCorp replication job SCD_POS_SYNC on host EAPW8504 as caused by a temporary database lock on the staging table. Cleared the lock, restarted the job from its last checkpoint, and verified that position updates were successfully synchronized to the reporting layer."
+        "tania.gupta@intcom.com: Resolution: Diagnosed that the SimCorp replication job SCD_POS_SYNC on host EAPW8504 had stalled due to a temporary lock on the database. Cleared the lock, restarted the job from its last checkpoint, and verified that position updates were successfully synchronized to the reporting layer."
       ]
     },
     {
@@ -449,7 +449,7 @@
       "All Comments": [
         "sa_accounting@intcom.com: Alert source NAV_EOD_GE_375 on host calc-prd-09. Tolerance breach detected.",
         "monitoring.bot@intcom.com: Automated incident created because the downstream NAV publication queue did not receive a success event within 10 minutes.",
-        "yves.moreau@intcom.com: Resolution: Diagnosed the NAV_EOD_GE_375 batch stoppage due to valuation tolerance breaches on four Germany funds. Coordinated with the valuation team to confirm the tolerance issues before proceeding. Verified that the batch remains on hold pending their confirmation prior to the next accounting cycle."
+        "yves.moreau@intcom.com: Resolution: Diagnosed the NAV_EOD_GE_375 batch stoppage due to valuation tolerance breaches on four Germany funds. Coordinated with the valuation team to review the tolerance issues and ensured the NAV snapshot was withheld from downstream control queues as expected. Verified that the batch remains on hold pending tolerance confirmation before the next accounting cycle."
       ]
     },
     {
@@ -483,7 +483,7 @@
       "Resolution date": null,
       "All Comments": [
         "sebastian.eaton@intcom.com: Breach detail pages look current, but the dashboard summary still shows yesterday's open breaches after the rule update.",
-        "ruth.berg@intcom.com: Resolution: Diagnosed that the compliance dashboard summary had not refreshed after the recent rule update despite successful portfolio check reruns. Triggered a manual refresh of the summary cache and verified that breach statuses on the dashboard now accurately reflect the underlying rule results. Confirmed with multiple cases that the overview screen displayed correct breach statuses."
+        "ruth.berg@intcom.com: Resolution: Diagnosed that the compliance dashboard summary had not refreshed after the recent rule update and rerun of portfolio checks. Triggered a manual refresh of the summary cache and verified that breach statuses now matched the underlying rule results. Confirmed the overview screen displayed accurate breach information to analysts."
       ]
     },
     {
@@ -549,7 +549,7 @@
       "Resolution date": null,
       "All Comments": [
         "nadia.morgan@intcom.com: Contractor contract ended today. Please remove all SharePoint access including synced project folders.",
-        "zoe.peters@intcom.com: Resolution: Identified all SharePoint sites, libraries, and project groups associated with the contractor's access. Removed direct site permissions, revoked inherited group access, and disabled synchronization for relevant folders. Verified that the contractor no longer had access to any project documents in SharePoint and File Storage."
+        "zoe.peters@intcom.com: Resolution: Identified all SharePoint sites, libraries, and project groups associated with the contractor's access. Removed direct site permissions, revoked group-based access, and disabled synchronization for relevant folders. Verified that the contractor no longer had access to any project documents in SharePoint and File Storage."
       ]
     },
     {
@@ -581,7 +581,7 @@
       "Resolution date": null,
       "All Comments": [
         "cora.russell@intcom.com: Need a shared mailbox and DL before next week. There is no actual mail outage.",
-        "quinn.anderson@intcom.com: Resolution: Reclassified the ticket as a service request since no outage was present, then provisioned the requested shared mailbox and distribution list for the temporary campaign. Granted the appropriate send and access permissions and confirmed the mailbox's visibility in Outlook."
+        "quinn.anderson@intcom.com: Resolution: Reclassified the ticket as a service request since no outage was present, then provisioned the requested shared mailbox and distribution list for the temporary campaign. Granted the appropriate send and access permissions and confirmed the mailbox was visible and accessible in Outlook."
       ]
     },
     {
@@ -614,7 +614,7 @@
       "All Comments": [
         "sa_securities@intcom.com: CAEV-874 missing option code on 1 events. Publication to operations screen blocked.",
         "monitoring.bot@intcom.com: Automated incident created from corporate action data-quality rule.",
-        "pierre.johnson@intcom.com: Resolution: Diagnosed that the corporate action ingestion feed CAEV-874 was missing a mandatory option code on one event, preventing elections from being published. Updated the option-code mapping table accordingly and reprocessed the feed. Verified that the elections now appear correctly on the downstream operations screen."
+        "pierre.johnson@intcom.com: Resolution: Diagnosed that the corporate action ingestion feed CAEV-874 contained 1 event missing a mandatory option code. Updated the option-code mapping table accordingly, reprocessed the affected event, and confirmed that the elections were published correctly to the downstream operations screen."
       ]
     },
     {
@@ -646,7 +646,7 @@
       "Resolution date": null,
       "All Comments": [
         "maia.berg@intcom.com: Reproduced on three new orders after switching the broker account mapping. Orders stay pending approval and never leave OMS.",
-        "carlos.ortiz@intcom.com: Resolution: Diagnosed that the broker routing link was broken following the broker account switch, causing orders to remain in pending approval. Updated the routing table to reflect the new broker account configuration and verified that new orders progressed automatically to execution routing without requiring manual intervention."
+        "carlos.ortiz@intcom.com: Resolution: Diagnosed that after the broker account switch, the routing table was not updated, causing orders to remain in pending approval. Updated the routing table to reflect the new broker account configuration and verified that newly submitted orders progressed correctly to execution routing without manual intervention."
       ]
     },
     {
@@ -681,7 +681,7 @@
       "All Comments": [
         "sa_securities@intcom.com: Monitoring threshold breach on SECLINK-7549. Confirmation queue depth above 161 for 15 minutes.",
         "monitoring.bot@intcom.com: Auto-ticket opened from securities middleware health check.",
-        "beatrice.monti@intcom.com: Resolution: Diagnosed a backlog in the settlement confirmation queue SECLINK-7549 caused by unposted final settlement acknowledgements. Cleared the stuck acknowledgements and replayed the pending confirmations, which restored synchronization of custody statuses to the operations dashboard. Verified that the queue depth returned to normal and settlement acknowledgements were properly reflected."
+        "beatrice.monti@intcom.com: Resolution: Diagnosed a backlog in the settlement confirmation queue SECLINK-7549 caused by unposted final settlement acknowledgements. Cleared the stuck acknowledgements and replayed the pending confirmations, which restored synchronization of custody statuses to the operations dashboard. Verified that the queue depth returned to normal and settlement statuses were properly reflected."
       ]
     },
     {
@@ -715,7 +715,7 @@
       "Resolution date": null,
       "All Comments": [
         "maia.berg@intcom.com: Daily deactivation batch completed. Need confirmation that inactive users no longer retain portal access.",
-        "ulrich.fischer@intcom.com: Resolution: Classified the ticket as a service request for identity cleanup, then coordinated the removal of access for all deactivated users in the portal as of the requested date. Verified that the enterprise applications confirmed the successful revocation of access for the specified accounts."
+        "ulrich.fischer@intcom.com: Resolution: Classified the ticket as a service request for identity cleanup, then coordinated removal of access for all deactivated users in the portal as of the requested date. Verified that inactive accounts no longer retained access permissions."
       ]
     }
   ],

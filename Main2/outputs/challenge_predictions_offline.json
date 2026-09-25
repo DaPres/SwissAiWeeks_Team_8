@@ -280,7 +280,7 @@
       "Resolution date": null,
       "All Comments": [
         "helen.smith@intcom.com: Margin cash looked wrong after yesterday close. Need help quickly.",
-        "nora.leclerc@intcom.com: Resolution: Reconciled the cash ledger against the bank statement and found the sweep missed the prior day's cutoff; booked a value-dated adjustment and confirmed the balance with the desk."
+        "nora.leclerc@intcom.com: Resolution: Traced the shortfall to a missed banking cutoff on the margin sweep; corrected with an intraday adjustment and confirmed with Treasury."
       ]
     },
     {
