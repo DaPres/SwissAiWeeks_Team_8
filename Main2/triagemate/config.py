@@ -102,6 +102,8 @@ class Settings(BaseSettings):
     agent_mode: str = "llm"                  # llm = model picks the tools; policy = deterministic plan (fastest)
     batch_workers: int = 4                   # tickets processed concurrently in a batch when an LLM is on
     urgency_samples: int = 1                 # optional self-consistency: N parallel urgency/impact ratings, per-dimension median
+    llm_guard: bool = True                   # isolated LLM verdict on masked text when the regex gate is silent (only with a model on)
+    guard_threshold: float = Field(default=0.7, ge=0.0, le=1.0)
     decision_cache: bool = True              # content-addressed cache: same text+model+prompt => same urgency/impact (idempotent re-triage)
 
     # --- paths ---

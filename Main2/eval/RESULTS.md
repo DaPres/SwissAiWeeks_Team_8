@@ -14,7 +14,7 @@ Mode: **offline** - stress set n=106, priority consistency over 5 runs.
 | PII redaction recall | - | 1.000 | - |
 | Citation coverage (EN replies) | - | 1.0 | target >= 0.9 |
 | Duplicate linking P / R | - | 1.000 / 1.000 | - |
-| Latency p50 / p95 (ms/ticket) | - | 47.1 / 67.9 | target p95 < 6000 |
+| Latency p50 / p95 (ms/ticket) | - | 34.9 / 50.2 | target p95 < 6000 |
 | Cost per ticket (USD) | - | 0.0 | - |
 
 ## Post-freeze validation set (n=37, written after the rules were frozen; hybrid numbers are post prompt-fix, see first-run files)

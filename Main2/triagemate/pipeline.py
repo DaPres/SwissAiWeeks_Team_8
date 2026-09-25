@@ -32,7 +32,7 @@ from .config import get_settings
 from .llm import LLMError, LLMUnavailable, any_llm_enabled, track
 from .models import Classification, Draft, Flags, PriorityResult, Ticket, TriageResult
 from .retrieve import Retriever, _parse_dt, get_retriever
-from .safety import TicketSafety, analyse_ticket, names_from_emails
+from .safety import TicketSafety, analyse_ticket, names_from_emails, strip_links, without_suspicious_sentences
 
 PB_MIN = 0.28          # min fused score for a same-service playbook note to be used as the resolution basis
 KB_GOOD = 0.5          # fused score treated as a "good" retrieval for confidence normalisation
@@ -43,7 +43,8 @@ _PERSONAL_TOKEN = re.compile(r"\[(PERSON|EMAIL_[A-Z]+|PHONE|IBAN|POLICY|ID)_\d+\
 
 def _scrub_note(note: str) -> str:
     """A resolution note becomes a Jira comment: personal-data tokens are never restored into it (unlike the analyst-facing draft)."""
-    return _PERSONAL_TOKEN.sub(lambda m: "the requester" if m.group(1).startswith(("PERSON", "EMAIL")) else "the reported account", note)
+    note = _PERSONAL_TOKEN.sub(lambda m: "the requester" if m.group(1).startswith(("PERSON", "EMAIL")) else "the reported account", note)
+    return strip_links(note)                        # output guard: a reflected URL must never reach a Jira comment
 
 
 def _submit(ex: ThreadPoolExecutor, fn: Callable, *a, **kw):
@@ -100,6 +101,19 @@ class Triage:
         stage["classify_rules"] = (time.perf_counter() - t0) * 1000
 
         cls, agreement, versions, notes, spec = rules, 0.6, {}, [], None
+        if self.llm_on and not safe.injection and self.s.llm_guard:
+            t0 = time.perf_counter()
+            try:
+                from .llm_tasks import llm_guard
+                g_inj, g_conf, g_why, g_ver = llm_guard(self._text_all(safe))
+                versions["guard"] = g_ver
+                if g_inj and g_conf >= self.s.guard_threshold:
+                    safe.injection = True
+                    safe.injection_reasons = [f"LLM guard ({g_conf:.2f}): {g_why or 'instructions aimed at the AI'}"]
+                    notes.append("LLM guard flagged instruction-like text the regex gate did not recognise")
+            except (LLMError, LLMUnavailable) as e:               # fail open on availability, never on a positive verdict
+                notes.append(f"LLM guard unavailable ({str(e)[:70]}): regex gate only")
+            stage["guard"] = (time.perf_counter() - t0) * 1000
         if self.llm_on and not safe.injection:
             t0 = time.perf_counter()
             from .llm_tasks import llm_classify, llm_urgency_impact
@@ -224,7 +238,7 @@ class Triage:
             same = [h for h in same if R.playbook_fits_intent(h.text, intent)]
             best_pb = same[0] if same and same[0].score >= PB_MIN else None
             status, why = R.decide_status(cls, flags, text_all, bool(best_pb), dup_parent)
-            refs = R.extract_refs(safe.text)
+            refs = R.extract_refs(without_suspicious_sentences(safe.text))
             note, src = self._resolution_note(t, cls, safe, status, best_pb, same, st, refs, dup_parent, versions, notes)
             stage["resolution"] = (time.perf_counter() - t0) * 1000
             return status, why, note, src
@@ -294,8 +308,8 @@ class Triage:
             d = D.build_reply(cls.service, cls.team, lang, st.kb_hits, floor=self.s.confidence_floor * 0.5)
         else:
             d = self._reply(t, cls, safe, st, lang, versions, notes)
-        d.text = safe.restore(d.text)
-        d.next_steps = [safe.restore(s) for s in d.next_steps]
+        d.text = strip_links(safe.restore(d.text))
+        d.next_steps = [strip_links(safe.restore(s)) for s in d.next_steps]
         return d
 
     def _clarification(self, cls, safe, st, lang, versions, notes) -> Draft:

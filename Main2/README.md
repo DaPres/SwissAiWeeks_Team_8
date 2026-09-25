@@ -19,6 +19,7 @@ python -m triagemate.cli run-challenge    # triage the challenge file           
 python -m triagemate.cli eval --offline   # stress + post-freeze validation + holdout        -> eval/results_offline.json
 python -m triagemate.cli serve --port 8765   # analyst UI + REST API                        -> http://127.0.0.1:8765
 python -m pytest tests -q                 # 100+ tests, no network
+python scripts/validate_submission.py    # independent audit of the output against the organisers' rules (matrix, vocabulary, voice, ...)
 ```
 
 Windows: run the same commands in PowerShell (no `make` needed). Linux/macOS: `make check` runs the whole gate.
@@ -62,9 +63,9 @@ and raw ticket text contains personal data (masked before any model call).
 | Service team | strict catalogue lookup | `catalogue.py` |
 | Assignee | policy over the real 30-agent pool: spread a batch, lowest backlog, familiarity, stable hash (statistically the historical assignee is unpredictable) | `assign.py` |
 | Priority consistent with the matrix | urgency/impact from evidence, **matrix computed in code**; 25 cells tested against the README table; never freehand | `priority.py` |
-| Resolution status | policy over signals (`done`, `clarification` for unclear/injection, `cancelled` for duplicates, `cannot reproduce` for transient) | `resolutions.py` |
+| Resolution status | policy over signals (`done`, `clarification` for unclear/injection or for low confidence with no comparable past resolution - ask rather than guess, `cancelled` for duplicates, `cannot reproduce` for transient) | `resolutions.py` |
 | Resolution comment (specific, in the agent's voice, reuse similar history) | best-matching mined human note adapted with ticket identifiers, or an LLM rewrite grounded in playbook + KB; written as `agent@intcom.com: Resolution: ...` and appended to `All Comments` | `resolutions.py`, `retrieve.py`, `challenge.py` |
-| No hardcoded answers | the runner has no notion of ticket identity; `test_runner_is_ticket_agnostic_no_hardcoded_answers` triages a fresh synthetic ticket; lexicon contains generic domain terms only | `tests/` |
+| No hardcoded answers | the runner has no notion of ticket identity; `test_runner_is_ticket_agnostic_no_hardcoded_answers` triages a fresh synthetic ticket; `test_no_hardcoding.py` fails if any identifier or title of a bundled challenge ticket appears in code, prompts, KB, UI or tests; lexicon contains generic domain terms only; the decision cache is git-ignored | `tests/` |
 
 The challenge file in the repo is `jira_hackathon_blind_eval_challenge_*.json` (Jira-export envelope), not the README's `jira_hackathon_20_new_tickets_challenge.json`;
 the loader accepts either name, an envelope, a bare list or JSONL, and the output keeps the input schema.
@@ -139,7 +140,7 @@ Mode: **offline** - stress set n=106, priority consistency over 5 runs.
 | PII redaction recall | - | 1.000 | - |
 | Citation coverage (EN replies) | - | 1.0 | target >= 0.9 |
 | Duplicate linking P / R | - | 1.000 / 1.000 | - |
-| Latency p50 / p95 (ms/ticket) | - | 47.1 / 67.9 | target p95 < 6000 |
+| Latency p50 / p95 (ms/ticket) | - | 34.9 / 50.2 | target p95 < 6000 |
 | Cost per ticket (USD) | - | 0.0 | - |
 
 #### Post-freeze validation set (n=37, written after the rules were frozen; hybrid numbers are post prompt-fix, see first-run files)
@@ -208,11 +209,11 @@ assist("Hi i am facing a transaction")                              # typing ass
 ## Safety (Sec. 4.10 of the plan, all tested)
 
 1. **Separation** - ticket text only inside delimited data blocks; role-tag lookalikes are neutralised.
-2. **Detection** - precision-first injection patterns (EN/DE/FR, hidden HTML comments, zero-width characters); 0 false positives on the benign look-alike tickets.
+2. **Detection** - two layers: bounded regex patterns in 9 languages with de-obfuscation (leetspeak, homoglyphs, base64, rot13, reversed text, hidden HTML/zero-width), then an isolated LLM guard on the masked text when a model is on. Measured on four red-team sets (`eval/redteam*.py`, `docs/SECURITY.md`): the regex alone generalises poorly (13% on fresh paraphrases), the two layers together stop 19/20 on the final blind set; 0 false alarms on 331 real tickets.
 3. **Least privilege** - agent tools are read-only; tools *recommend*, deterministic gates *decide*.
 4. **Redaction** - e-mails, phones, IBANs, policy numbers and person names become tokens before any model call; restored only in the analyst-facing draft, never in resolution notes.
 
-An injected ticket triggers escalation **before** any model runs: zero bytes of the attack text are sent to a provider (tested).
+A ticket stopped by the regex gate sends zero bytes of the attack text to any provider (tested); one stopped by the guard reaches only that isolated call (masked text, no tools). Classification, drafting and the agent never see a flagged ticket. Output guards strip reflected links and attacker-supplied identifiers; a 250 KB hostile ticket is processed in 0.17 s. Full method, numbers and limits: [`docs/SECURITY.md`](docs/SECURITY.md). Run it: `python eval/redteam.py --llm`.
 
 ## Cost and latency (measured, not estimated)
 

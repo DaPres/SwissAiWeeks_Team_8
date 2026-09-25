@@ -121,7 +121,7 @@ def template_note(service: str, work_type: str, text: str, team: str, entity: st
 
 # ------------------------------------------------------------------ identifiers for specificity
 _REF_PATTERNS = [
-    re.compile(r"\b[A-Z][A-Z0-9]{1,9}(?:[-_][A-Z0-9]{2,}){1,4}\b"),     # TMA-402, NAV_EOD_GE_375, SCD_POS_SYNC, SECLINK-7549
+    re.compile(r"\b[A-Z][A-Z0-9]{1,9}(?:[-_][A-Z0-9]{2,}){1,4}\b"),     # job / adapter / queue ids such as ABC-123 or JOB_NAME_42
     re.compile(r"\b\S+\.(?:txt|csv|xml|json|xlsx|dat)\b", re.I),        # file names
     re.compile(r"\b[A-Z]{3,5}\d{3,6}\b"),                               # host names like ABCD1234
 ]
@@ -157,4 +157,6 @@ def decide_status(cls: Classification, flags: Flags, text: str, has_playbook: bo
         return "clarification", "input is unclear and no comparable historical resolution exists: ask, never guess"
     if cls.service == UNKNOWN:
         return "clarification", "affected system cannot be identified from the ticket"
+    if flags.low_confidence and not has_playbook:
+        return "clarification", "confidence is below the floor and no comparable resolution exists: ask rather than guess"
     return "done", "actionable ticket with a concrete resolution path"

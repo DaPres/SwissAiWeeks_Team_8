@@ -226,8 +226,8 @@ def test_duplicate_linking_is_directional_and_needs_similarity(retriever):
 
 # ------------------------------------------------------------------ resolutions / assignment / store
 def test_refs_extraction_is_generic():
-    refs = resolutions.extract_refs("Adapter TMA-402 failed on host EAPW8504; file DM_RIMES_FU_20260918.txt late; see [PERSON_1]")
-    assert "TMA-402" in refs and not any(r.startswith("[") for r in refs)
+    refs = resolutions.extract_refs("Adapter ABC-123 failed on host HOST4321; file EXPORT_20240101.txt late; see [PERSON_1]")
+    assert "ABC-123" in refs and "EXPORT_20240101.txt" in refs and not any(r.startswith("[") for r in refs)
 
 
 def test_assigner_spreads_a_batch_and_is_deterministic(training):

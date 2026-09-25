@@ -101,7 +101,10 @@ def main() -> int:
         print("  (skipped - no working chat provider)")
 
     hard_ok = all(v.get("chat") and v.get("json") for v in results.values() if v)
-    print("\nRESULT:", "READY - hybrid mode works" if (hard_ok and ok_e2e) else "not ready - see FAIL lines (offline mode still works)")
+    if not any(results.values()):
+        print("\nRESULT: OK - no LLM key configured, so the deterministic engine runs (all features work offline). Add a key to .env for hybrid mode.")
+    else:
+        print("\nRESULT:", "READY - hybrid mode works" if (hard_ok and ok_e2e) else "LLM path not ready - see FAIL lines (the system falls back to offline mode)")
     return 0 if (hard_ok and ok_e2e) or not any(results.values()) else 1
 
 

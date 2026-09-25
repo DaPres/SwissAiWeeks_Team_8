@@ -1,5 +1,5 @@
 {
-  "created": "2026-09-24T20:15:20",
+  "created": "2026-09-25T10:00:07",
   "llm_enabled": false,
   "provider": null,
   "model": null,
@@ -8,7 +8,7 @@
   "stress": {
     "n": 106,
     "mode": "offline",
-    "wall_seconds": 5.3,
+    "wall_seconds": 3.94,
     "routing_accuracy_team": 1.0,
     "service_accuracy": 1.0,
     "work_type_accuracy": 1.0,
@@ -42,8 +42,8 @@
       "f1": 1.0
     },
     "draft_language_matches_ticket": 1.0,
-    "latency_ms_p50": 47.1,
-    "latency_ms_p95": 67.9,
+    "latency_ms_p50": 34.9,
+    "latency_ms_p95": 50.2,
     "mean_cost_usd": 0.0,
     "per_category": {
       "paraphrase": {
@@ -112,7 +112,7 @@
   "validation": {
     "n": 37,
     "mode": "offline",
-    "wall_seconds": 1.78,
+    "wall_seconds": 1.28,
     "routing_accuracy_team": 0.946,
     "service_accuracy": 0.946,
     "work_type_accuracy": 0.946,
@@ -146,8 +146,8 @@
       "f1": 0.0
     },
     "draft_language_matches_ticket": 0.0,
-    "latency_ms_p50": 47.9,
-    "latency_ms_p95": 60.2,
+    "latency_ms_p50": 33.7,
+    "latency_ms_p95": 41.7,
     "mean_cost_usd": 0.0,
     "per_category": {
       "val_incident": {

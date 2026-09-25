@@ -26,8 +26,8 @@
     "why": {
       "classification": [
         "Description specifies need for additional user license for quarterly withholding tax workflow, matching Tax Reporting service.",
-        "Summary and intake metadata both indicate a license request, consistent with Service Request.",
-        "Advisory ranking strongly supports Tax Reporting service for withholding tax related requests.",
+        "Summary and intake metadata indicate a new license request for tax-related work.",
+        "Advisory ranking strongly supports Tax Reporting service for withholding tax tasks.",
         "service Tax Reporting: “withholding tax”, “withholding tax”, “tax filing*”, “tax output”",
         "intake request type “New License” leans Service Request",
         "summary suggests Service Request, description suggests Service Request"
@@ -82,30 +82,30 @@
       {
         "step": 1,
         "tool": "search_kb",
-        "args": "{\"query\": \"add user license quarterly withholding tax workflow Germany entity\", \"service\": \"Tax Reporting\"}",
+        "args": "{\"query\": \"request additional user license quarterly withholding tax workflow Germany entity\", \"service\": \"Tax Reporting\"}",
         "result": "KB-14 requester reply points (0.43); KB-14 first checks (0.42); KB-14 when to use (0.41); KB-14 analyst next steps (0.35)",
-        "latency_ms": 0.8,
+        "latency_ms": 0.7,
         "mode": "llm"
       },
       {
         "step": 2,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"additional user license quarterly withholding tax Germany\"}",
+        "result": "New license requested for Tax Reporting (sim 0.459, 40 tickets); Access requested for Tax Reporting (sim 0.335, 21 tickets); New license requested for Regulatory Reporting (sim 0.418, 44 tickets)",
+        "latency_ms": 1.6,
+        "mode": "llm"
+      },
+      {
+        "step": 3,
         "tool": "find_open_related",
         "args": "{}",
         "result": "no similar open ticket on this service in the last 4h",
         "latency_ms": 0.2,
         "mode": "llm"
-      },
-      {
-        "step": 3,
-        "tool": "find_similar_tickets",
-        "args": "{\"query\": \"New license requested for quarterly withholding tax workflow\"}",
-        "result": "New license requested for Tax Reporting (sim 0.459, 40 tickets); Access requested for Tax Reporting (sim 0.335, 21 tickets); New license requested for Regulatory Reporting (sim 0.418, 44 tickets)",
-        "latency_ms": 1.3,
-        "mode": "policy (fill-in)"
       }
     ],
-    "latency_ms": 8500.9,
-    "cost_usd": 0.002881,
+    "latency_ms": 8636.6,
+    "cost_usd": 0.002545,
     "mode": "hybrid"
   },
   {
@@ -134,9 +134,9 @@
     },
     "why": {
       "classification": [
-        "Summary and description both indicate an access request for Portfolio Accounting.",
-        "Description specifies standard processing role and read access for reconciliation dashboards.",
-        "Selected service matches the described need for Portfolio Accounting access.",
+        "Description clearly states access request for Portfolio Accounting for month-end reconciliation support.",
+        "Summary and intake metadata align on Portfolio Accounting and access request.",
+        "Advisory ranking supports Portfolio Accounting as relevant service.",
         "service Portfolio Accounting: “portfolio accounting”, “portfolio accounting”",
         "intake request type “Access to a Service” leans Service Request",
         "summary suggests Service Request, description suggests Service Request"
@@ -185,27 +185,35 @@
       "low_confidence": false,
       "pii": false
     },
-    "confidence": 0.976,
+    "confidence": 0.962,
     "trace": [
       {
         "step": 1,
         "tool": "search_kb",
         "args": "{\"query\": \"standard Portfolio Accounting access month-end reconciliation processing role read access reconciliation dashboards\", \"service\": \"Portfolio Accountin",
         "result": "KB-08 when to use (0.49); KB-08 standard resolution paths (0.48); KB-08 requester reply points (0.48); KB-08 analyst next steps (0.45)",
-        "latency_ms": 0.9,
+        "latency_ms": 0.8,
         "mode": "llm"
       },
       {
         "step": 2,
-        "tool": "find_similar_tickets",
-        "args": "{\"query\": \"Portfolio Accounting access month-end reconciliation processing role read access reconciliation dashboards\"}",
-        "result": "Access requested for Portfolio Accounting (sim 0.479, 37 tickets); Access removal requested for Portfolio Accounting (sim 0.428, 26 tickets); New license requested for Portfolio Accounting (sim 0.423, 41 tickets)",
-        "latency_ms": 1.2,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
         "mode": "llm"
+      },
+      {
+        "step": 3,
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"Access requested for Portfolio Accounting to support month-end reconciliation\"}",
+        "result": "Access requested for Portfolio Accounting (sim 0.479, 37 tickets); Access removal requested for Portfolio Accounting (sim 0.428, 26 tickets); New license requested for Portfolio Accounting (sim 0.423, 41 tickets)",
+        "latency_ms": 1.3,
+        "mode": "policy (fill-in)"
       }
     ],
-    "latency_ms": 6608.3,
-    "cost_usd": 0.002493,
+    "latency_ms": 7745.3,
+    "cost_usd": 0.002383,
     "mode": "hybrid"
   },
   {
@@ -235,12 +243,13 @@
     "why": {
       "classification": [
         "Description explicitly states a license request for sanctions screening dashboard, which is part of Risk & Compliance Monitoring.",
+        "Summary and intake metadata align with a service request for Risk & Compliance Monitoring license.",
         "service Risk & Compliance Monitoring: “sanctions screening”, “sanctions screening”, “sanctions screening”",
         "intake request type “New License” leans Service Request",
         "summary suggests Service Request, description suggests Service Request"
       ],
       "urgency": "A new compliance analyst needs a standard license for the sanctions screening dashboard used in daily control activities.",
-      "impact": "Standard compliance analyst license requested for sanctions screening dashboard.",
+      "impact": "The request concerns monitoring of rule exceptions and periodic review of escalated alerts rather than document management or collaboration.",
       "assignee": "least-loaded agent in the pool (open workload 89; 18 previously resolved Risk & Compliance Monitoring tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
       "resolution_source": "llm",
       "notes": [
@@ -295,23 +304,23 @@
       },
       {
         "step": 2,
-        "tool": "find_similar_tickets",
-        "args": "{\"query\": \"new license sanctions screening dashboard\"}",
-        "result": "New license requested for Risk & Compliance Monitoring (sim 0.445, 38 tickets); Access requested for Risk & Compliance Monitoring (sim 0.362, 51 tickets); New license requested for Regulatory Reporting (sim 0.404, 44 tickets)",
-        "latency_ms": 1.2,
+        "tool": "find_open_related",
+        "args": "{}",
+        "result": "no similar open ticket on this service in the last 4h",
+        "latency_ms": 0.2,
         "mode": "llm"
       },
       {
         "step": 3,
-        "tool": "find_open_related",
-        "args": "{}",
-        "result": "no similar open ticket on this service in the last 4h",
-        "latency_ms": 0.4,
-        "mode": "llm"
+        "tool": "find_similar_tickets",
+        "args": "{\"query\": \"New license requested for sanctions screening dashboard\"}",
+        "result": "New license requested for Risk & Compliance Monitoring (sim 0.445, 38 tickets); Access requested for Risk & Compliance Monitoring (sim 0.362, 51 tickets); New license requested for Regulatory Reporting (sim 0.404, 44 tickets)",
+        "latency_ms": 1.2,
+        "mode": "policy (fill-in)"
       }
     ],
-    "latency_ms": 6574.1,
-    "cost_usd": 0.002459,
+    "latency_ms": 9760.1,
+    "cost_usd": 0.002942,
     "mode": "hybrid"
   },
   {
@@ -340,8 +349,9 @@
     },
     "why": {
       "classification": [
-        "Description states delayed MT536 settlement status messages for France books, which matches Securities Settlement service scope.",
-        "Summary and intake metadata both indicate an incident related to settlement status messages delay.",
+        "Description states delayed MT536 settlement status messages for France books, which directly relates to Securities Settlement service.",
+        "Summary and intake metadata both indicate an incident involving settlement status messages delay.",
+        "Advisory ranking strongly supports Securities Settlement due to keywords like 'settlement', 'custodian', 'MT536'.",
         "service Securities Settlement: “settlement”, “settle*”, “custodian*”, “mt536”",
         "intake request type “Email / 3rd Party Warning” leans Incident",
         "summary suggests Incident, description suggests Incident"
@@ -397,7 +407,7 @@
       {
         "step": 1,
         "tool": "search_kb",
-        "args": "{\"query\": \"MT536 settlement status message delay France\"}",
+        "args": "{\"query\": \"MT536 settlement status messages delay France books\", \"service\": \"Securities Settlement\"}",
         "result": "KB-04 when to use (0.41); KB-04 requester reply points (0.39); KB-04 first checks (0.38); KB-04 analyst next steps (0.38)",
         "latency_ms": 0.9,
         "mode": "llm"
@@ -405,7 +415,7 @@
       {
         "step": 2,
         "tool": "find_similar_tickets",
-        "args": "{\"query\": \"MT536 settlement status message delay France\"}",
+        "args": "{\"query\": \"MT536 settlement status messages delay France books\"}",
         "result": "Automated alert triggered for Securities Settlement (sim 0.275, 356 tickets); Unclear incident input for Securities Settlement (sim 0.274, 100 tickets); Operational issue reported for Securities Settlement (sim 0.262, 85 tickets)",
         "latency_ms": 1.1,
         "mode": "llm"
@@ -419,8 +429,8 @@
         "mode": "llm"
       }
     ],
-    "latency_ms": 8751.5,
-    "cost_usd": 0.003113,
+    "latency_ms": 8967.9,
+    "cost_usd": 0.002654,
     "mode": "hybrid"
   },
   {
@@ -449,7 +459,9 @@
     },
     "why": {
       "classification": [
-        "Description details rejection of allocation messages by trade matching adapter TMA-402, blocking confirmation workflow, indicating a trade matching system fault.",
+        "Description states trade matching adapter rejected allocations causing confirmation workflow blockage, indicating a Trade Matching incident.",
+        "Summary and comments confirm matching adapter error and incident creation.",
+        "Selected service and advisory ranking strongly support Trade Matching.",
         "service Trade Matching: “trade matching”, “matching adapter”, “allocation*”, “trade-matching”",
         "intake request type “Machine Created Alert” leans Incident",
         "summary suggests Incident, description suggests Incident"
@@ -504,17 +516,17 @@
       {
         "step": 1,
         "tool": "search_kb",
-        "args": "{\"query\": \"TMA-402 trade matching adapter allocation rejection inbound execution references pairing backlog clearing\", \"service\": \"Trade Matching\"}",
+        "args": "{\"query\": \"TMA-402 trade matching adapter allocation rejection inbound execution references not paired\"}",
         "result": "KB-03 when to use (0.54); KB-03 first checks (0.50); KB-03 requester reply points (0.50); KB-03 analyst next steps (0.49)",
-        "latency_ms": 0.7,
+        "latency_ms": 0.9,
         "mode": "llm"
       },
       {
         "step": 2,
         "tool": "find_similar_tickets",
-        "args": "{\"query\": \"TMA-402 trade matching adapter rejected allocations JPM inbound execution references pairing backlog\"}",
+        "args": "{\"query\": \"TMA-402 trade matching adapter rejected allocations broker JPM inbound execution references not paired\"}",
         "result": "Automated alert triggered for Trade Matching (sim 0.377, 407 tickets); Operational issue reported for Trade Matching (sim 0.348, 72 tickets); General request for Trade Matching with unclear details (sim 0.346, 24 tickets)",
-        "latency_ms": 0.7,
+        "latency_ms": 0.8,
         "mode": "llm"
       },
       {
@@ -524,18 +536,10 @@
         "result": "no similar open ticket on this service in the last 4h",
         "latency_ms": 0.2,
         "mode": "llm"
-      },
-      {
-        "step": 4,
-        "tool": "search_kb",
-        "args": "{\"query\": \"procedure to clear backlog and resolve allocation rejection in TMA-402 trade matching adapter\", \"service\": \"Trade Matching\"}",
-        "result": "KB-03 when to use (0.54); KB-03 first checks (0.50); KB-03 requester reply points (0.50); KB-03 analyst next steps (0.49)",
-        "latency_ms": 0.8,
-        "mode": "llm"
       }
     ],
-    "latency_ms": 8257.9,
-    "cost_usd": 0.003315,
+    "latency_ms": 6030.1,
+    "cost_usd": 0.002622,
     "mode": "hybrid"
   },
   {
@@ -553,9 +557,9 @@
       "service": "Client Reporting",
       "team": "Client Services",
       "assignee": "jack.martin@intcom.com",
-      "urgency": "medium",
-      "impact": "low",
-      "priority": "low",
+      "urgency": "high",
+      "impact": "high",
+      "priority": "high",
       "resolution": "done"
     },
     "changed": {
@@ -564,20 +568,20 @@
     },
     "why": {
       "classification": [
-        "Description details a fault in generated client report PDFs with missing fee section, matching Client Reporting service scope.",
-        "Summary and intake metadata indicate an incident related to client report generation.",
-        "Advisory ranking strongly supports Client Reporting as the relevant service.",
+        "Description details a fault in generated client report PDFs with missing fee section, matching Client Reporting service scope",
+        "Summary and intake metadata indicate an incident related to client report generation",
+        "Advisory ranking strongly supports Client Reporting as the relevant service",
         "service Client Reporting: “client report*”, “generated pdf*”, “pdf pack*”",
         "intake request type “Human Created Incident” leans Incident",
         "summary suggests Incident, description suggests Incident"
       ],
-      "urgency": "Users can still open the reports, but the distributed output is incomplete and unsuitable for release.",
-      "impact": "The client reporting team observed that the latest batch of Nordics quarterly client report PDFs was generated with a blank management fee section.",
+      "urgency": "the distributed output is incomplete and unsuitable for release",
+      "impact": "Client report PDFs for the Nordics entity were generated with a blank fee section",
       "assignee": "least-loaded agent in the pool (open workload 92; 14 previously resolved Client Reporting tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
       "resolution_source": "llm",
       "notes": [
         "LLM and rules agree on the service",
-        "urgency/impact: LLM medium/low vs rules medium/high",
+        "urgency/impact: LLM high/high vs rules medium/high",
         "status: actionable ticket with a concrete resolution path"
       ]
     },
@@ -631,7 +635,7 @@
         "tool": "find_similar_tickets",
         "args": "{\"query\": \"blank fee section in client report PDFs Nordics\"}",
         "result": "Unclear incident input for Client Reporting (sim 0.287, 86 tickets); General request for Client Reporting with unclear details (sim 0.283, 15 tickets); Operational issue reported for Client Reporting (sim 0.262, 87 tickets)",
-        "latency_ms": 0.9,
+        "latency_ms": 0.7,
         "mode": "llm"
       },
       {
@@ -639,12 +643,12 @@
         "tool": "find_open_related",
         "args": "{}",
         "result": "no similar open ticket on this service in the last 4h",
-        "latency_ms": 0.2,
+        "latency_ms": 0.1,
         "mode": "llm"
       }
     ],
-    "latency_ms": 8394.4,
-    "cost_usd": 0.003155,
+    "latency_ms": 7516.4,
+    "cost_usd": 0.003103,
     "mode": "hybrid"
   },
   {
@@ -673,9 +677,9 @@
     },
     "why": {
       "classification": [
-        "Description indicates missing cash after margin sweep, a treasury and liquidity issue",
+        "Description indicates missing cash after margin sweep, a treasury and liquidity issue matching Cash Management",
         "Summary and comments emphasize urgency and cash discrepancy after margin sweep",
-        "Selected service Cash Management aligns with treasury and liquidity context",
+        "Selected service Cash Management aligns with the problem context",
         "unclear: Description lacks exact account and booking date details needed for precise action",
         "service Cash Management: “margin sweep*”, “margin sweep*”, “liquidity”, “treasury”",
         "intake request type “Nonsense / Unclear Input” leans Incident"
@@ -740,7 +744,7 @@
         "tool": "search_kb",
         "args": "{\"query\": \"Cash Management Cash not there pls fix asap for yesterday margin sweep\", \"service\": \"Cash Management\"}",
         "result": "KB-09 requester reply points (0.40); KB-09 when to use (0.39); KB-09 analyst next steps (0.38); KB-09 first checks (0.38)",
-        "latency_ms": 0.9,
+        "latency_ms": 0.8,
         "mode": "policy (fill-in)"
       },
       {
@@ -748,7 +752,7 @@
         "tool": "find_open_related",
         "args": "{}",
         "result": "no similar open ticket on this service in the last 4h",
-        "latency_ms": 0.2,
+        "latency_ms": 0.3,
         "mode": "policy (fill-in)"
       },
       {
@@ -756,12 +760,12 @@
         "tool": "find_similar_tickets",
         "args": "{\"query\": \"Cash not there pls fix asap for yesterday margin sweep\"}",
         "result": "Unclear incident input for Cash Management (sim 0.388, 81 tickets); General request for Cash Management with unclear details (sim 0.372, 19 tickets); Operational issue reported for Cash Management (sim 0.359, 75 tickets)",
-        "latency_ms": 0.8,
+        "latency_ms": 1.1,
         "mode": "policy (fill-in)"
       }
     ],
-    "latency_ms": 5035.0,
-    "cost_usd": 0.002102,
+    "latency_ms": 4672.2,
+    "cost_usd": 0.002076,
     "mode": "hybrid"
   },
   {
@@ -794,8 +798,8 @@
         "service Rimes Data Feed: “rimes”, “benchmark file*”, “rimes”, “benchmark file*”",
         "intake request type “Email / 3rd Party Warning” leans Incident"
       ],
-      "urgency": "The price mastering job for the Germany book therefore started with stale input and the downstream valuation chain is at risk.",
-      "impact": "Rimes Client Managed Services reported that the benchmark file DM_RIMES_FU_PR_BBG3_EODD_20260918_1.txt was delivered after the agreed processing window.",
+      "urgency": "Rimes overnight benchmark file DM_RIMES_FU_PR_BBG3_EODD_20260918_1.txt was delivered after the agreed processing window.",
+      "impact": "The price mastering job for the Germany book therefore started with stale input and the downstream valuation chain is at risk.",
       "assignee": "least-loaded agent in the pool (open workload 94; 20 previously resolved Rimes Data Feed tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
       "resolution_source": "llm",
       "notes": [
@@ -848,7 +852,7 @@
         "tool": "search_kb",
         "args": "{\"query\": \"Rimes benchmark file late arrival downstream cutoff\"}",
         "result": "KB-12 first checks (0.45); KB-12 when to use (0.44); KB-12 analyst next steps (0.41); KB-12 standard resolution paths (0.40)",
-        "latency_ms": 1.2,
+        "latency_ms": 1.1,
         "mode": "llm"
       },
       {
@@ -856,7 +860,7 @@
         "tool": "find_similar_tickets",
         "args": "{\"query\": \"Rimes benchmark file late arrival downstream cutoff\"}",
         "result": "Automated alert triggered for Rimes Data Feed (sim 0.341, 401 tickets); Operational issue reported for Rimes Data Feed (sim 0.333, 74 tickets); Unclear incident input for Rimes Data Feed (sim 0.328, 65 tickets)",
-        "latency_ms": 1.3,
+        "latency_ms": 9.8,
         "mode": "llm"
       },
       {
@@ -864,12 +868,12 @@
         "tool": "find_open_related",
         "args": "{}",
         "result": "no similar open ticket on this service in the last 4h",
-        "latency_ms": 0.3,
+        "latency_ms": 0.2,
         "mode": "llm"
       }
     ],
-    "latency_ms": 9932.0,
-    "cost_usd": 0.003625,
+    "latency_ms": 8520.8,
+    "cost_usd": 0.003494,
     "mode": "hybrid"
   },
   {
@@ -898,9 +902,9 @@
     },
     "why": {
       "classification": [
-        "Description states a vendor warning about delayed Americas benchmark publication, indicating Rimes Data Feed service impact.",
-        "Summary and comments mention benchmark publication delay and incomplete price snapshots, aligning with Rimes Data Feed.",
-        "Selected service SharePoint & File Storage is likely incorrect as it is a channel, not the impacted platform.",
+        "Description states a vendor warning about delayed Americas benchmark publication affecting price snapshots, indicating Rimes Data Feed service impact.",
+        "Summary and comments mention benchmark publication delay and incomplete price snapshots, which aligns with Rimes Data Feed, not SharePoint & File Storage.",
+        "Advisory ranking strongly supports Rimes Data Feed due to benchmark publication keywords.",
         "service Rimes Data Feed: “benchmark publication”, “benchmark publication”, “benchmark publication”",
         "intake request type “Email / 3rd Party Warning” leans Incident",
         "summary suggests Incident, description suggests Incident"
@@ -960,7 +964,7 @@
         "tool": "search_kb",
         "args": "{\"query\": \"Americas benchmark publication delay\", \"service\": \"Rimes Data Feed\"}",
         "result": "KB-12 analyst next steps (0.39); KB-12 when to use (0.38); KB-12 first checks (0.34); KB-12 requester reply points (0.33)",
-        "latency_ms": 0.9,
+        "latency_ms": 1.1,
         "mode": "llm"
       },
       {
@@ -976,12 +980,12 @@
         "tool": "find_similar_tickets",
         "args": "{\"query\": \"Vendor notice: Americas benchmark publication delayed beyond the publishing window\"}",
         "result": "Operational issue reported for Rimes Data Feed (sim 0.276, 74 tickets); Automated alert triggered for Rimes Data Feed (sim 0.267, 401 tickets); General request for Rimes Data Feed with unclear details (sim 0.264, 26 tickets)",
-        "latency_ms": 1.1,
+        "latency_ms": 1.5,
         "mode": "policy (fill-in)"
       }
     ],
-    "latency_ms": 7960.3,
-    "cost_usd": 0.003081,
+    "latency_ms": 7608.9,
+    "cost_usd": 0.00307,
     "mode": "hybrid"
   },
   {
@@ -1010,9 +1014,9 @@
     },
     "why": {
       "classification": [
-        "Description states LEI submission file rejected by regulator gateway indicating a regulatory reporting issue",
-        "Summary and intake selected service CRM & Client Portal does not match the described LEI submission process",
-        "Advisory ranking strongly supports Regulatory Reporting due to multiple mentions of regulator and LEI",
+        "Description states LEI submission file rejected by regulator gateway, which relates to Regulatory Reporting service handling regulatory transaction reporting including LEI.",
+        "Summary and intake selected service CRM & Client Portal is inconsistent with the described issue.",
+        "The issue is a rejection error indicating a fault, implying an Incident work type.",
         "service Regulatory Reporting: “regulator*”, “lei”, “regulator*”, “lei”",
         "intake request type “Email / 3rd Party Warning” leans Incident",
         "summary suggests Incident, description suggests Incident"
@@ -1073,7 +1077,7 @@
         "tool": "search_kb",
         "args": "{\"query\": \"LEI submission file rejected mandatory classification segment empty\", \"service\": \"Regulatory Reporting\"}",
         "result": "KB-11 when to use (0.38); KB-11 requester reply points (0.35); KB-11 first checks (0.34); KB-11 standard resolution paths (0.34)",
-        "latency_ms": 0.7,
+        "latency_ms": 0.9,
         "mode": "llm"
       },
       {
@@ -1081,7 +1085,7 @@
         "tool": "find_similar_tickets",
         "args": "{\"query\": \"LEI submission file rejected mandatory classification segment empty\"}",
         "result": "General request for Regulatory Reporting with unclear details (sim 0.295, 18 tickets); Unclear incident input for Regulatory Reporting (sim 0.285, 71 tickets); Incorrect incident title for service request in Regulatory Reporting (sim 0.283,",
-        "latency_ms": 0.7,
+        "latency_ms": 0.9,
         "mode": "llm"
       },
       {
@@ -1089,12 +1093,12 @@
         "tool": "find_open_related",
         "args": "{}",
         "result": "no similar open ticket on this service in the last 4h",
-        "latency_ms": 0.3,
+        "latency_ms": 0.2,
         "mode": "llm"
       }
     ],
-    "latency_ms": 7338.4,
-    "cost_usd": 0.002911,
+    "latency_ms": 5649.4,
+    "cost_usd": 0.002651,
     "mode": "hybrid"
   },
   {
@@ -1123,8 +1127,7 @@
     },
     "why": {
       "classification": [
-        "Description explicitly states failure of SimCorp replication job SCD_POS_SYNC on host EAPW8504 causing stale holdings.",
-        "Summary and intake metadata align with SimCorp Dimension and incident work type.",
+        "Description states the SimCorp replication job SCD_POS_SYNC failed causing position updates not to synchronize, indicating a technical fault in SimCorp Dimension.",
         "service SimCorp Dimension: “simcorp”, “replication job*”, “simcorp”, “replication job*”",
         "intake request type “Machine Created Alert” leans Incident",
         "summary suggests Incident, description suggests Incident"
@@ -1135,6 +1138,7 @@
       "resolution_source": "llm",
       "notes": [
         "LLM and rules agree on the service",
+        "LLM draft rejected: citation coverage 0.50 < 0.9 after one repair pass; deterministic draft used",
         "status: actionable ticket with a concrete resolution path"
       ]
     },
@@ -1179,17 +1183,17 @@
       {
         "step": 1,
         "tool": "search_kb",
-        "args": "{\"query\": \"SimCorp replication job failure SCD_POS_SYNC host EAPW8504\", \"service\": \"SimCorp Dimension\"}",
+        "args": "{\"query\": \"SimCorp replication job failure SCD_POS_SYNC\"}",
         "result": "KB-19 when to use (0.52); KB-19 analyst next steps (0.49); KB-19 standard resolution paths (0.45); KB-19 first checks (0.44)",
-        "latency_ms": 0.9,
+        "latency_ms": 0.8,
         "mode": "llm"
       },
       {
         "step": 2,
         "tool": "find_similar_tickets",
-        "args": "{\"query\": \"SimCorp replication job failure SCD_POS_SYNC host EAPW8504\"}",
+        "args": "{\"query\": \"SimCorp replication job SCD_POS_SYNC failed\"}",
         "result": "Automated alert triggered for SimCorp Dimension (sim 0.312, 434 tickets); Operational issue reported for SimCorp Dimension (sim 0.299, 72 tickets); Unclear incident input for SimCorp Dimension (sim 0.284, 67 tickets)",
-        "latency_ms": 0.9,
+        "latency_ms": 0.8,
         "mode": "llm"
       },
       {
@@ -1201,8 +1205,8 @@
         "mode": "llm"
       }
     ],
-    "latency_ms": 6596.2,
-    "cost_usd": 0.002706,
+    "latency_ms": 7599.2,
+    "cost_usd": 0.003,
     "mode": "hybrid"
   },
   {
@@ -1232,7 +1236,8 @@
     "why": {
       "classification": [
         "Description details an alert for NAV_EOD_GE_375 after valuation tolerance breach during end-of-day valuation run, matching NAV Calculation service scope.",
-        "Summary and description both indicate an incident due to failure to publish NAV snapshot after tolerance breach.",
+        "The batch failure to publish NAV snapshot and need for triage indicates an incident.",
+        "Summary and intake metadata align with NAV Calculation and incident work type.",
         "service NAV Calculation: “valuation tolerance*”, “valuation tolerance breach”, “valuation run”, “end-of-day valuation”",
         "intake request type “Machine Created Alert” leans Incident",
         "summary suggests Incident, description suggests Incident"
@@ -1289,7 +1294,7 @@
         "tool": "search_kb",
         "args": "{\"query\": \"valuation tolerance breach NAV_EOD_GE_375 Germany funds\", \"service\": \"NAV Calculation\"}",
         "result": "KB-07 when to use (0.48); KB-07 requester reply points (0.41); KB-07 first checks (0.40); KB-07 standard resolution paths (0.39)",
-        "latency_ms": 0.8,
+        "latency_ms": 1.4,
         "mode": "llm"
       },
       {
@@ -1297,7 +1302,7 @@
         "tool": "find_similar_tickets",
         "args": "{\"query\": \"valuation tolerance breach NAV_EOD_GE_375 Germany funds\"}",
         "result": "Automated alert triggered for NAV Calculation (sim 0.393, 362 tickets); Operational issue reported for NAV Calculation (sim 0.297, 98 tickets); Unclear incident input for NAV Calculation (sim 0.285, 70 tickets)",
-        "latency_ms": 0.6,
+        "latency_ms": 1.0,
         "mode": "llm"
       },
       {
@@ -1305,12 +1310,12 @@
         "tool": "find_open_related",
         "args": "{}",
         "result": "no similar open ticket on this service in the last 4h",
-        "latency_ms": 0.1,
+        "latency_ms": 0.2,
         "mode": "llm"
       }
     ],
-    "latency_ms": 6241.9,
-    "cost_usd": 0.002761,
+    "latency_ms": 5812.0,
+    "cost_usd": 0.002787,
     "mode": "hybrid"
   },
   {
@@ -1339,8 +1344,8 @@
     },
     "why": {
       "classification": [
-        "Description details a fault with compliance monitoring dashboard breach statuses not updating after rule update, matching Risk & Compliance Monitoring service.",
-        "Summary and intake metadata indicate an incident related to compliance monitoring.",
+        "Description details a fault in the compliance monitoring dashboard showing stale breach statuses after a rule update, matching Risk & Compliance Monitoring service.",
+        "Summary and intake metadata also indicate an incident related to compliance monitoring.",
         "service Risk & Compliance Monitoring: “compliance monitoring”, “breach status*”",
         "intake request type “Human Created Incident” leans Incident",
         "summary suggests Incident, description suggests Incident"
@@ -1396,7 +1401,7 @@
         "tool": "search_kb",
         "args": "{\"query\": \"compliance monitoring dashboard stale breach statuses after rule update\", \"service\": \"Risk & Compliance Monitoring\"}",
         "result": "KB-10 standard resolution paths (0.41); KB-10 first checks (0.41); KB-10 when to use (0.41); KB-10 analyst next steps (0.41)",
-        "latency_ms": 0.9,
+        "latency_ms": 1.0,
         "mode": "llm"
       },
       {
@@ -1404,7 +1409,7 @@
         "tool": "find_similar_tickets",
         "args": "{\"query\": \"compliance dashboard breach statuses stale after rule update\"}",
         "result": "Automated alert triggered for Risk & Compliance Monitoring (sim 0.331, 382 tickets); Operational issue reported for Risk & Compliance Monitoring (sim 0.315, 88 tickets); Unclear incident input for Risk & Compliance Monitoring (sim 0.294, 77",
-        "latency_ms": 0.7,
+        "latency_ms": 0.9,
         "mode": "llm"
       },
       {
@@ -1414,18 +1419,10 @@
         "result": "no similar open ticket on this service in the last 4h",
         "latency_ms": 0.2,
         "mode": "llm"
-      },
-      {
-        "step": 4,
-        "tool": "search_kb",
-        "args": "{\"query\": \"compliance monitoring dashboard breach status stale after rule update\", \"service\": \"Risk & Compliance Monitoring\"}",
-        "result": "KB-10 standard resolution paths (0.41); KB-10 first checks (0.41); KB-10 when to use (0.41); KB-10 analyst next steps (0.41)",
-        "latency_ms": 1.0,
-        "mode": "llm"
       }
     ],
-    "latency_ms": 8202.0,
-    "cost_usd": 0.003231,
+    "latency_ms": 5559.7,
+    "cost_usd": 0.002748,
     "mode": "hybrid"
   },
   {
@@ -1456,13 +1453,12 @@
       "classification": [
         "Description clearly states access request for CRM & Client Portal for a new relationship manager.",
         "Summary and intake metadata align with a service request for CRM & Client Portal access.",
-        "No conflicting information in description or comments.",
         "service CRM & Client Portal: “crm”, “client portal”, “relationship manager*”, “crm”",
         "intake request type “Access to a Service” leans Service Request",
         "summary suggests Service Request, description suggests Service Request"
       ],
       "urgency": "Access requested for CRM & Client Portal for a new relationship manager in France",
-      "impact": "The affected service is CRM & Client Portal (Non-Critical) and individual users affected (a single new joiner)",
+      "impact": "The affected service is CRM & Client Portal (Non-Critical) and the request is for a single new joiner.",
       "assignee": "least-loaded agent in the pool (open workload 96; 30 previously resolved CRM & Client Portal tickets). Historical assignment is independent of service/team in the training data, so load-balancing is the defensible policy.",
       "resolution_source": "llm",
       "notes": [
@@ -1506,14 +1502,14 @@
       "low_confidence": false,
       "pii": false
     },
-    "confidence": 0.928,
+    "confidence": 0.956,
     "trace": [
       {
         "step": 1,
         "tool": "search_kb",
         "args": "{\"query\": \"standard access role for relationship manager France\", \"service\": \"CRM & Client Portal\"}",
         "result": "KB-15 first checks (0.45); KB-15 requester reply points (0.43); KB-15 standard resolution paths (0.42); KB-15 when to use (0.41)",
-        "latency_ms": 1.7,
+        "latency_ms": 0.9,
         "mode": "llm"
       },
       {
@@ -1521,7 +1517,7 @@
         "tool": "find_open_related",
         "args": "{}",
         "result": "no similar open ticket on this service in the last 4h",
-        "latency_ms": 0.4,
+        "latency_ms": 0.2,
         "mode": "llm"
       },
       {
@@ -1529,12 +1525,12 @@
         "tool": "find_similar_tickets",
         "args": "{\"query\": \"Access requested for CRM & Client Portal for a new relationship manager in France\"}",
         "result": "Access requested for CRM & Client Portal (sim 0.489, 47 tickets); New license requested for CRM & Client Portal (sim 0.395, 49 tickets); Access removal requested for CRM & Client Portal (sim 0.392, 20 tickets)",
-        "latency_ms": 1.2,
+        "latency_ms": 1.1,
         "mode": "policy (fill-in)"
       }
     ],
-    "latency_ms": 6117.2,
-    "cost_usd": 0.002511,
+    "latency_ms": 7222.1,
+    "cost_usd": 0.002888,
     "mode": "hybrid"
   },
   {
@@ -1563,9 +1559,9 @@
     },
     "why": {
       "classification": [
-        "Summary and description both indicate access removal for SharePoint & File Storage after contractor offboarding",
-        "Request type is access removal which is a service request",
+        "Summary and description both indicate access removal request for SharePoint & File Storage after contractor offboarding",
         "Selected service matches the described system for access removal",
+        "Request type and recorded work type align with a service request",
         "service SharePoint & File Storage: “sharepoint”, “file storage”, “sharepoint”, “file storage”",
         "intake request type “Access Removal” leans Service Request",
         "summary suggests Service Request, description suggests Service Request"
@@ -1615,14 +1611,14 @@
       "low_confidence": false,
       "pii": false
     },
-    "confidence": 0.969,
+    "confidence": 0.983,
     "trace": [
       {
         "step": 1,
         "tool": "search_kb",
         "args": "{\"query\": \"remove contractor access SharePoint File Storage\", \"service\": \"SharePoint & File Storage\"}",
         "result": "KB-17 when to use (0.48); KB-17 first checks (0.48); KB-17 requester reply points (0.47); KB-17 analyst next steps (0.47)",
-        "latency_ms": 0.7,
+        "latency_ms": 1.0,
         "mode": "llm"
       },
       {
@@ -1630,7 +1626,7 @@
         "tool": "find_open_related",
         "args": "{}",
         "result": "no similar open ticket on this service in the last 4h",
-        "latency_ms": 0.2,
+        "latency_ms": 0.3,
         "mode": "llm"
       },
       {
@@ -1638,12 +1634,12 @@
         "tool": "find_similar_tickets",
         "args": "{\"query\": \"Access removal requested for SharePoint & File Storage after contractor offboarding\"}",
         "result": "Access removal requested for SharePoint & File Storage (sim 0.54, 22 tickets); Access requested for SharePoint & File Storage (sim 0.396, 43 tickets); Access removal requested for CRM & Client Portal (sim 0.42, 20 tickets)",
-        "latency_ms": 1.1,
+        "latency_ms": 2.1,
         "mode": "policy (fill-in)"
       }
     ],
-    "latency_ms": 6082.5,
-    "cost_usd": 0.002498,
+    "latency_ms": 5401.7,
+    "cost_usd": 0.002474,
     "mode": "hybrid"
   },
   {
@@ -1672,10 +1668,10 @@
     },
     "why": {
       "classification": [
-        "Summary implies an incident due to 'Production outage' phrase",
-        "Description clarifies it is a service request for shared mailbox and distribution list creation",
+        "Summary implies an incident due to 'Production outage' wording",
+        "Description clarifies it is a standard service request for shared mailbox and distribution list creation",
         "No actual mail outage reported",
-        "Selected service Outlook & Email matches the described request for mailbox and DL",
+        "Selected service Outlook & Email matches the request for shared mailbox and DL",
         "service Outlook & Email: “outlook”, “shared mailbox*”, “mailbox*”, “shared-mailbox”",
         "intake request type “Misclassified Incident Title” leans Service Request"
       ],
@@ -1732,7 +1728,7 @@
         "tool": "search_kb",
         "args": "{\"query\": \"create shared mailbox and distribution list in Outlook & Email\", \"service\": \"Outlook & Email\"}",
         "result": "KB-18 standard resolution paths (0.50); KB-18 first checks (0.46); KB-18 when to use (0.42); KB-18 requester reply points (0.41)",
-        "latency_ms": 1.0,
+        "latency_ms": 1.5,
         "mode": "llm"
       },
       {
@@ -1740,12 +1736,12 @@
         "tool": "find_similar_tickets",
         "args": "{\"query\": \"Production outage in Outlook & Email for shared mailbox creation\"}",
         "result": "Operational issue reported for Outlook & Email (sim 0.375, 74 tickets); Access removal requested for Outlook & Email (sim 0.347, 21 tickets); Access requested for Outlook & Email (sim 0.341, 44 tickets)",
-        "latency_ms": 2.1,
+        "latency_ms": 2.4,
         "mode": "policy (fill-in)"
       }
     ],
-    "latency_ms": 7731.3,
-    "cost_usd": 0.002412,
+    "latency_ms": 5381.5,
+    "cost_usd": 0.002421,
     "mode": "hybrid"
   },
   {
@@ -1774,7 +1770,9 @@
     },
     "why": {
       "classification": [
-        "Description states missing mandatory option code in corporate action ingestion feed CAEV-874, blocking publication to operations screen, indicating a fault in Corporate Actions service.",
+        "Description states 'corporate action ingestion feed CAEV-874 loaded 1 events without a mandatory option code', indicating a fault in Corporate Actions ingestion.",
+        "Summary and comments confirm missing option code blocking publication to operations screen, consistent with Corporate Actions service.",
+        "Selected service is Corporate Actions and the issue relates directly to corporate action event ingestion and processing.",
         "service Corporate Actions: “corporate action*”, “corporate-action*”, “caev”, “option code*”",
         "intake request type “Machine Created Alert” leans Incident",
         "summary suggests Incident, description suggests Incident"
@@ -1831,15 +1829,15 @@
         "tool": "search_kb",
         "args": "{\"query\": \"missing mandatory option code corporate action ingestion CAEV-874\", \"service\": \"Corporate Actions\"}",
         "result": "KB-05 when to use (0.55); KB-05 standard resolution paths (0.50); KB-05 first checks (0.48); KB-05 requester reply points (0.46)",
-        "latency_ms": 0.8,
+        "latency_ms": 3.2,
         "mode": "llm"
       },
       {
         "step": 2,
         "tool": "find_similar_tickets",
-        "args": "{\"query\": \"missing mandatory option code CAEV-874\"}",
+        "args": "{\"query\": \"missing mandatory option code corporate action ingestion CAEV-874\"}",
         "result": "Unclear incident input for Corporate Actions (sim 0.349, 75 tickets); Automated alert triggered for Corporate Actions (sim 0.314, 387 tickets); Operational issue reported for Corporate Actions (sim 0.307, 91 tickets)",
-        "latency_ms": 0.8,
+        "latency_ms": 5.6,
         "mode": "llm"
       },
       {
@@ -1847,12 +1845,12 @@
         "tool": "find_open_related",
         "args": "{}",
         "result": "no similar open ticket on this service in the last 4h",
-        "latency_ms": 0.2,
+        "latency_ms": 0.8,
         "mode": "llm"
       }
     ],
-    "latency_ms": 6282.0,
-    "cost_usd": 0.002707,
+    "latency_ms": 5916.3,
+    "cost_usd": 0.002737,
     "mode": "hybrid"
   },
   {
@@ -1940,7 +1938,7 @@
         "tool": "search_kb",
         "args": "{\"query\": \"orders pending approval after broker account switch\", \"service\": \"Order Management\"}",
         "result": "KB-02 when to use (0.48); KB-02 first checks (0.46); KB-02 standard resolution paths (0.45); KB-02 requester reply points (0.43)",
-        "latency_ms": 0.9,
+        "latency_ms": 1.4,
         "mode": "llm"
       },
       {
@@ -1948,7 +1946,7 @@
         "tool": "find_similar_tickets",
         "args": "{\"query\": \"orders pending approval after broker account switch\"}",
         "result": "Operational issue reported for Order Management (sim 0.305, 66 tickets); Automated alert triggered for Order Management (sim 0.294, 369 tickets); Access removal requested for Order Management (sim 0.276, 22 tickets)",
-        "latency_ms": 1.3,
+        "latency_ms": 1.8,
         "mode": "llm"
       },
       {
@@ -1956,12 +1954,12 @@
         "tool": "find_open_related",
         "args": "{}",
         "result": "no similar open ticket on this service in the last 4h",
-        "latency_ms": 0.2,
+        "latency_ms": 0.3,
         "mode": "llm"
       }
     ],
-    "latency_ms": 7833.7,
-    "cost_usd": 0.003362,
+    "latency_ms": 9626.3,
+    "cost_usd": 0.003458,
     "mode": "hybrid"
   },
   {
@@ -1990,9 +1988,9 @@
     },
     "why": {
       "classification": [
-        "Description details a settlement confirmation queue backlog and settlement processing issue, matching Securities Settlement service.",
+        "Description details a settlement confirmation queue backlog and settlement processing issue, matching Securities Settlement service scope.",
         "Summary and intake metadata indicate an incident with settlement confirmation queue exceeding threshold.",
-        "Advisory ranking strongly supports Securities Settlement service.",
+        "Advisory ranking strongly supports Securities Settlement as the relevant service.",
         "service Securities Settlement: “settlement”, “settle*”, “settlement”, “settle*”",
         "intake request type “Machine Created Alert” leans Incident",
         "summary suggests Incident, description suggests Incident"
@@ -2049,7 +2047,7 @@
         "tool": "search_kb",
         "args": "{\"query\": \"settlement confirmation queue backlog exceeded threshold\", \"service\": \"Securities Settlement\"}",
         "result": "KB-04 first checks (0.41); KB-04 when to use (0.40); KB-04 requester reply points (0.39); KB-04 analyst next steps (0.38)",
-        "latency_ms": 0.8,
+        "latency_ms": 0.6,
         "mode": "llm"
       },
       {
@@ -2057,7 +2055,7 @@
         "tool": "find_similar_tickets",
         "args": "{\"query\": \"settlement confirmation queue backlog exceeded threshold\"}",
         "result": "Automated alert triggered for Securities Settlement (sim 0.362, 356 tickets); Operational issue reported for Securities Settlement (sim 0.333, 85 tickets); Unclear incident input for Securities Settlement (sim 0.327, 100 tickets)",
-        "latency_ms": 0.8,
+        "latency_ms": 0.6,
         "mode": "llm"
       },
       {
@@ -2065,12 +2063,12 @@
         "tool": "find_open_related",
         "args": "{}",
         "result": "no similar open ticket on this service in the last 4h",
-        "latency_ms": 0.2,
+        "latency_ms": 0.1,
         "mode": "llm"
       }
     ],
-    "latency_ms": 8005.0,
-    "cost_usd": 0.003216,
+    "latency_ms": 7690.8,
+    "cost_usd": 0.003188,
     "mode": "hybrid"
   },
   {
@@ -2099,9 +2097,9 @@
     },
     "why": {
       "classification": [
-        "Description states this is a routine identity cleanup after user deactivations, not an urgent incident.",
-        "Selected service Identity & Access Management matches the focus on user access removal.",
-        "Summary implies incident due to urgency wording but description clarifies it is a service request.",
+        "Description states this is a routine identity cleanup after user deactivations, not an urgent incident as the title suggests",
+        "Selected service Identity & Access Management matches the identity lifecycle focus of the request",
+        "Comments confirm the need to remove access for deactivated users in the portal",
         "service Identity & Access Management: “deactivated user*”, “user deactivation*”, “inactive account*”, “inactive user*”",
         "description states the request is routine / the title is misleading (no real disruption)",
         "summary suggests Service Request, description suggests Service Request"
@@ -2173,14 +2171,14 @@
       {
         "step": 3,
         "tool": "find_similar_tickets",
-        "args": "{\"query\": \"remove access for deactivated users\"}",
+        "args": "{\"query\": \"Need access removed from all deactivated users in portal today\"}",
         "result": "Access removal requested for Identity & Access Management (sim 0.386, 26 tickets); Operational issue reported for Identity & Access Management (sim 0.333, 83 tickets); Access requested for Identity & Access Management (sim 0.333, 43 tickets",
-        "latency_ms": 1.2,
-        "mode": "llm"
+        "latency_ms": 1.4,
+        "mode": "policy (fill-in)"
       }
     ],
-    "latency_ms": 6047.6,
-    "cost_usd": 0.00262,
+    "latency_ms": 5457.1,
+    "cost_usd": 0.002407,
     "mode": "hybrid"
   }
 ]
