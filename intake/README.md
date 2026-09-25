@@ -14,15 +14,15 @@ python3 server.py
 
 Open http://127.0.0.1:8080. Python serves the compiled frontend from `dist/` and the `GET /api/health` endpoint. Run `npm run build` again after frontend changes.
 
-The **Run TriageMate Demo** button needs the sibling `main2` dependencies installed in the Python environment that runs this server. For example, from the repository root:
+The **Run TriageMate Demo** button needs the sibling `Main2` dependencies installed in the Python environment that runs this server. For example, from the repository root:
 
 ```sh
-uv venv main2/.venv
-uv pip install --python main2/.venv/bin/python -r main2/requirements.txt
-cd intake && ../main2/.venv/bin/python server.py
+uv venv Main2/.venv
+uv pip install --python Main2/.venv/bin/python -r Main2/requirements.txt
+cd intake && ../Main2/.venv/bin/python server.py
 ```
 
-The demo passes the description and visible chip values to `main2/triagemate` using its offline preview path (`use_llm=False`, `commit_assign=False`) and displays the returned JSON below the form. Service, entity, urgency, impact, summary, and reporter map to native TriageMate inputs; selected team, assignee, context, and evidence go in labeled comments. The first call can take longer while the local retrieval index is built.
+The demo passes the description and visible chip values to `Main2/triagemate` using its offline preview path (`use_llm=False`, `commit_assign=False`) and displays the returned JSON below the form. Service, entity, urgency, impact, summary, and reporter map to native TriageMate inputs; selected team, assignee, context, and evidence go in labeled comments. The first call can take longer while the local retrieval index is built.
 
 ## Frontend development
 

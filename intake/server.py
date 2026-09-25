@@ -48,7 +48,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_json(400, {"error": str(error)})
             return
         except ImportError:
-            self.send_json(503, {"error": "TriageMate dependencies are unavailable. Install main2/requirements.txt and run Intake with that Python environment."})
+            self.send_json(503, {"error": "TriageMate dependencies are unavailable. Install Main2/requirements.txt and run Intake with that Python environment."})
             return
         except Exception:
             self.log_error("Request failed for %s", path)

@@ -7,7 +7,9 @@ import sys
 from quality import normalize_details
 
 
-CORE_DIR = Path(__file__).resolve().parent.parent / 'main2'
+CORE_DIR = Path(__file__).resolve().parent.parent / 'Main2'
+if not CORE_DIR.is_dir():
+    CORE_DIR = Path(__file__).resolve().parent.parent / 'main2'
 
 
 def prepare_incident(data):
@@ -32,7 +34,7 @@ def prepare_incident(data):
 @lru_cache(maxsize=1)
 def offline_triage():
     if not CORE_DIR.is_dir():
-        raise FileNotFoundError('The main2 TriageMate folder is missing.')
+        raise FileNotFoundError('The Main2 TriageMate folder is missing.')
     if str(CORE_DIR) not in sys.path:
         sys.path.insert(0, str(CORE_DIR))
     from triagemate.data import load_training
