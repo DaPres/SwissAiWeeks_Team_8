@@ -29,7 +29,31 @@
       display: flex;
       flex-direction: column;
       overflow-x: hidden;
-      padding-bottom: 120px;
+      padding-bottom: 75vh; /* Allows last line to scroll up to eye level */
+      scroll-behavior: smooth;
+    }
+
+    /* Reading Focus Eyeline Indicator */
+    .reading-guide {
+      position: fixed;
+      top: 36%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.25), rgba(251, 191, 36, 0.4), rgba(56, 189, 248, 0.25));
+      pointer-events: none;
+      z-index: 50;
+      opacity: 0.6;
+    }
+    .reading-guide::after {
+      content: "READING FOCUS";
+      position: absolute;
+      right: 14px;
+      top: -14px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: rgba(251, 191, 36, 0.6);
+      letter-spacing: 0.1em;
     }
 
     /* Fixed Top HUD */
@@ -144,11 +168,12 @@
     }
 
     .script-text {
-      font-size: 1.6rem;
+      font-size: var(--script-font-size, 1.6rem);
       line-height: 1.5;
       font-weight: 600;
       letter-spacing: -0.01em;
       word-spacing: 0.06em;
+      transition: font-size 0.15s ease;
     }
     .word {
       display: inline;
@@ -171,19 +196,29 @@
     /* Pause / Transition Card */
     .pause-card {
       text-align: center;
-      padding: 12px;
+      padding: 14px;
       margin-bottom: 24px;
       border-radius: 12px;
       background: rgba(148, 163, 184, 0.06);
       border: 1px dashed rgba(148, 163, 184, 0.2);
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       font-weight: 600;
       color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .pause-card:hover {
+      border-color: rgba(16, 185, 129, 0.5);
     }
     .pause-card.active-card {
       border-color: var(--emerald);
       color: var(--emerald);
-      background: rgba(16, 185, 129, 0.08);
+      background: rgba(16, 185, 129, 0.1);
+      box-shadow: 0 0 24px rgba(16, 185, 129, 0.15);
+    }
+
+    .section-card {
+      cursor: pointer;
     }
 
     /* Floating Bottom Action Bar */
@@ -196,9 +231,9 @@
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid var(--border);
-      padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+      padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
       display: flex;
-      gap: 12px;
+      gap: 8px;
       align-items: center;
       justify-content: center;
       z-index: 200;
@@ -218,8 +253,8 @@
     }
     .btn-main {
       flex: 1;
-      height: 52px;
-      font-size: 1.15rem;
+      height: 50px;
+      font-size: 1.1rem;
       background: #38bdf8;
       color: #090d16;
       box-shadow: 0 4px 20px rgba(56, 189, 248, 0.35);
@@ -230,22 +265,32 @@
       color: #090d16;
     }
     .btn-secondary {
-      height: 52px;
-      padding: 0 18px;
-      font-size: 0.95rem;
+      height: 50px;
+      padding: 0 14px;
+      font-size: 0.9rem;
       background: rgba(255, 255, 255, 0.08);
       color: #cbd5e1;
       border: 1px solid var(--border);
     }
+    .font-btn {
+      width: 44px;
+      padding: 0;
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
   </style>
 </head>
 <body>
+  <div class="reading-guide"></div>
 
   <!-- Top Fixed HUD -->
   <header class="hud">
     <div class="hud-top">
       <div class="timer" id="timerDisplay">00:00<span>.0</span></div>
-      <div class="phase-badge" id="phaseBadge">Ready (0:27 Total)</div>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <span style="font-size: 0.65rem; color: #10b981; font-weight: 700; background: rgba(16, 185, 129, 0.12); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.25);">⚡ Auto-Scroll ON</span>
+        <div class="phase-badge" id="phaseBadge">Ready (0:27 Total)</div>
+      </div>
     </div>
     <div class="progress-bar-container">
       <div class="progress-bar" id="progressBar"></div>
@@ -292,7 +337,9 @@
 
   <!-- Fixed Bottom Controls -->
   <footer class="control-dock">
-    <button class="btn btn-secondary" id="resetBtn">↺ Reset</button>
+    <button class="btn btn-secondary" id="resetBtn" title="Reset to start">↺ Reset</button>
+    <button class="btn btn-secondary font-btn" id="fontDown" title="Decrease font size">A−</button>
+    <button class="btn btn-secondary font-btn" id="fontUp" title="Increase font size">A+</button>
     <button class="btn btn-main" id="playBtn">▶ Start Pitch</button>
   </footer>
 
@@ -331,50 +378,50 @@
       { text: "at", start: 10.85, end: 11.05 },
       { text: "intake", start: 11.05, end: 11.45 },
       { text: "and", start: 11.45, end: 11.65 },
-      { text: "scales", start: 11.65, end: 12.00 },
-      { text: "deterministically.”", start: 12.00, end: 12.60 }
+      { text: "scales", start: 11.65, end: 11.85 },
+      { text: "deterministically.”", start: 11.85, end: 12.00 }
     ];
 
     const TIMEFRAME_2 = [
-      { text: "“Watch:", start: 14.0, end: 14.50 },
-      { text: "an", start: 14.50, end: 14.70 },
-      { text: "employee", start: 14.70, end: 15.20 },
-      { text: "asks", start: 15.20, end: 15.55 },
-      { text: "a", start: 15.55, end: 15.70 },
-      { text: "routine", start: 15.70, end: 16.15 },
-      { text: "question—", start: 16.15, end: 16.70 },
-      { text: "‘Which", start: 16.70, end: 17.05 },
-      { text: "mail", start: 17.05, end: 17.35 },
-      { text: "client", start: 17.35, end: 17.75 },
-      { text: "do", start: 17.75, end: 17.95 },
-      { text: "we", start: 17.95, end: 18.15 },
-      { text: "use?’", start: 18.15, end: 18.70 },
-      { text: "Instead", start: 18.70, end: 19.10 },
-      { text: "of", start: 19.10, end: 19.30 },
-      { text: "clogging", start: 19.30, end: 19.75 },
-      { text: "the", start: 19.75, end: 19.95 },
-      { text: "queue", start: 19.95, end: 20.35 },
-      { text: "with", start: 20.35, end: 20.60 },
-      { text: "another", start: 20.60, end: 21.05 },
-      { text: "ticket,", start: 21.05, end: 21.55 },
-      { text: "Intake", start: 21.55, end: 21.95 },
-      { text: "answers", start: 21.95, end: 22.40 },
-      { text: "instantly", start: 22.40, end: 22.95 },
-      { text: "from", start: 22.95, end: 23.20 },
-      { text: "verified", start: 23.20, end: 23.70 },
-      { text: "enterprise", start: 23.70, end: 24.30 },
-      { text: "knowledge.", start: 24.30, end: 24.95 },
-      { text: "Problem", start: 24.95, end: 25.40 },
-      { text: "solved", start: 25.40, end: 25.80 },
-      { text: "in", start: 25.80, end: 26.00 },
-      { text: "seconds—", start: 26.00, end: 26.45 },
-      { text: "with", start: 26.45, end: 26.65 },
-      { text: "zero", start: 26.65, end: 27.00 },
-      { text: "tickets", start: 27.00, end: 27.40 },
-      { text: "created.”", start: 27.40, end: 28.00 }
+      { text: "“Watch:", start: 14.0, end: 14.45 },
+      { text: "an", start: 14.45, end: 14.65 },
+      { text: "employee", start: 14.65, end: 15.10 },
+      { text: "asks", start: 15.10, end: 15.45 },
+      { text: "a", start: 15.45, end: 15.60 },
+      { text: "routine", start: 15.60, end: 16.05 },
+      { text: "question—", start: 16.05, end: 16.55 },
+      { text: "‘Which", start: 16.55, end: 16.90 },
+      { text: "mail", start: 16.90, end: 17.20 },
+      { text: "client", start: 17.20, end: 17.55 },
+      { text: "do", start: 17.55, end: 17.75 },
+      { text: "we", start: 17.75, end: 17.95 },
+      { text: "use?’", start: 17.95, end: 18.50 },
+      { text: "Instead", start: 18.50, end: 18.90 },
+      { text: "of", start: 18.90, end: 19.10 },
+      { text: "clogging", start: 19.10, end: 19.55 },
+      { text: "the", start: 19.55, end: 19.75 },
+      { text: "queue", start: 19.75, end: 20.15 },
+      { text: "with", start: 20.15, end: 20.40 },
+      { text: "another", start: 20.40, end: 20.85 },
+      { text: "ticket,", start: 20.85, end: 21.30 },
+      { text: "Intake", start: 21.30, end: 21.70 },
+      { text: "answers", start: 21.70, end: 22.15 },
+      { text: "instantly", start: 22.15, end: 22.70 },
+      { text: "from", start: 22.70, end: 22.95 },
+      { text: "verified", start: 22.95, end: 23.45 },
+      { text: "enterprise", start: 23.45, end: 24.05 },
+      { text: "knowledge.", start: 24.05, end: 24.65 },
+      { text: "Problem", start: 24.65, end: 25.05 },
+      { text: "solved", start: 25.05, end: 25.45 },
+      { text: "in", start: 25.45, end: 25.65 },
+      { text: "seconds—", start: 25.65, end: 26.05 },
+      { text: "with", start: 26.05, end: 26.25 },
+      { text: "zero", start: 26.25, end: 26.55 },
+      { text: "tickets", start: 26.55, end: 26.85 },
+      { text: "created.”", start: 26.85, end: 27.00 }
     ];
 
-    const TOTAL_DURATION = 28.0;
+    const TOTAL_DURATION = 27.0;
 
     // Render words to DOM
     function renderScript(words, containerId, prefix) {
@@ -393,17 +440,42 @@
     let elapsedPaused = 0;
     let animationFrame = null;
     let wakeLock = null;
+    let lastScrolledElement = null;
+    let currentFontSizeRem = 1.6;
 
     const timerDisplay = document.getElementById("timerDisplay");
     const progressBar = document.getElementById("progressBar");
     const phaseBadge = document.getElementById("phaseBadge");
     const playBtn = document.getElementById("playBtn");
     const resetBtn = document.getElementById("resetBtn");
+    const fontUpBtn = document.getElementById("fontUp");
+    const fontDownBtn = document.getElementById("fontDown");
     const card1 = document.getElementById("card1");
     const card2 = document.getElementById("card2");
     const pauseCard = document.getElementById("pauseCard");
 
-    // Request Screen Wake Lock so mobile display stays on
+    // Hands-Free Auto-Scroll to Active Eyeline (~36% from top)
+    function autoScrollTo(el) {
+      if (!el || el === lastScrolledElement) return;
+      lastScrolledElement = el;
+
+      const rect = el.getBoundingClientRect();
+      const eyeline = window.innerHeight * 0.36;
+      const diff = rect.top - eyeline;
+
+      // Only scroll when word wraps to a new line or advances to a card (> 20px off eyeline).
+      // This prevents jitter while eyes scan words horizontally across the same line.
+      if (Math.abs(diff) > 20) {
+        const currentY = window.pageYOffset || document.documentElement.scrollTop;
+        const targetY = currentY + diff;
+        window.scrollTo({
+          top: Math.max(0, targetY),
+          behavior: "smooth"
+        });
+      }
+    }
+
+    // Request Screen Wake Lock so mobile display stays awake
     async function requestWakeLock() {
       try {
         if ("wakeLock" in navigator) {
@@ -461,12 +533,15 @@
         phaseBadge.style.color = "#a855f7";
       }
 
+      let activeWordEl = null;
+
       // Word highlighting for Section 1
       TIMEFRAME_1.forEach((w, idx) => {
         const el = document.getElementById(`w1_${idx}`);
         if (!el) return;
         if (current >= w.start && current < w.end) {
           el.className = "word active";
+          activeWordEl = el;
         } else if (current >= w.end) {
           el.className = "word past";
         } else {
@@ -480,12 +555,20 @@
         if (!el) return;
         if (current >= w.start && current < w.end) {
           el.className = "word active";
+          activeWordEl = el;
         } else if (current >= w.end) {
           el.className = "word past";
         } else {
           el.className = "word";
         }
       });
+
+      // Hands-free auto-scrolling
+      if (activeWordEl) {
+        autoScrollTo(activeWordEl);
+      } else if (current >= 12.0 && current < 14.0) {
+        autoScrollTo(pauseCard);
+      }
 
       if (current < TOTAL_DURATION) {
         animationFrame = requestAnimationFrame(update);
@@ -515,6 +598,7 @@
       pause();
       startTime = null;
       elapsedPaused = 0;
+      lastScrolledElement = null;
       timerDisplay.innerHTML = "00:00<span>.0</span>";
       progressBar.style.width = "0%";
       phaseBadge.innerText = "Ready (0:27 Total)";
@@ -527,6 +611,34 @@
       pauseCard.classList.remove("active-card");
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+
+    // Tap to jump (rehearsal helper)
+    function jumpToTime(sec) {
+      const wasRunning = isRunning;
+      if (isRunning) pause();
+      elapsedPaused = sec * 1000;
+      startTime = performance.now() - elapsedPaused;
+      lastScrolledElement = null;
+      update(performance.now());
+      if (wasRunning) play();
+    }
+
+    // Font size controls
+    function adjustFontSize(delta) {
+      currentFontSizeRem = Math.min(Math.max(currentFontSizeRem + delta, 1.15), 2.3);
+      document.documentElement.style.setProperty("--script-font-size", `${currentFontSizeRem}rem`);
+    }
+
+    fontUpBtn.addEventListener("click", () => adjustFontSize(0.15));
+    fontDownBtn.addEventListener("click", () => adjustFontSize(-0.15));
+
+    card1.addEventListener("click", (e) => {
+      if (e.target.tagName !== "BUTTON") jumpToTime(0.0);
+    });
+    pauseCard.addEventListener("click", () => jumpToTime(12.0));
+    card2.addEventListener("click", (e) => {
+      if (e.target.tagName !== "BUTTON") jumpToTime(14.0);
+    });
 
     playBtn.addEventListener("click", () => {
       if (isRunning) pause();
